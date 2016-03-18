@@ -1,0 +1,2 @@
+python FirstN.py
+pause

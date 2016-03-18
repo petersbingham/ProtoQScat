@@ -1,0 +1,2 @@
+python TwoChannelMatMult.py
+pause

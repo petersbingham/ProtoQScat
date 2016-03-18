@@ -1,0 +1,2 @@
+python PoleValues_N_diff_real.py
+pause

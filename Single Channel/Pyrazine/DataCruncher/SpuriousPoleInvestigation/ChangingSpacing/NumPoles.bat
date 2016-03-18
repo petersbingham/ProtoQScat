@@ -1,0 +1,2 @@
+python NumPoles.py
+pause
