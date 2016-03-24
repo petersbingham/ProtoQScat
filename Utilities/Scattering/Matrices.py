@@ -117,11 +117,19 @@ class matSequence:
     def _init(self, ax):
         if self.title is not None:
             if ax==plt:
+                plt.gca().set_color_cycle(self.colourCycle)
                 fig = plt.figure()
                 fig.suptitle(self.title)
+                fig.set_size_inches(xsize, ysize, forward=True)
+                fig.subplots_adjust(left, bottom, right, top, wspace, hspace)
             else:
+                if xlim is not None:
+                    ax.set_xlim(xlim)
+                if ylim is not None:
+                    ax.set_ylim(ylim)
                 ax.set_title(self.title)
                 ax.title.set_fontsize(10)
+                ax.set_color_cycle(self.colourCycle)
     
     def plot(self, m, n, logx=False, logy=False, imag=False, ax=plt):
         self._init(ax)
@@ -168,7 +176,6 @@ class matSequence:
         return self._plotMany(self._plotAll, logx, logy, imag, ax)
       
     def _plotMany(self, plotFun, logx, logy, imag, ax, *args):
-        plt.gca().set_color_cycle(self.colourCycle)
         lines, strings = plotFun(logx, logy, imag, ax, *args)
         if ax==plt and self.title is not None:
             plt.legend(lines, strings, prop={'size':9})
@@ -211,7 +218,6 @@ numSubplotRows = 1
 numSubplotCols = 1
 subplotRowCnt = 1
 subplotColCnt = 0
-
 def setSubPlots(numSubplotRows_, numSubplotCols_, title=None, xlabel="", ylabel=""):
     global subplots
     global numSubplotRows
@@ -224,6 +230,44 @@ def setSubPlots(numSubplotRows_, numSubplotCols_, title=None, xlabel="", ylabel=
         plt.suptitle(title)
     subplotFig.text(0.5, 0.04, xlabel, ha='center', va='center')
     subplotFig.text(0.06, 0.5, ylabel, ha='center', va='center', rotation='vertical')
+    subplotFig.subplots_adjust(left, bottom, right, top, wspace, hspace)
+    subplotFig.set_size_inches(xsize, ysize, forward=True)
+
+left = None
+bottom = None
+right = None
+top = None
+wspace = None
+hspace = None
+def setParams(left_=None, bottom_=None, right_=None, top_=None, wspace_=None, hspace_=None):
+    global left
+    global bottom
+    global right
+    global top
+    global wspace
+    global hspace
+    left = left_
+    bottom = bottom_
+    right = right_
+    top = top_
+    wspace = wspace_
+    hspace = hspace_
+
+xlim = None
+ylim = None
+def setExtents(xlim_, ylim_):
+    global xlim
+    global ylim
+    xlim = xlim_
+    ylim = ylim_
+
+xsize = None
+ysize = None
+def setSize(xsize_, ysize_):
+    global xsize
+    global ysize
+    xsize = xsize_
+    ysize = ysize_
 
 def _getAxis():
     global subplots
@@ -272,7 +316,7 @@ def _plot(plotFun, type, matSequences, title, xlabel, ylabel, imag, *args):
             plt.ylabel(ylabel, fontsize=12)
     else:
         plt.figlegend(lines, strings, prop={'size':9}, loc = 'upper left', ncol=1, labelspacing=0. )
-    if subplots is None or (numSubplotRows==subplotRowCnt and numSubplotCols==subplotColCnt):
+    if subplots is None or (numSubplotRows==subplotRowCnt and numSubplotCols==subplotColCnt):         
         plt.draw()
         plt.show()
 

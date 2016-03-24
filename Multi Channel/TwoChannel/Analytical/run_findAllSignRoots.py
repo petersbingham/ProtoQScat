@@ -10,9 +10,12 @@ for i in [1.0,-1.0]:
     mats = Mats(args.v1_, args.v2_, args.lam_, kCal)
     smat = Smat(args.r0_, mats)
     try:
-        print str([i,j]) + "   " + str(smat.findRoot(args.findStart_))
+        root1 = str(smat.findRoot(args.findStart_))
     except ValueError:
-        try:
-            print str([i,j]) + "   " + str(smat.findRoot(-1.0*args.findStart_))
-        except ValueError:
-            print str([i,j]) + "   Val Err"
+        root1 = "none" 
+    try:
+        root2 = str(smat.findRoot(args.findStart_.real-1.0j*args.findStart_.imag))
+    except ValueError:
+        root2 = "none"
+        
+    print str([i,j]) + "\t" + root1 + "\t" + root2

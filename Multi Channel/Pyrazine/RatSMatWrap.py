@@ -62,10 +62,14 @@ class RatSMatWrap:
   def _getSfromKmatrix(self, ene):
     return sm.getSfromKmatrix(self.kmats, NUMCHANNELS, ene)
   
-  def getRatXS(self, title=None, colourCycle=None):
+  def _getRatSmat(self):
     smats = self._getSfromKmatrices()
     ratSmat = RatSMat(smats, self.kFitCal.k, fitName=self.fitName, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
     ratSmat.kFun = self.kCal.k
+    return ratSmat
+  
+  def getRatXS(self, title=None, colourCycle=None):
+    ratSmat = self._getRatSmat()
     ratXSMats = sm.matSequence(title, colourCycle)
     ratXSmat = S.XSmat(S.Tmat(ratSmat), self.kCal)
     for ene in self.kmats:
@@ -74,21 +78,19 @@ class RatSMatWrap:
     return ratXSMats
     
   def findRoot(self, startingEne, multipler=1.0):
-    smats = self._getSfromKmatrices()
-    ratSmat = RatSMat(smats, self.kFitCal.k, fitName=self.fitName, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
-    ratSmat.kFun = self.kCal.k
-    return complex(ratSmat.findRoot(startingEne, multipler))
+    ratSmat = self._getRatSmat()
+    return ratSmat.findRoot(startingEne, multipler)
+    
+  def findConjRoots(self, startingEne, multipler=1.0):
+    ratSmat = self._getRatSmat()
+    return ratSmat.findConjRoots(startingEne, multipler)
     
   def findPolyRoots(self):
-    smats = self._getSfromKmatrices()
-    ratSmat = RatSMat(smats, self.kFitCal.k, fitName=self.fitName, fitSize=self._getRatSmatFitSize())
-    ratSmat.kFun = self.kCal.k
+    ratSmat = self._getRatSmat()
     return ratSmat.findPolyRoots(EFROMK_CONVERSIONFACTOR)
     
   def getFinDetRange(self, startEne, endEne, complexOffset, steps):
-    smats = self._getSfromKmatrices()
-    ratSmat = RatSMat(smats, self.kFitCal.k, fitName=self.fitName, fitSize=self._getRatSmatFitSize())
-    ratSmat.kFun = self.kCal.k
+    ratSmat = self._getRatSmat()
     return ratSmat.getFinDetRange(startEne, endEne, complexOffset, steps)
 
   def _getRatSmatFitSize(self):

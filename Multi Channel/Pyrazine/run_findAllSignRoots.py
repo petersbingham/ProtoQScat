@@ -23,7 +23,8 @@ try:
                         for kk in [1.0,-1.0]:
                             ksigns = [ii,jj,kk]
                             kmat = RatSMatWrap("fort.19",args.subN_,args.subStart_,args.subEnd_,kfitSigns,ksigns,True)
-                            print str(ksigns)+"   \t"+"{:.8f}".format(kmat.findRoot(args.sene_))+"   \t"+"{:.8f}".format(kmat.findRoot(args.sene_.real-1.0j*args.sene_.imag))
+                            roots = kmat.findConjRoots(args.sene_)
+                            print str(ksigns)+"   \t"+"{:.8f}".format(roots[0])+"   \t"+"{:.8f}".format(roots[1])
 except (sm.MatException) as inst:
   print str(inst)
   sys.exit()

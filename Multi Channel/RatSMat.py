@@ -342,10 +342,19 @@ class RatSMat(sm.mat):
     val = multipler*self.getFinDet()
     #print str(e) + "\n" + str(val) + "\n"
     return val
+  
+  def _findRoot(self, startingEne, multipler):
+    self.setType(TYPE_FIN)
+    try:
+        return complex(mpm.findroot(lambda e: self._getDet(e, multipler), (startingEne,startingEne+.001,startingEne+.002), solver='muller'))
+    except ValueError:
+        return None
           
   def findRoot(self, startingEne, multipler=1.0):
-    self.setType(TYPE_FIN)
-    return mpm.findroot(lambda e: self._getDet(e, multipler), (startingEne,startingEne+.001,startingEne+.002), solver='muller')
+    return self._findRoot(startingEne, multipler)
+          
+  def findConjRoots(self, startingEne, multipler=1.0):
+    return [self._findRoot(startingEne, multipler), self._findRoot(startingEne.real - 1.0j*startingEne.imag, multipler)]
 
   def getFinDetRange(self, startEne, endEne, complexOffset, steps):
     xs = np.ndarray((steps,), dtype=float)

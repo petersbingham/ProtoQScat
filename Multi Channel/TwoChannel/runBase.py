@@ -1,4 +1,5 @@
 import sys
+#sys.path.append("../../Utilities")
 sys.path.append("..")
 from RatSMat import *
 from Analytical.DoubleChannel import *
@@ -16,7 +17,7 @@ def getAnaSmat(args, anakCal):
   mats = Mats(args.v1_, args.v2_, args.lam_, anakCal)
   return Smat(args.r0_, mats)
 
-def getRatSmat(args, anaSmat, anakCal, fitkCal):
+def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
   dEne = (args.eneEnd_-args.eneStart_) / float(args.eneSteps_)
   ene = args.eneStart_ + args.eneComplex_*1.0j
   sMats = {}
@@ -24,28 +25,35 @@ def getRatSmat(args, anaSmat, anakCal, fitkCal):
     anaSmat.setEnergy(ene)
     sMats[ene] = anaSmat.getMatrix()
     ene += dEne  
-  return RatSMat(sMats, fitkCal.k, fitName="Two Channel Radial Well" + _getTypeName(anakCal, fitkCal, args.r0_, args.v1_, args.v2_, args.lam_, args.eneStart_, args.eneEnd_, args.eneComplex_, args.eneSteps_))
+  return RatSMat(sMats, fitkCal.k, fitName="Two Channel Radial Well" + _getTypeName(anakCal, fitkCal, args.r0_, args.v1_, args.v2_, args.lam_, args.eneStart_, args.eneEnd_, args.eneComplex_, args.eneSteps_), suppressCmdOut=suppressCmdOut)
 
 def getSmats(args, anakCal, fitkCal):
   anaSmat = getAnaSmat(args, anakCal)
   ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal)
   return (anaSmat, ratSmat)
   
-def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun):
+def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppressCmdOut=False, signsAsList=False):
     try:
         for anaSigns in anaSignList:
             anakCal = sm.kCalculator([args.t1_,args.t2_], 2.0, sm.K_SIGN, anaSigns)
             anaSmat = getAnaSmat(args, anakCal)
-            signString = "ana:"+str(anakCal)
-            anaFun(anakCal, anaSmat, signString)
+            if signsAsList:
+                signs = [str(anakCal)]
+            else:
+                signs = "ana:"+str(anakCal)
+            if anaFun is not None:
+                anaFun(anakCal, anaSmat, signs)
             for fitSigns in fitSignList:
                 fitkCal = sm.kCalculator([args.t1_,args.t2_], 2.0, sm.K_SIGN, fitSigns)
-                ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal)
+                ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut)
                 for ratSigns in ratSignList:
                     ratkCal = sm.kCalculator([args.t1_,args.t2_], 2.0, sm.K_SIGN, ratSigns)
                     ratSmat.kFun = ratkCal.k
-                    signString = "ana:"+str(anakCal)+", fit:"+str(fitkCal)+", jost:"+str(ratkCal)
-                    ratFun(ratkCal, ratSmat, signString)
+                    if signsAsList:
+                        signs = [str(anakCal), str(fitkCal), str(ratkCal)]
+                    else:
+                        signs = "ana:"+str(anakCal)+", fit:"+str(fitkCal)+", jost:"+str(ratkCal)
+                    ratFun(ratkCal, ratSmat, signs)
     except (DCException, sm.MatException) as inst:
         print str(inst)
         sys.exit()
