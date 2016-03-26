@@ -6,7 +6,7 @@ seArgs.add_argument("ene_", help="Energy", type=complex)
 args = seArgs.parse_args()
 
 try:
-  kCal = sm.kCalculator([args.t1_,args.t2_], 2.0)
+  kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
   sMats, ratSmat = getSmats(args, kCal, kCal)
   ratSmat.setEnergy(args.ene_)  
   print str(ratSmat.getMatrix()) 

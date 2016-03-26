@@ -14,7 +14,7 @@ x = args.rangeStart_+args.rangeComplex_*1j
 dx = (args.rangeEnd_-args.rangeStart_) / args.rangeSteps_
 
 try:
-  kCal = sm.kCalculator([args.t1_,args.t2_], 2.0)
+  kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
   matSeq = sm.matSequence() 
   anaSmat, ratSmat = getSmats(args, kCal, kCal)
   

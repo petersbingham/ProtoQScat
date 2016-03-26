@@ -25,7 +25,7 @@ def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
     anaSmat.setEnergy(ene)
     sMats[ene] = anaSmat.getMatrix()
     ene += dEne  
-  return RatSMat(sMats, fitkCal.k, fitName="Two Channel Radial Well" + _getTypeName(anakCal, fitkCal, args.r0_, args.v1_, args.v2_, args.lam_, args.eneStart_, args.eneEnd_, args.eneComplex_, args.eneSteps_), suppressCmdOut=suppressCmdOut)
+  return RatSMat(sMats, fitkCal.kl, fitName="Two Channel Radial Well" + _getTypeName(anakCal, fitkCal, args.r0_, args.v1_, args.v2_, args.lam_, args.eneStart_, args.eneEnd_, args.eneComplex_, args.eneSteps_), suppressCmdOut=suppressCmdOut)
 
 def getSmats(args, anakCal, fitkCal):
   anaSmat = getAnaSmat(args, anakCal)
@@ -35,7 +35,7 @@ def getSmats(args, anakCal, fitkCal):
 def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppressCmdOut=False, signsAsList=False):
     try:
         for anaSigns in anaSignList:
-            anakCal = sm.kCalculator([args.t1_,args.t2_], 2.0, sm.K_SIGN, anaSigns)
+            anakCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=anaSigns, eneFactor=ENEFACTOR)
             anaSmat = getAnaSmat(args, anakCal)
             if signsAsList:
                 signs = [str(anakCal)]
@@ -44,11 +44,11 @@ def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppr
             if anaFun is not None:
                 anaFun(anakCal, anaSmat, signs)
             for fitSigns in fitSignList:
-                fitkCal = sm.kCalculator([args.t1_,args.t2_], 2.0, sm.K_SIGN, fitSigns)
+                fitkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=fitSigns, eneFactor=ENEFACTOR)
                 ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut)
                 for ratSigns in ratSignList:
-                    ratkCal = sm.kCalculator([args.t1_,args.t2_], 2.0, sm.K_SIGN, ratSigns)
-                    ratSmat.kFun = ratkCal.k
+                    ratkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=ratSigns, eneFactor=ENEFACTOR)
+                    ratSmat.kFun = ratkCal.kl
                     if signsAsList:
                         signs = [str(anakCal), str(fitkCal), str(ratkCal)]
                     else:

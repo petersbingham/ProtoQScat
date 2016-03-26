@@ -13,6 +13,7 @@ import General.Numerical as num
 
 EQUIVALENT_TESTS = False
 LIN_ALGEBRA = False
+ENEFACTOR = sm.EFROMK_HARTREES
 
 gu = num.Compare()
 

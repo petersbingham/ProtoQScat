@@ -5,7 +5,7 @@ rtArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Rang
 args = rtArgs.parse_args()
 
 try:
-  kCal = sm.kCalculator([args.t1_,args.t2_], 2.0)
+  kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
   anaSmat, ratSmat = getSmats(args, kCal, kCal)
   
   dEne = (args.eneEnd_-args.eneStart_) / float(args.eneSteps_)

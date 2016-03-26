@@ -223,16 +223,16 @@ class RatSMat(sm.mat):
     return self.numPolyTerms*self.numChannels + m*self.numPolyTerms + ti
   
   def _primaryAlpha(self, m, n, ene, exp):
-    return self.kFun(n,ene) / self.kFun(m,ene) * (self.sMatData[ene][m,m]-1.0) * pow(ene,exp)
+    return self.kFun(n,ene,1.0) / self.kFun(m,ene,1.0) * (self.sMatData[ene][m,m]-1.0) * pow(ene,exp)
   
   def _primaryBeta(self, m, n, ene, exp):
-    return -1.0j * self.kFun(n,ene) * (self.sMatData[ene][m,m]+1.0) * pow(ene,exp)
+    return -1.0j * self.kFun(m,ene,0.0) * self.kFun(n,ene,1.0) * (self.sMatData[ene][m,m]+1.0) * pow(ene,exp)
   
   def _secondaryAlpha(self, m, n, j, ene, exp):
-    return self.kFun(n,ene) / self.kFun(j,ene) * self.sMatData[ene][m,j] * pow(ene,exp)
+    return self.kFun(n,ene,1.0) / self.kFun(j,ene,1.0) * self.sMatData[ene][m,j] * pow(ene,exp)
   
   def _secondaryBeta(self, m, n, j, ene, exp):
-    return -1.0j * self.kFun(n,ene) * self.sMatData[ene][m,j] * pow(ene,exp)
+    return -1.0j * self.kFun(j,ene,0.0) * self.kFun(n,ene,1.0) * self.sMatData[ene][m,j] * pow(ene,exp)
     
   def _result(self, m, n, ene):
     num = 0.0
@@ -298,8 +298,8 @@ class RatSMat(sm.mat):
             exp = ci
             A += alphas[ci][m,n] * pow(self.ene, exp)
             B += betas[ci][m,n] * pow(self.ene, exp)
-          t1 = self.kFun(n,self.ene)/self.kFun(m,self.ene)*A
-          t2 = 1.0j*self.kFun(n,self.ene)*B
+          t1 = self.kFun(n,self.ene,1.0)/self.kFun(m,self.ene,1.0)*A
+          t2 = 1.0j*self.kFun(m,self.ene,0.0)*self.kFun(n,self.ene,1.0)*B
           Fin[m,n] = (t1-t2) / 2.0
           Fout[m,n] = (t1+t2) / 2.0
       #print str(self.ene) + " , " + str(Fin[0,0]) + " , " + str(Fin[0,1]) + " , " + str(Fin[1,0]) + " , " + str(Fin[1,1])

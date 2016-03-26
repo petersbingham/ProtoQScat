@@ -33,7 +33,7 @@ class PoleFinder:
         while N <= Nmax:
             roots = self._getMroots(N)
             self._locatePoles(roots)
-            print str(len(roots)) + " roots."
+            print str(len(roots)) + " roots.\n\n"
             N = 2*N
         return roots
 
@@ -43,7 +43,7 @@ class PoleFinder:
         self._printSep2(self.file_poles)
         writeStr = "N=%d, Emin=%d, Emax=%d, step=%d, stepOff=%d\n" % (N,self.startIndex,endIndex,step,self.offset)
         self.file_poles.write(writeStr)
-        ratSmat = RatSMat(smats, self.kCal.k, fitName=self.fitName)
+        ratSmat = RatSMat(smats, self.kCal.kl, fitName=self.fitName)
         return ratSmat.findPolyRoots(self.kConversionFactor, False)
     
     def _calEnergy(self, k):

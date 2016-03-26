@@ -1,12 +1,7 @@
 import sys
-import os
-base =  os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0,base+'/.')
-sys.path.insert(0,base+'/..')
-sys.path.insert(0,base+'/../..')
-sys.path.insert(0,base+'/../../../Utilities')
-from PoleFinder import *
+sys.path.append("..")
 from Elastic3ChanReader import *
+from PoleFinder import *
 
 
 import argparse
@@ -22,7 +17,7 @@ for i in [1.0,-1.0]:
   for j in [1.0,-1.0]:
     for k in [1.0,-1.0]:
       ksigns = [i,j,k]
-      kCal = sm.kCalculator([0.0,0.0,0.0], EFROMK_CONVERSIONFACTOR, sm.K_SIGN, ksigns)
+      kCal = sm.kCalculator([0.0,0.0,0.0], ktype=sm.K_SIGN, ksigns=ksigns, eneFactor=ENEFACTOR)
       kmats = readkMats("../fort.19")
       fitName = getFitName(kCal, args.startIndex_, args.endIndex_)
-      PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, "./Results", fitName, EFROMK_CONVERSIONFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, args.cmpValue_)
+      PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, "./Results", fitName, ENEFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, args.cmpValue_)

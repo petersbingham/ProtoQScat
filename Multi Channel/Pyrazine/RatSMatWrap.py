@@ -1,11 +1,7 @@
-import sys
-sys.path.append("..")
-sys.path.append("../../Utilities")
 import numpy as np
-import Scattering.Matrices as sm
+from Elastic3ChanReader import *
 import Scattering.Stran as S
 from RatSMat import *
-from Elastic3ChanReader import *
 
 M_NORM = 0
 M_PIECEWISE = 1
@@ -15,13 +11,13 @@ class RatSMatWrap:
     self.numChannels = 3
     self.ene = None
     if kfitSigns is None:
-        self.kFitCal = sm.kCalculator([0.0,0.0,0.0], EFROMK_CONVERSIONFACTOR)
+        self.kFitCal = sm.kCalculator([0.0,0.0,0.0], eneFactor=ENEFACTOR)
     else:
-        self.kFitCal = sm.kCalculator([0.0,0.0,0.0], EFROMK_CONVERSIONFACTOR, sm.K_SIGN, kfitSigns)
+        self.kFitCal = sm.kCalculator([0.0,0.0,0.0], ktype=sm.K_SIGN, ksigns=kfitSigns, eneFactor=ENEFACTOR)
     if ksigns is None:
         self.kCal = self.kFitCal
     else:
-        self.kCal = sm.kCalculator([0.0,0.0,0.0], EFROMK_CONVERSIONFACTOR, sm.K_SIGN, ksigns)
+        self.kCal = sm.kCalculator([0.0,0.0,0.0], ktype=sm.K_SIGN, ksigns=ksigns, eneFactor=ENEFACTOR)
     self.kmats = readkMats(fileName)
     self.mode = M_PIECEWISE
     self.N = N
@@ -64,8 +60,8 @@ class RatSMatWrap:
   
   def _getRatSmat(self):
     smats = self._getSfromKmatrices()
-    ratSmat = RatSMat(smats, self.kFitCal.k, fitName=self.fitName, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
-    ratSmat.kFun = self.kCal.k
+    ratSmat = RatSMat(smats, self.kFitCal.kl, fitName=self.fitName, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
+    ratSmat.kFun = self.kCal.kl
     return ratSmat
   
   def getRatXS(self, title=None, colourCycle=None):
@@ -87,7 +83,7 @@ class RatSMatWrap:
     
   def findPolyRoots(self):
     ratSmat = self._getRatSmat()
-    return ratSmat.findPolyRoots(EFROMK_CONVERSIONFACTOR)
+    return ratSmat.findPolyRoots(ENEFACTOR)
     
   def getFinDetRange(self, startEne, endEne, complexOffset, steps):
     ratSmat = self._getRatSmat()

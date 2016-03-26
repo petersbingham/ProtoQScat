@@ -40,24 +40,34 @@ K_POS = "kPos"
 K_SIGN = "kSign"
 K_ROT = "kRot"
 
+EFROMK_RYDBERGS = 1.0
+EFROMK_HARTREES = 2.0
+
 class kCalculator:
-    def __init__(self, thresholds, eneFactor, type=K_POS, channelSigns=None, invertChannel=False):  #invertChannel is for test purposes.
+    def __init__(self, thresholds, ls=None, ktype=K_POS, ksigns=None, eneFactor=EFROMK_RYDBERGS, invertChannel=False):  #invertChannel is for test purposes.
         self.thresholds = thresholds
+        if ls is None:
+            self.ls = [0.0]*len(thresholds)
+        else:
+            self.ls = ls
         self.eneFactor = eneFactor
-        self.type = type
-        self.channelSigns = channelSigns
+        self.ktype = ktype
+        self.ksigns = ksigns
         self.invertChannel = invertChannel
     def __str__(self):
-        if self.channelSigns is None:
-            return self.type
+        if self.ksigns is None:
+            return self.ktype
         else:
-            return str(self.channelSigns)
+            return str(self.ksigns)
+    def kl(self, ch, ene, add=0.0):
+        k = self.k(ch, ene)
+        return pow(k, self.ls[ch]+add)
     def k(self, ch, ene):
-        if self.type == K_POS:
+        if self.ktype == K_POS:
             return self.kpos(ch, ene)
-        elif self.type == K_SIGN:
+        elif self.ktype == K_SIGN:
             return self.ksign(ch, ene)
-        elif self.type == K_ROT:
+        elif self.ktype == K_ROT:
             return self.krot(ch, ene)
     def kpos(self, ch, ene):
         return cmath.sqrt(self._getValue(ch, ene))
@@ -65,8 +75,8 @@ class kCalculator:
         if self.invertChannel:
             ch = len(self.thresholds)-1 - ch
         mult = 1.0
-        if self.channelSigns is not None:
-            mult = self.channelSigns[ch]
+        if self.ksigns is not None:
+            mult = self.ksigns[ch]
         return mult * self.kpos(ch, ene)
     def krot(self, ch, ene):
         k = self.kpos(ch, ene)
@@ -117,10 +127,11 @@ class matSequence:
     def _init(self, ax):
         if self.title is not None:
             if ax==plt:
-                plt.gca().set_color_cycle(self.colourCycle)
                 fig = plt.figure()
+                plt.gca().set_color_cycle(self.colourCycle)
                 fig.suptitle(self.title)
-                fig.set_size_inches(xsize, ysize, forward=True)
+                if xsize is not None and ysize is not None:
+                    fig.set_size_inches(xsize, ysize, forward=True)
                 fig.subplots_adjust(left, bottom, right, top, wspace, hspace)
             else:
                 if xlim is not None:

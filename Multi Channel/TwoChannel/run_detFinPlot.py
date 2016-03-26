@@ -12,7 +12,7 @@ spArgs.add_argument("steps_", help="Number of steps", type=int)
 args = spArgs.parse_args()
 
 try:
-  kCal = sm.kCalculator([args.t1_,args.t2_], 2.0)
+  kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
   matSeq = sm.matSequence() 
   anaSmat, ratSmat = getSmats(args, kCal, kCal)
   
