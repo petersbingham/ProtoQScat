@@ -1,6 +1,7 @@
 import numpy as np
 import cmath
 from Elastic3ChanReader import *
+import Scattering.Conversions as conv
 import Scattering.Stran as S
 from RatSMat import *
 
@@ -15,7 +16,7 @@ class PyXSmat(S.XSmat):
         t = self.sourceMat[m][n]
         k = self.kCal.k(n,self.ene)
         XS = cmath.pi / pow(k,2.0) * pow(abs(t),2.0)
-        return XS*0.280028560859208001
+        return XS * conv.BOHRSQ_to_ANGSQ
 
 def getTotalXS(XSmat):
     XS = 0.0

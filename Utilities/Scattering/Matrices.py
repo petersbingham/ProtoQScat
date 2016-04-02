@@ -2,6 +2,7 @@ import numpy as np
 import cmath
 import matplotlib.pyplot as plt
 import random
+import Conversions as conv
 
 def decimate(mats, startIndex, endIndex, N):
     step = int((endIndex-startIndex) / (N-1))
@@ -127,7 +128,7 @@ class matSequence:
     
     def _convertEnergy(self, ene):
         if self.originalUnits==RYDs and self.convUnits==eVs:
-            return ene*13.605698066
+            return ene * conv.RYD_to_EV
         return ene
     
     def keys(self):
