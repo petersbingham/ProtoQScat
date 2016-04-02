@@ -9,16 +9,13 @@ args = parentArgs.parse_args()
 
 try:
   kmat = RatSMatWrap("fort.19",args.subN_,args.subStart_,args.subEnd_)
-  xs = kmat.getDiscreteXS()
-  ratxs = kmat.getRatXS()
+  totxs = kmat.getTotalDiscreteXS()
+  ratTotxs = kmat.getTotalRatXS()
   
-  xs.setDetails("", ['red','green','blue','purple','orange','brown','cyan','pink','grey'])
-  ratxs.setDetails("", ['red','green','blue','purple','orange','brown','cyan','pink','grey'])
+  totxs.setDetails("", ['red'])
+  ratTotxs.setDetails("", ['blue'])
   
-  sm.plotAll("Lin", [xs], False, "Analytical")
-  sm.plotAll("Lin", [ratxs], False, "Approximated")
-  
-  plt.show()
+  sm.plotAll("Lin", [totxs, ratTotxs]) 
 except (sm.MatException) as inst:
   print str(inst)
   sys.exit()

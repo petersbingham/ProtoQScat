@@ -25,9 +25,6 @@ class TranMat(sm.mat):
       
     def _getRow(self, m):
         return self.tranMat[m].tolist()[0]
-    
-    def _getRow(self, m):
-        return self.tranMat[m].tolist()[0]
 
 class Tmat(TranMat):
     def setEnergy(self, ene):
@@ -65,5 +62,6 @@ class XSmat(TranMat):
     def _getElement(self, m, n):
         self.sourceMat.setEnergy(self.ene)
         t = self.sourceMat[m][n]
-        k = self.kCal.k(m,self.ene)
-        return cmath.pi / pow(k,2.0) * pow(abs(t),2.0)
+        k = self.kCal.k(n,self.ene)
+        l = self.kCal.l(n)
+        return cmath.pi / pow(k,2.0) * (2*l+1) * pow(abs(t),2.0)

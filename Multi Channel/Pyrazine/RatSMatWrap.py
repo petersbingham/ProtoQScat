@@ -1,23 +1,40 @@
 import numpy as np
+import cmath
 from Elastic3ChanReader import *
 import Scattering.Stran as S
 from RatSMat import *
 
 M_NORM = 0
 M_PIECEWISE = 1
+THRESHOLDS = [0.0,0.0,0.0]
+LS = [3.0,5.0,5.0]
+
+class PyXSmat(S.XSmat):
+    def _getElement(self, m, n):
+        self.sourceMat.setEnergy(self.ene)
+        t = self.sourceMat[m][n]
+        k = self.kCal.k(n,self.ene)
+        XS = cmath.pi / pow(k,2.0) * pow(abs(t),2.0)
+        return XS*0.280028560859208001
+
+def getTotalXS(XSmat):
+    XS = 0.0
+    for x in np.nditer(XSmat.getMatrix(), flags=['refs_ok']):
+        XS += x
+    return np.matrix([[XS]])
 
 class RatSMatWrap:
   def __init__(self, fileName, N=None, startIndex=None, endIndex=None, kfitSigns=None, ksigns=None, suppressCmdOut=False):
     self.numChannels = 3
     self.ene = None
     if kfitSigns is None:
-        self.kFitCal = sm.kCalculator([0.0,0.0,0.0], eneFactor=ENEFACTOR)
+        self.kFitCal = sm.kCalculator(THRESHOLDS, LS, eneFactor=ENEFACTOR)
     else:
-        self.kFitCal = sm.kCalculator([0.0,0.0,0.0], ktype=sm.K_SIGN, ksigns=kfitSigns, eneFactor=ENEFACTOR)
+        self.kFitCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=kfitSigns, eneFactor=ENEFACTOR)
     if ksigns is None:
         self.kCal = self.kFitCal
     else:
-        self.kCal = sm.kCalculator([0.0,0.0,0.0], ktype=sm.K_SIGN, ksigns=ksigns, eneFactor=ENEFACTOR)
+        self.kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=ksigns, eneFactor=ENEFACTOR)
     self.kmats = readkMats(fileName)
     self.mode = M_PIECEWISE
     self.N = N
@@ -47,10 +64,18 @@ class RatSMatWrap:
   def getDiscreteXS(self, title=None, colourCycle=None):
     XSmats = sm.matSequence(title, colourCycle)
     for ene in sorted(self.kmats, key=lambda val: val.real):
-      xs = S.XSmat(S.Tmat(self), self.kFitCal)
-      xs.setEnergy(ene)
-      XSmats[ene] = xs.getMatrix()
+        xs = PyXSmat(S.Tmat(self), self.kFitCal)
+        xs.setEnergy(ene)
+        XSmats[ene] = xs.getMatrix()
     return XSmats
+  
+  def getTotalDiscreteXS(self, title=None, colourCycle=None):
+    totXSmats = sm.matSequence(title, colourCycle)
+    xs = PyXSmat(S.Tmat(self), self.kFitCal)
+    for ene in sorted(self.kmats, key=lambda val: val.real):
+        xs.setEnergy(ene)
+        totXSmats[ene] = getTotalXS(xs)
+    return totXSmats
   
   def _getSfromKmatrices(self):
     return sm.getSfromKmatrices(self.kmats, NUMCHANNELS)
@@ -67,11 +92,20 @@ class RatSMatWrap:
   def getRatXS(self, title=None, colourCycle=None):
     ratSmat = self._getRatSmat()
     ratXSMats = sm.matSequence(title, colourCycle)
-    ratXSmat = S.XSmat(S.Tmat(ratSmat), self.kCal)
+    ratXSmat = PyXSmat(S.Tmat(ratSmat), self.kCal)
     for ene in self.kmats:
       ratXSmat.setEnergy(ene)
       ratXSMats[ene] = ratXSmat.getMatrix()
     return ratXSMats
+  
+  def getTotalRatXS(self, title=None, colourCycle=None):
+    ratSmat = self._getRatSmat()
+    ratTotXSMats = sm.matSequence(title, colourCycle)
+    ratXSmat = PyXSmat(S.Tmat(ratSmat), self.kCal)
+    for ene in self.kmats:
+      ratXSmat.setEnergy(ene)
+      ratTotXSMats[ene] = getTotalXS(ratXSmat)
+    return ratTotXSMats
     
   def findRoot(self, startingEne, multipler=1.0):
     ratSmat = self._getRatSmat()

@@ -69,6 +69,8 @@ class kCalculator:
             return self.ksign(ch, ene)
         elif self.ktype == K_ROT:
             return self.krot(ch, ene)
+    def l(self, ch):
+        return self.ls[ch]
     def kpos(self, ch, ene):
         return cmath.sqrt(self._getValue(ch, ene))
     def ksign(self, ch, ene):
@@ -95,11 +97,18 @@ class MatException(Exception):
         self.string = string
     def __str__(self):
         return "Matrix Error: " + self.string
+
+
+NONE = 0
+RYDs = 1
+eVs = 2
    
 class matSequence:
-    def __init__(self, title=None, colourCycle=None):
+    def __init__(self, title=None, colourCycle=None, units=RYDs):
         if colourCycle is None:
             colourCycle = ['red', 'green', 'blue', 'purple']
+        self.originalUnits = units
+        self.convUnits = NONE
         self.items = {}
         self.title = title
         self.marker = False
@@ -110,10 +119,25 @@ class matSequence:
         self.size = item.size
         self.items[key] = item
     
+    def __getitem__(self, key):
+        return self.items[key]
+    
+    def setConversionEnergy(self, units):
+        self.convUnits = units
+    
+    def _convertEnergy(self, ene):
+        if self.originalUnits==RYDs and self.convUnits==eVs:
+            return ene*13.605698066
+        return ene
+    
+    def keys(self):
+        return self.items.keys()
+    
     def writeAllToFile(self):
         f = open("res.txt","w")
         for x in sorted(self.items.keys(), key=lambda val: val.real):
-            eneStr = "{:1.6f}".format(x.real) + "+{:1.6f}i".format(x.imag)
+            xx = self._convertEnergy(x)
+            eneStr = "{:1.6f}".format(xx.real) + "+{:1.6f}i".format(xx.imag)
             f.write(eneStr + ":\n" + str(self.items[x])+"\n\n")
         f.close()
     
@@ -156,7 +180,8 @@ class matSequence:
         ys = np.ndarray((len(items),), dtype=float)
         i = 0
         for x in sorted(items.keys(), key=lambda val: val.real):
-            xs[i] = x.real
+            xx = self._convertEnergy(x)
+            xs[i] = xx.real
             if not imag:
                 ys[i] = items[x][m,n].real
             else:
@@ -242,7 +267,8 @@ def setSubPlots(numSubplotRows_, numSubplotCols_, title=None, xlabel="", ylabel=
     subplotFig.text(0.5, 0.04, xlabel, ha='center', va='center')
     subplotFig.text(0.06, 0.5, ylabel, ha='center', va='center', rotation='vertical')
     subplotFig.subplots_adjust(left, bottom, right, top, wspace, hspace)
-    subplotFig.set_size_inches(xsize, ysize, forward=True)
+    if xsize is not None and ysize is not None:
+        subplotFig.set_size_inches(xsize, ysize, forward=True)
 
 left = None
 bottom = None

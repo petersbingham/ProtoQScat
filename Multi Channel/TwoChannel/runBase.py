@@ -43,17 +43,18 @@ def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppr
                 signs = "ana:"+str(anakCal)
             if anaFun is not None:
                 anaFun(anakCal, anaSmat, signs)
-            for fitSigns in fitSignList:
-                fitkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=fitSigns, eneFactor=ENEFACTOR)
-                ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut)
-                for ratSigns in ratSignList:
-                    ratkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=ratSigns, eneFactor=ENEFACTOR)
-                    ratSmat.kFun = ratkCal.kl
-                    if signsAsList:
-                        signs = [str(anakCal), str(fitkCal), str(ratkCal)]
-                    else:
-                        signs = "ana:"+str(anakCal)+", fit:"+str(fitkCal)+", jost:"+str(ratkCal)
-                    ratFun(ratkCal, ratSmat, signs)
+            if ratFun is not None:
+                for fitSigns in fitSignList:
+                    fitkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=fitSigns, eneFactor=ENEFACTOR)
+                    ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut)
+                    for ratSigns in ratSignList:
+                        ratkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=ratSigns, eneFactor=ENEFACTOR)
+                        ratSmat.kFun = ratkCal.kl
+                        if signsAsList:
+                            signs = [str(anakCal), str(fitkCal), str(ratkCal)]
+                        else:
+                            signs = "ana:"+str(anakCal)+", fit:"+str(fitkCal)+", jost:"+str(ratkCal)
+                        ratFun(ratkCal, ratSmat, signs)
     except (DCException, sm.MatException) as inst:
         print str(inst)
         sys.exit()
