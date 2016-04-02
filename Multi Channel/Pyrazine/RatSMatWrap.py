@@ -26,6 +26,12 @@ def getTotalXS(XSmat):
 
 class RatSMatWrap:
   def __init__(self, fileName, N=None, startIndex=None, endIndex=None, kfitSigns=None, ksigns=None, suppressCmdOut=False):
+    if N == -1:
+        N = None
+    if startIndex == -1:
+        startIndex = None 
+    if endIndex == -1:
+        endIndex = None
     self.numChannels = 3
     self.ene = None
     if kfitSigns is None:

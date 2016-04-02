@@ -1,11 +1,6 @@
 from RatSMatWrap import *
 import matplotlib.pyplot as plt
-import argparse
-
-parentArgs = argparse.ArgumentParser(description="Pyrazine Fit - Cross section")
-parentArgs.add_argument("subN_", help="Sub Set Number", type=int, nargs='?', default=None)
-parentArgs.add_argument("subStart_", help="Sub Set Start", type=int, nargs='?', default=None)
-parentArgs.add_argument("subEnd_", help="Sub Set End", type=int, nargs='?', default=None)
+from runBase import *
 args = parentArgs.parse_args()
 
 sm.setParams(0.12, 0.07, 0.90, 0.93, 0.20, 0.11)

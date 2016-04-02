@@ -2,7 +2,7 @@ from Analytical.runArgsRange import *
 from runBase import *
 from cmath import *
 
-spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - S-matrix Plot", parents=[tcp_range])
+spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Plot", parents=[tcp_range])
 spArgs.add_argument("plotStart_", help="Plot Start", type=float)
 spArgs.add_argument("plotEnd_", help="Plot End", type=float)
 spArgs.add_argument("plotComplex_", help="Plot Complex Energy Offset", type=float)
