@@ -153,7 +153,6 @@ class matSequence:
         if self.title is not None:
             if ax==plt:
                 fig = plt.figure()
-                plt.gca().set_color_cycle(self.colourCycle)
                 fig.suptitle(self.title)
                 if xsize is not None and ysize is not None:
                     fig.set_size_inches(xsize, ysize, forward=True)
@@ -165,7 +164,10 @@ class matSequence:
                     ax.set_ylim(ylim)
                 ax.set_title(self.title)
                 ax.title.set_fontsize(10)
-                ax.set_color_cycle(self.colourCycle)
+        if ax==plt:
+            plt.gca().set_color_cycle(self.colourCycle)
+        else:
+            ax.set_color_cycle(self.colourCycle)
     
     def plot(self, m, n, logx=False, logy=False, imag=False, ax=plt):
         self._init(ax)
@@ -201,7 +203,7 @@ class matSequence:
         elif logy:
             lne, = ax.semilogy(xs, ys, linestyle=li, marker=ma, basey=10)
         else:
-            lne, = ax.plot(xs, ys)
+            lne, = ax.plot(xs, ys, linestyle=li, marker=ma)
         return (lne, self.legPrefix+": "+str(m)+","+str(n))
         
     def plotRow(self, m, logx=False, logy=False, imag=False, ax=plt):

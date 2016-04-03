@@ -105,11 +105,16 @@ class RatSMatWrap:
       ratXSMats[ene] = ratXSmat.getMatrix()
     return ratXSMats
   
-  def getTotalRatXS(self, title=None, colourCycle=None):
+  def getTotalRatXS(self, title=None, colourCycle=None, eneStart=None, eneEnd=None, eneComplexOffset=None, eneSteps=None):
     ratSmat = self._getRatSmat()
     ratTotXSMats = sm.matSequence(title, colourCycle)
     ratXSmat = PyXSmat(S.Tmat(ratSmat), self.kCal)
-    for ene in self.kmats:
+    if eneStart is None and eneEnd is None and eneSteps is None and eneComplexOffset is None:
+        eneRange = self.kmats.keys()
+    else:
+        d = (float(eneEnd) - float(eneStart)) / float(eneSteps)
+        eneRange = [eneStart+d*i for i in range(eneSteps+1)]
+    for ene in eneRange:
       ratXSmat.setEnergy(ene)
       ratTotXSMats[ene] = getTotalXS(ratXSmat)
     return ratTotXSMats
