@@ -31,12 +31,18 @@ class RatSMat(sm.mat):
     self.ene = None
     self._initialiseMatrices()
     self.fitName = fitName
+    
+    read = False
     if self._doFilesExist() and not ALWAYS_CALCULATE:
-      read = True
-      self._readCoefficients()
-    else:
-      read = False
+      try:
+          self._readCoefficients()
+          read = True
+      except Exception as e:
+          print "Error reading coefficients will attempt to calculate"
+      
+    if read==False:
       self._calculateCoefficients()
+      
     if not read and self.fitName:
       self._writeCoefficients() 
     self.lastPrintedEne = None
