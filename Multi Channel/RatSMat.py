@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import sympy
 import sympy.polys as syp
@@ -33,22 +34,28 @@ class RatSMat(sm.mat):
     self.fitName = fitName
     
     read = False
-    if self._doFilesExist() and not ALWAYS_CALCULATE:
+    if self._doFilesExist() and not ALWAYS_CALCULATE and self._checkNumpyVersionForFiles():
       try:
-          self._readCoefficients()
-          read = True
+        self._readCoefficients()
+        read = True
       except Exception as e:
-          print "Error reading coefficients will attempt to calculate"
-      
-    if read==False:
+        print "Error reading coefficients will attempt to calculate"
+
+    if not read:
       self._calculateCoefficients()
-      
-    if not read and self.fitName:
-      self._writeCoefficients() 
+      if self.fitName and self._checkNumpyVersionForFiles():
+        self._writeCoefficients() 
+
     self.lastPrintedEne = None
     sm.mat.__init__(self, self.numChannels, PRECISION)
     self._print("")
   
+  def _checkNumpyVersionForFiles(self):
+    npVer = [int(val) for val in np.__version__.split('.')]
+    if npVer[0]>1 or (npVer[0]==1 and npVer[1]>6) or (npVer[0]==1 and npVer[1]==6 and npVer[2]>1): #saveTxt not supported prior.
+        return True
+    return False
+
   def _print(self, msg):
     if not self.suppressCmdOut:
         print msg
@@ -161,7 +168,7 @@ class RatSMat(sm.mat):
     f1 = open(fitName, 'r')
     f2 = open(fitName + "_temp", 'w')
     for line in f1:
-        f2.write(line.replace("+-", '-'))
+      f2.write(line.replace("+-", '-'))
     f1.close()
     f2.close()
     os.remove(fitName)
@@ -259,7 +266,8 @@ class RatSMat(sm.mat):
           self.betas[eneKey][ci][m,n] = coeffVec[self._betaIndex(m,ti),0]
 
   def _printToFile(self, mat):
-    np.savetxt("systemMatrix.csv", mat, delimiter=",")
+    if self._checkNumpyVersionForFiles():
+      np.savetxt("systemMatrix.csv", mat, delimiter=",")
           
 #########################################################  
   
