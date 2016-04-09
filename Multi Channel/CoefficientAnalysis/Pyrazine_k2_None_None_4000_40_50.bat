@@ -1,2 +1,0 @@
-python CoeffAnalyser.py Pyrazine_k2_None_None_4000_40_50
-pause

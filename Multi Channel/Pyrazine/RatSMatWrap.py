@@ -4,11 +4,10 @@ from Elastic3ChanReader import *
 import Scattering.Conversions as conv
 import Scattering.Stran as S
 from RatSMat import *
+from Pyrazine import *
 
 M_NORM = 0
 M_PIECEWISE = 1
-THRESHOLDS = [0.0,0.0,0.0]
-LS = [3.0,5.0,5.0]
 
 class PyXSmat(S.XSmat):
     def _getElement(self, m, n):
@@ -54,10 +53,10 @@ class RatSMatWrap:
     self.fitName = getFitName(self.kFitCal, startIndex, endIndex)
   
   def _decimate(self, startIndex, endIndex, N):
-    self.kmats, step, endIndex = sm.decimate(self.kmats, startIndex, endIndex, N)
+    self.kmats, step, actualEndIndex, startEne, endEne = sm.decimate(self.kmats, startIndex, endIndex, N)
     if not self.suppressCmdOut:
         print "Decimation:"
-        print "  step: " + str(step)
+        print "  N=%d, Emin=%d(%f), Emax=%d(%f), step=%d" % (N,startIndex,startEne,actualEndIndex,endEne,step)
 
   def setEnergy(self, ene):
     self.ene = ene
@@ -92,8 +91,8 @@ class RatSMatWrap:
   
   def _getRatSmat(self):
     smats = self._getSfromKmatrices()
-    ratSmat = RatSMat(smats, self.kFitCal.kl, fitName=self.fitName, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
-    ratSmat.kFun = self.kCal.kl
+    ratSmat = RatSMat(smats, self.kFitCal, fitName=self.fitName, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
+    ratSmat.kCal = self.kCal
     return ratSmat
   
   def getRatXS(self, title=None, colourCycle=None):
@@ -122,6 +121,10 @@ class RatSMatWrap:
   def findRoot(self, startingEne, multipler=1.0):
     ratSmat = self._getRatSmat()
     return ratSmat.findRoot(startingEne, multipler)
+
+  def findRoot_Multi(self, startingEne, multipler=1.0):
+    ratSmat = self._getRatSmat()
+    return ratSmat.findRoot_Multi(startingEne, multipler)
     
   def findConjRoots(self, startingEne, multipler=1.0):
     ratSmat = self._getRatSmat()

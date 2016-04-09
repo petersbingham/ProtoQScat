@@ -1,2 +1,0 @@
-python NumPolesNotLost.py
-pause

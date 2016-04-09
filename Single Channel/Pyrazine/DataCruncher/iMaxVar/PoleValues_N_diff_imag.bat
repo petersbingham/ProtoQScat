@@ -1,2 +1,0 @@
-python PoleValues_N_diff_imag.py
-pause

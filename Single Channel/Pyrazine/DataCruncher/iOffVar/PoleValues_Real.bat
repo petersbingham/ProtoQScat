@@ -1,2 +1,0 @@
-python PoleValues_Real.py
-pause

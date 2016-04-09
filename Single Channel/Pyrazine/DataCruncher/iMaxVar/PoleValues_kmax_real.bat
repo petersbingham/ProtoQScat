@@ -1,2 +1,0 @@
-python PoleValues_kmax_real.py
-pause

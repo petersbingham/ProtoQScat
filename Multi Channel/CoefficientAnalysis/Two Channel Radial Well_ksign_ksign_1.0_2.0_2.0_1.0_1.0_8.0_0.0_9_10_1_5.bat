@@ -1,2 +1,0 @@
-python CoeffAnalyser.py "Two Channel Radial Well_ksign[1.0, 1.0]_ksign[1.0, 1.0]_1.0_2.0_2.0_1.0_1.0_8.0_0.0_9_10_1_5" "Two Channel Radial Well_ksign[1.0, -1.0]_ksign[1.0, -1.0]_1.0_2.0_2.0_1.0_1.0_8.0_0.0_9_10_1_5" "Two Channel Radial Well_ksign[-1.0, 1.0]_ksign[-1.0, 1.0]_1.0_2.0_2.0_1.0_1.0_8.0_0.0_9_10_1_5" "Two Channel Radial Well_ksign[-1.0, -1.0]_ksign[-1.0, -1.0]_1.0_2.0_2.0_1.0_1.0_8.0_0.0_9_10_1_5"
-pause

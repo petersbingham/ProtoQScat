@@ -9,11 +9,14 @@ def decimate(mats, startIndex, endIndex, N):
     newMats = {}
     index = 0
     stepCnt = 0
+    startEne = None
     for ene in sorted(mats, key=lambda val: val.real):
         if index>endIndex:
             return None, None
         if index>=startIndex:
             if stepCnt == 0:
+                if startEne is None:
+                    startEne = ene
                 newMats[ene] = mats[ene]
             stepCnt += 1
             if stepCnt == step:
@@ -21,7 +24,7 @@ def decimate(mats, startIndex, endIndex, N):
         if len(newMats) == N:
             break
         index += 1
-    return newMats, step, index
+    return newMats, step, index, startEne, ene
 
 def getSfromKmatrices(kmats, numChannels):
     smats = {}
@@ -40,6 +43,7 @@ REDUCED_MASS = 1.0
 K_POS = "kPos"
 K_SIGN = "kSign"
 K_ROT = "kRot"
+K_COMP = "kComp"
 
 EFROMK_RYDBERGS = 1.0
 EFROMK_HARTREES = 2.0
@@ -48,7 +52,7 @@ class kCalculator:
     def __init__(self, thresholds, ls=None, ktype=K_POS, ksigns=None, eneFactor=EFROMK_RYDBERGS, invertChannel=False):  #invertChannel is for test purposes.
         self.thresholds = thresholds
         if ls is None:
-            self.ls = [0.0]*len(thresholds)
+            self.ls = [0]*len(thresholds)
         else:
             self.ls = ls
         self.eneFactor = eneFactor
@@ -70,6 +74,8 @@ class kCalculator:
             return self.ksign(ch, ene)
         elif self.ktype == K_ROT:
             return self.krot(ch, ene)
+        elif self.ktype == K_COMP:
+            return self.kcomp(ch, ene)
     def l(self, ch):
         return self.ls[ch]
     def kpos(self, ch, ene):
@@ -85,6 +91,19 @@ class kCalculator:
         k = self.kpos(ch, ene)
         absolute, argument = cmath.polar(k) 
         return absolute * cmath.exp(1j*(argument+self.getPhase(ch, ene)))
+    def kcomp(self, ch, ene):
+        k = self.kpos(ch, ene)
+        if ene.real <= self.thresholds[ch]:
+            if ene.imag >= 0.0:
+                sign = 1.0
+            else:
+                sign = -1.0
+        elif ene.real > self.thresholds[ch]:
+            if ene.imag >= 0.0:
+                sign = -1.0
+            else:
+                sign = 1.0
+        return sign*k
     def _getValue(self, ch, ene):
         return self.eneFactor*REDUCED_MASS*(ene - self.thresholds[ch])
     def getPhase(self, ch, ene):

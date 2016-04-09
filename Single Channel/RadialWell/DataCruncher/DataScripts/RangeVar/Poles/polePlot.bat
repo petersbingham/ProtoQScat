@@ -1,2 +1,0 @@
-python polePlot.py
-pause

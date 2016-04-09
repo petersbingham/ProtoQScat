@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import sympy
-import sympy.polys as syp
-import sympy.mpmath as mpm
-from sympy.matrices import Matrix
+import scipy.sparse.linalg as sp_sparse_linalg
+import sympy as sy
+from sympy.matrices import Matrix as sy_matrix
+import sympy.polys as sy_polys
+import sympy.mpmath as sy_mp
+import mpmath
+mpmath.mp.dps = 100
 import collections
 
 import sys
@@ -21,12 +24,111 @@ COEFFDIR = os.path.dirname(os.path.realpath(__file__)) + "/CoefficientFiles/"
 
 ALWAYS_CALCULATE = False
 
+def checkNumpyVersionForFiles():
+  npVer = [int(val) for val in np.__version__.split('.')]
+  if npVer[0]>1 or (npVer[0]==1 and npVer[1]>6) or (npVer[0]==1 and npVer[1]==6 and npVer[2]>1): #saveTxt not supported prior.
+      return True
+  return False
+
+
+SOLVE_METHOD = 0
+class CoeffSolve():
+  def __init__(self, numPolyTerms, fitSize, numChannels, verbose):
+    if SOLVE_METHOD in [0,1,3,4,5,6,7,8]:
+      self.matrixType = 0
+    elif SOLVE_METHOD in [2]:
+      self.matrixType = 1
+    elif SOLVE_METHOD in []:
+      self.matrixType = 2
+      
+    if SOLVE_METHOD in [0,1,8]:
+      self.indexType = 0
+    elif SOLVE_METHOD in [3,4,5,6,7]:
+      self.indexType = 1
+    elif SOLVE_METHOD in [2]:
+      self.indexType = 2
+      
+    self.numPolyTerms = numPolyTerms
+    self.fitSize = fitSize
+    self.numChannels = numChannels 
+    self.verbose = verbose
+  
+  def initialiseMatrices(self):
+    if self.matrixType == 0:
+      self.sysMat = np.matrix([[0.0]*2*self.numPolyTerms*self.numChannels]*self.fitSize*self.numChannels, dtype=np.complex128)
+      self.resVec = np.matrix([[0.0]]*self.fitSize*self.numChannels, dtype=np.complex128)
+    elif self.matrixType == 1:
+      self.sysMat = mpmath.matrix([[0.0+0.0j]*2*self.numPolyTerms*self.numChannels]*self.fitSize*self.numChannels)       
+      self.resVec = mpmath.matrix([[0.0+0.0j]]*self.fitSize*self.numChannels)
+    else:
+      self.sysMat = sy_matrix([[0.0]*2*self.numPolyTerms*self.numChannels]*self.fitSize*self.numChannels)       
+      self.resVec = sy_matrix([[0.0]]*self.fitSize*self.numChannels) 
+        
+  def setSysElement(self, row, col, val):
+    self.sysMat[row,col] = val
+  
+  def setResult(self, row, col, val):
+    self.resVec[row,col] = val 
+  
+  def solve(self):
+    if SOLVE_METHOD == 0:
+        self.coeffVec = np.linalg.solve(self.sysMat, self.resVec)
+        self._calStr("numpy solve")
+    elif SOLVE_METHOD == 1:
+        self.coeffVec = np.linalg.lstsq(self.sysMat, self.resVec)[0]
+        self._calStr("numpy lstsq")
+    elif SOLVE_METHOD == 2:
+        self.coeffVec = mpmath.qr_solve(self.sysMat, self.resVec)
+        self._calStr("mpmath qr_solve")
+    elif SOLVE_METHOD == 3:
+        self.coeffVec = self._sparseRet(sp_sparse_linalg.bicg(self.sysMat, self.resVec),"numpy sparse bicg") #, tol=1e-04, maxiter=100000000
+    elif SOLVE_METHOD == 4:
+        self.coeffVec = self._sparseRet(sp_sparse_linalg.bicgstab(self.sysMat, self.resVec),"numpy sparse bicgstab")
+    elif SOLVE_METHOD == 5:
+        self.coeffVec = self._sparseRet(sp_sparse_linalg.lgmres(self.sysMat, self.resVec),"numpy sparse lgmres")
+    elif SOLVE_METHOD == 6:
+        self.coeffVec = self._sparseRet(sp_sparse_linalg.minres(self.sysMat, self.resVec),"numpy sparse minres")
+    elif SOLVE_METHOD == 7:
+        self.coeffVec = self._sparseRet(sp_sparse_linalg.qmr(self.sysMat, self.resVec),"numpy sparse qmr")
+    elif SOLVE_METHOD == 8:
+        Q,R = np.linalg.qr(self.sysMat)
+        y = np.dot(Q.T,self.resVec)
+        self.coeffVec = np.linalg.solve(R,y) 
+        self._calStr("numpy qr solve")
+
+  def _calStr(self, typeStr):
+    if self.verbose:
+        print "Coeffs calculated using " + typeStr 
+
+  def _sparseRet(self, ret, typeStr):
+    if self.verbose:
+        print "Coeffs calculated using " + typeStr + ". Ret: " + str(ret[1])
+    return ret[0]
+
+  def getValue(self, row):
+    if self.indexType == 0:
+        ret = self.coeffVec[row,0]
+    elif self.indexType == 1:
+        ret = self.coeffVec[row]
+    else:
+        ret = self.coeffVec[0][row]
+    return ret
+
+  def printSysMatToFile(self):
+    if self.matrixType == 0:
+        if checkNumpyVersionForFiles():
+          np.savetxt("systemMatrix.csv", self.sysMat, delimiter=",")
+    else:
+        with open("systemMatrix.txt", 'w') as f:
+            f.write(str(self.resVec))
+
 class RatSMat(sm.mat):
-  def __init__(self, sMatData, kFun, fitSize=None, fitName=None, suppressCmdOut=False):
+  def __init__(self, sMatData, kCal, fitSize=None, fitName=None, suppressCmdOut=False, verbose=False):
     self.sMatData = sMatData
     self.suppressCmdOut = suppressCmdOut
+    self.verbose = verbose
     self._initData(fitSize)
-    self.kFun = kFun
+    self.kCal = kCal
     self.type = TYPE_S
     self.hasCoeffs = False
     self.ene = None
@@ -34,7 +136,7 @@ class RatSMat(sm.mat):
     self.fitName = fitName
     
     read = False
-    if self._doFilesExist() and not ALWAYS_CALCULATE and self._checkNumpyVersionForFiles():
+    if self._doFilesExist() and not ALWAYS_CALCULATE and checkNumpyVersionForFiles():
       try:
         self._readCoefficients()
         read = True
@@ -43,18 +145,12 @@ class RatSMat(sm.mat):
 
     if not read:
       self._calculateCoefficients()
-      if self.fitName and self._checkNumpyVersionForFiles():
+      if self.fitName and checkNumpyVersionForFiles():
         self._writeCoefficients() 
 
     self.lastPrintedEne = None
     sm.mat.__init__(self, self.numChannels, PRECISION)
     self._print("")
-  
-  def _checkNumpyVersionForFiles(self):
-    npVer = [int(val) for val in np.__version__.split('.')]
-    if npVer[0]>1 or (npVer[0]==1 and npVer[1]>6) or (npVer[0]==1 and npVer[1]==6 and npVer[2]>1): #saveTxt not supported prior.
-        return True
-    return False
 
   def _print(self, msg):
     if not self.suppressCmdOut:
@@ -91,6 +187,7 @@ class RatSMat(sm.mat):
           raise sm.MatException("Bad Input: Inconsistent matrices")
     else:
       raise sm.MatException("Bad Input: Matrix not square")
+    self.coeffSolve = CoeffSolve(self.numPolyTerms, self.fitSize, self.numChannels, self.verbose)
   
   def _checkInput(self):
     if self.numData<2:
@@ -195,11 +292,7 @@ class RatSMat(sm.mat):
   def _calculateCoefficients(self):
     for fit in range(self.numFits):
       for n in range(self.numChannels):
-        resVec = np.matrix([[0.0]]*self.fitSize*self.numChannels, dtype=np.complex128)
-        sysMat = np.matrix([[0.0]*2*self.numPolyTerms*self.numChannels]*self.fitSize*self.numChannels, dtype=np.complex128)
-        #print sysMat.shape
-        #print resVec.shape
-        #print self.numPolyTerms
+        self.coeffSolve.initialiseMatrices()
         for m in range(self.numChannels):
           ei = 0
           for ene in self.enes[fit*self.fitSize:(fit+1)*self.fitSize]:
@@ -214,15 +307,15 @@ class RatSMat(sm.mat):
                   betaCoeff = self._secondaryBeta(m, n, j, ene, exp)
                 #print str(self._row(m,ei)) + "\t" + str(self._alphaIndex(j,ti)) + "   " + str(alphaCoeff)
                 #print "\t" + str(self._betaIndex(j,ti)) + "   " + str(betaCoeff)
-                sysMat[self._row(m,ei), self._alphaIndex(j,ti)] = alphaCoeff
-                sysMat[self._row(m,ei), self._betaIndex(j,ti)] = betaCoeff
-            resVec[self._row(m,ei),0] = self._result(m, n, ene)
+                self.coeffSolve.setSysElement(self._row(m,ei), self._alphaIndex(j,ti), alphaCoeff)
+                self.coeffSolve.setSysElement(self._row(m,ei), self._betaIndex(j,ti), betaCoeff)
+            self.coeffSolve.setResult(self._row(m,ei),0,self._result(m, n, ene))
             ei += 1
-        self._printToFile(sysMat)
-        coeffVec = np.linalg.solve(sysMat, resVec)
-        #coeffVec = np.linalg.lstsq(sysMat, resVec)[0]
-        #print coeffVec
-        self._copyColumnCoeffs(fit, coeffVec, n)
+        self.coeffSolve.printSysMatToFile()
+        self.coeffSolve.solve()
+        
+        coeffVec = self.coeffSolve.solve()
+        self._copyColumnCoeffs(fit, n)
       self._print("Calculated Fit: " + str(fit))
     self.hasCoeffs = True
      
@@ -236,16 +329,16 @@ class RatSMat(sm.mat):
     return self.numPolyTerms*self.numChannels + m*self.numPolyTerms + ti
   
   def _primaryAlpha(self, m, n, ene, exp):
-    return self.kFun(n,ene,1.0) / self.kFun(m,ene,1.0) * (self.sMatData[ene][m,m]-1.0) * pow(ene,exp)
+    return self.kCal.kl(n,ene,1.0) / self.kCal.kl(m,ene,1.0) * (self.sMatData[ene][m,m]-1.0) * pow(ene,exp)
   
   def _primaryBeta(self, m, n, ene, exp):
-    return -1.0j * self.kFun(m,ene,0.0) * self.kFun(n,ene,1.0) * (self.sMatData[ene][m,m]+1.0) * pow(ene,exp)
+    return -1.0j * self.kCal.kl(m,ene,0.0) * self.kCal.kl(n,ene,1.0) * (self.sMatData[ene][m,m]+1.0) * pow(ene,exp)
   
   def _secondaryAlpha(self, m, n, j, ene, exp):
-    return self.kFun(n,ene,1.0) / self.kFun(j,ene,1.0) * self.sMatData[ene][m,j] * pow(ene,exp)
+    return self.kCal.kl(n,ene,1.0) / self.kCal.kl(j,ene,1.0) * self.sMatData[ene][m,j] * pow(ene,exp)
   
   def _secondaryBeta(self, m, n, j, ene, exp):
-    return -1.0j * self.kFun(j,ene,0.0) * self.kFun(n,ene,1.0) * self.sMatData[ene][m,j] * pow(ene,exp)
+    return -1.0j * self.kCal.kl(j,ene,0.0) * self.kCal.kl(n,ene,1.0) * self.sMatData[ene][m,j] * pow(ene,exp)
     
   def _result(self, m, n, ene):
     num = 0.0
@@ -253,7 +346,7 @@ class RatSMat(sm.mat):
       num = 1.0
     return num - self.sMatData[ene][m,n]
 
-  def _copyColumnCoeffs(self, fit, coeffVec, n):
+  def _copyColumnCoeffs(self, fit, n):
     eneKey = self.enes[fit*self.fitSize]
     for ci in range(self.numCoeffs):
       ti = ci-1
@@ -262,12 +355,8 @@ class RatSMat(sm.mat):
           if m==n:
             self.alphas[eneKey][ci][m,n] = 1.0
         else:
-          self.alphas[eneKey][ci][m,n] = coeffVec[self._alphaIndex(m,ti),0]
-          self.betas[eneKey][ci][m,n] = coeffVec[self._betaIndex(m,ti),0]
-
-  def _printToFile(self, mat):
-    if self._checkNumpyVersionForFiles():
-      np.savetxt("systemMatrix.csv", mat, delimiter=",")
+          self.alphas[eneKey][ci][m,n] = complex(self.coeffSolve.getValue(self._alphaIndex(m,ti)))
+          self.betas[eneKey][ci][m,n] = complex(self.coeffSolve.getValue(self._betaIndex(m,ti)))
           
 #########################################################  
   
@@ -312,8 +401,8 @@ class RatSMat(sm.mat):
             exp = ci
             A += alphas[ci][m,n] * pow(self.ene, exp)
             B += betas[ci][m,n] * pow(self.ene, exp)
-          t1 = self.kFun(n,self.ene,1.0)/self.kFun(m,self.ene,1.0)*A
-          t2 = 1.0j*self.kFun(m,self.ene,0.0)*self.kFun(n,self.ene,1.0)*B
+          t1 = self.kCal.kl(n,self.ene,1.0)/self.kCal.kl(m,self.ene,1.0)*A
+          t2 = 1.0j*self.kCal.kl(m,self.ene,0.0)*self.kCal.kl(n,self.ene,1.0)*B
           Fin[m,n] = (t1-t2) / 2.0
           Fout[m,n] = (t1+t2) / 2.0
       #print str(self.ene) + " , " + str(Fin[0,0]) + " , " + str(Fin[0,1]) + " , " + str(Fin[1,0]) + " , " + str(Fin[1,1])
@@ -357,18 +446,33 @@ class RatSMat(sm.mat):
     #print str(e) + "\n" + str(val) + "\n"
     return val
   
-  def _findRoot(self, startingEne, multipler):
+  def findRoot(self, startingEne, multipler=1.0):
     self.setType(TYPE_FIN)
     try:
-        return complex(mpm.findroot(lambda e: self._getDet(e, multipler), (startingEne,startingEne+.001,startingEne+.002), solver='muller'))
+        return self._findRootAttempt((startingEne,startingEne+0.01,startingEne+0.02), multipler)
+    except ValueError:
+        return None
+  
+  def findRoot_Multi(self, startingEne, multipler=1.0):
+    self.setType(TYPE_FIN)
+    root = None
+    for i in reversed(range(-7,-1)):
+        root = self._findRootAttempt((startingEne,startingEne+pow(10,float(i)),startingEne+2.0*pow(10,float(i))), multipler)
+        if root is not None:
+            break
+        root = self._findRootAttempt((startingEne,startingEne-pow(10,float(i)),startingEne-2.0*pow(10,float(i))), multipler)
+        if root is not None:
+            break
+    return root
+
+  def _findRootAttempt(self, startingEne, multipler):
+    try:
+        return complex(sy_mp.findroot(lambda e: self._getDet(e, multipler), startingEne, solver='muller', maxsteps=1000, tol=2.16840434497100886801e-19))
     except ValueError:
         return None
           
-  def findRoot(self, startingEne, multipler=1.0):
-    return self._findRoot(startingEne, multipler)
-          
   def findConjRoots(self, startingEne, multipler=1.0):
-    return [self._findRoot(startingEne, multipler), self._findRoot(startingEne.real - 1.0j*startingEne.imag, multipler)]
+    return [self.findRoot(startingEne, multipler), self._findRoot(startingEne.real - 1.0j*startingEne.imag, multipler)]
 
   def getFinDetRange(self, startEne, endEne, complexOffset, steps):
     xs = np.ndarray((steps,), dtype=float)
@@ -393,24 +497,32 @@ class RatSMat(sm.mat):
             alphas = self.alphas[eKey]
             betas = self.betas[eKey]
             Fin = np.matrix(self._getZeroListMats(), dtype=np.complex128)
-            k = sympy.symbols('k')
+            k = sy.symbols('k')
             matLst = []
             for m in range(self.numChannels):
                 matLst.append([])
                 for n in range(self.numChannels):
-                    val = 0
+                    lm = self.kCal.l(m)
+                    ln = self.kCal.l(n)
+                    val = 0.0
                     for ci in range(self.numCoeffs):
                         A = alphas[ci][m,n]
                         B = betas[ci][m,n]
-                        val += (1.0/2.0)*(1.0/kConversionFactor)**(ci) * ( A*k**(2*ci) - 1.0j*B*k**(2*ci+1) )
+                        val += (1.0/2.0)*(1.0/kConversionFactor)**(ci) * ( A*k**(ln-lm+2*ci) - 1.0j*B*k**(ln+lm+1+2*ci) )
                     matLst[len(matLst)-1].append(val)
-            deter = Matrix(matLst).det()
-            coeffs = syp.Poly(deter, k).all_coeffs()
-            mappedCoeffs = map(lambda val: complex(val), coeffs)
-            roots = np.roots(mappedCoeffs)
+            deter = sy_matrix(matLst).det()
+            roots = self._getRoots_numpy(deter, k)
             if convertToEne:
                 mappedRoots = map(lambda val: complex((1.0/kConversionFactor)*val**2), roots)
             else:
                 mappedRoots = map(lambda val: complex(val), roots)
             allRoots.extend(mappedRoots)
     return allRoots
+
+  def _getRoots_numpy(self, deter, k):
+    coeffs = sy_polys.Poly(deter, k).all_coeffs()
+    mappedCoeffs = map(lambda val: complex(val), coeffs)
+    return np.roots(mappedCoeffs)     
+
+  def _getRoots_sympy(self, deter, k):
+    return sy_polys.Poly(deter, k).nroots(n=25, maxsteps=500, cleanup=True)

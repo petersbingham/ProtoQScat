@@ -2,6 +2,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import csv
 
 LEFT = 0.12
 BOTTOM = 0.1
@@ -111,7 +112,24 @@ def setImgSize(width, height):
 
 def turnOffColourCycle():
     matplotlib.rcParams['axes.color_cycle'] = ['black']
-  
+
+def _getDataFromCSV(csvpath):
+    xs = []
+    yss = None
+    with open(csvpath, 'rb') as csvfile:
+        csvReader = csv.reader(csvfile, delimiter=',')
+        for row in csvReader:
+            xs.append(float(row[0]))
+            if yss is None:
+                yss = [[] for i in range(0,len(row[1:]))]
+            for i in range(0,len(row[1:])):
+                yss[i].append(float(row[1+i]))
+    return xs, yss
+            
+def plotSingleFromCSV(csvpath,title,xlabel="",ylabel="",legends=None,logx=False,logy=False,markerSz=None,path=None,markWithLine=False,drawAxes=False):
+    xs,yss = _getDataFromCSV(csvpath)
+    plotSingle(title,xs,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,path,drawAxes)
+    
 def plotSingle(title,xs,yss,xlabel="",ylabel="",legends=None,logx=False,logy=False,markerSz=None,path=None,markWithLine=False,drawAxes=False):
     _plot(title,xs,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,path,drawAxes)
   

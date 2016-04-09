@@ -1,2 +1,0 @@
-call Test.bat
-pause
