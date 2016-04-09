@@ -2,7 +2,7 @@ import sys
 sys.path.append("..")
 from Elastic3ChanReader import *
 from PoleFinder import *
-
+from Pyrazine import *
 
 import argparse
 parentArgs = argparse.ArgumentParser(description="Pyrazine Fit - Pole find")
@@ -20,4 +20,4 @@ for i in [1.0,-1.0]:
       kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=ksigns, eneFactor=ENEFACTOR)
       kmats = readkMats("../fort.19")
       fitName = getFitName(kCal, args.startIndex_, args.endIndex_)
-      PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, "./Results", fitName, ENEFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, args.cmpValue_)
+      PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, "./Results", fitName, ENEFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, 1, args.cmpValue_)

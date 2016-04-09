@@ -4,11 +4,10 @@ from Elastic3ChanReader import *
 import Scattering.Conversions as conv
 import Scattering.Stran as S
 from RatSMat import *
+from Pyrazine import *
 
 M_NORM = 0
 M_PIECEWISE = 1
-THRESHOLDS = [0.0,0.0,0.0]
-LS = [3.0,5.0,5.0]
 
 class PyXSmat(S.XSmat):
     def _getElement(self, m, n):
