@@ -1,2 +1,0 @@
-python poleTable_Specific.py
-pause

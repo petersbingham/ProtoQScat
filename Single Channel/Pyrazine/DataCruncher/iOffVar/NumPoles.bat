@@ -1,2 +1,0 @@
-python NumPoles.py
-pause

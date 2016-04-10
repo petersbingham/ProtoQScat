@@ -1,2 +1,0 @@
-python Tables.py
-pause

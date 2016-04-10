@@ -1,2 +1,0 @@
-python SimpPlot.py
-pause
