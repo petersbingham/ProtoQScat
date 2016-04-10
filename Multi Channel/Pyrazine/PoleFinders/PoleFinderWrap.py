@@ -13,11 +13,19 @@ parentArgs.add_argument("distFactor_", help="Distinguish Factor", type=float)
 parentArgs.add_argument("cmpValue_", help="Compare Value", type=complex, nargs='?', default=None)
 args = parentArgs.parse_args()
 
+def _doPoleFind(kCal):
+    kmats = readkMats("../fort.19")
+    fitName = getFitName(kCal, args.startIndex_, args.endIndex_)
+    PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, "./Results", fitName, ENEFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, 2, args.cmpValue_)
+
+
 for i in [1.0,-1.0]:
   for j in [1.0,-1.0]:
     for k in [1.0,-1.0]:
       ksigns = [i,j,k]
       kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=ksigns, eneFactor=ENEFACTOR)
-      kmats = readkMats("../fort.19")
-      fitName = getFitName(kCal, args.startIndex_, args.endIndex_)
-      PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, "./Results", fitName, ENEFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, 1, args.cmpValue_)
+      _doPoleFind(kCal)
+
+
+#kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_ROT, eneFactor=ENEFACTOR)
+#_doPoleFind(kCal)

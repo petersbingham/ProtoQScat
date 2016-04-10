@@ -46,7 +46,7 @@ class PoleFinder:
         self._printSep2(self.file_poles)
         writeStr = "N=%d, Emin=%d, Emax=%d, step=%d, stepOff=%d\n" % (N,self.startIndex,endIndex,step,self.offset)
         self.file_poles.write(writeStr)
-        ratSmat = RatSMat(smats, self.kCal.kl, fitName=self.fitName)
+        ratSmat = RatSMat(smats, self.kCal, fitName=self.fitName)
         return ratSmat.findPolyRoots(self.kConversionFactor, False)
 
     def _locatePoles(self, roots):
@@ -62,7 +62,7 @@ class PoleFinder:
 
         newPoles = []
         numNewPoles = 0
-        if len(self.allRoots) > self.numCmpSteps:  
+        if len(self.allRoots) >= self.numCmpSteps:  
             for i in range(len(roots)):
                 root = roots[i]
                 isPole = True
@@ -73,7 +73,7 @@ class PoleFinder:
                         cmpRoot = cmpRootSet[j]
                         cdiff = self.ratCmp.getComplexDiff(root, cmpRoot)
                         if self.ratCmp.checkComplexDiff(cdiff):
-                            endStr += ", with N=%d[%d]: diff = %.14f%+.14fi" % (self.allNs[k], j, cdiff.real, cdiff.imag)
+                            endStr += " with N=%d[%d]: diff = %.14f%+.14fi" % (self.allNs[k], j, cdiff.real, cdiff.imag)
                             break
                         if j==len(cmpRootSet)-1:
                             endStr = ""

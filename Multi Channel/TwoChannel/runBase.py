@@ -25,7 +25,7 @@ def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
     anaSmat.setEnergy(ene)
     sMats[ene] = anaSmat.getMatrix()
     ene += dEne  
-  return RatSMat(sMats, fitkCal.kl, fitName="Two Channel Radial Well" + _getTypeName(anakCal, fitkCal, args.r0_, args.v1_, args.v2_, args.lam_, args.eneStart_, args.eneEnd_, args.eneComplex_, args.eneSteps_), suppressCmdOut=suppressCmdOut)
+  return RatSMat(sMats, fitkCal, fitName="Two Channel Radial Well" + _getTypeName(anakCal, fitkCal, args.r0_, args.v1_, args.v2_, args.lam_, args.eneStart_, args.eneEnd_, args.eneComplex_, args.eneSteps_), suppressCmdOut=suppressCmdOut)
 
 def getSmats(args, anakCal, fitkCal):
   anaSmat = getAnaSmat(args, anakCal)

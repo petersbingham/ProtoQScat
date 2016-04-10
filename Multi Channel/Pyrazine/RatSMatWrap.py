@@ -91,7 +91,7 @@ class RatSMatWrap:
   
   def _getRatSmat(self):
     smats = self._getSfromKmatrices()
-    ratSmat = RatSMat(smats, self.kFitCal.kl, fitName=self.fitName, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
+    ratSmat = RatSMat(smats, self.kFitCal, fitName=self.fitName, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
     ratSmat.kFun = self.kCal.kl
     return ratSmat
   

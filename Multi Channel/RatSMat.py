@@ -22,11 +22,11 @@ COEFFDIR = os.path.dirname(os.path.realpath(__file__)) + "/CoefficientFiles/"
 ALWAYS_CALCULATE = False
 
 class RatSMat(sm.mat):
-  def __init__(self, sMatData, kFun, fitSize=None, fitName=None, suppressCmdOut=False):
+  def __init__(self, sMatData, kCal, fitSize=None, fitName=None, suppressCmdOut=False):
     self.sMatData = sMatData
     self.suppressCmdOut = suppressCmdOut
     self._initData(fitSize)
-    self.kFun = kFun
+    self.kCal = kCal
     self.type = TYPE_S
     self.hasCoeffs = False
     self.ene = None
@@ -236,16 +236,16 @@ class RatSMat(sm.mat):
     return self.numPolyTerms*self.numChannels + m*self.numPolyTerms + ti
   
   def _primaryAlpha(self, m, n, ene, exp):
-    return self.kFun(n,ene,1.0) / self.kFun(m,ene,1.0) * (self.sMatData[ene][m,m]-1.0) * pow(ene,exp)
+    return self.kCal.kl(n,ene,1.0) / self.kCal.kl(m,ene,1.0) * (self.sMatData[ene][m,m]-1.0) * pow(ene,exp)
   
   def _primaryBeta(self, m, n, ene, exp):
-    return -1.0j * self.kFun(m,ene,0.0) * self.kFun(n,ene,1.0) * (self.sMatData[ene][m,m]+1.0) * pow(ene,exp)
+    return -1.0j * self.kCal.kl(m,ene,0.0) * self.kCal.kl(n,ene,1.0) * (self.sMatData[ene][m,m]+1.0) * pow(ene,exp)
   
   def _secondaryAlpha(self, m, n, j, ene, exp):
-    return self.kFun(n,ene,1.0) / self.kFun(j,ene,1.0) * self.sMatData[ene][m,j] * pow(ene,exp)
+    return self.kCal.kl(n,ene,1.0) / self.kCal.kl(j,ene,1.0) * self.sMatData[ene][m,j] * pow(ene,exp)
   
   def _secondaryBeta(self, m, n, j, ene, exp):
-    return -1.0j * self.kFun(j,ene,0.0) * self.kFun(n,ene,1.0) * self.sMatData[ene][m,j] * pow(ene,exp)
+    return -1.0j * self.kCal.kl(j,ene,0.0) * self.kCal.kl(n,ene,1.0) * self.sMatData[ene][m,j] * pow(ene,exp)
     
   def _result(self, m, n, ene):
     num = 0.0
@@ -312,8 +312,8 @@ class RatSMat(sm.mat):
             exp = ci
             A += alphas[ci][m,n] * pow(self.ene, exp)
             B += betas[ci][m,n] * pow(self.ene, exp)
-          t1 = self.kFun(n,self.ene,1.0)/self.kFun(m,self.ene,1.0)*A
-          t2 = 1.0j*self.kFun(m,self.ene,0.0)*self.kFun(n,self.ene,1.0)*B
+          t1 = self.kCal.kl(n,self.ene,1.0)/self.kCal.kl(m,self.ene,1.0)*A
+          t2 = 1.0j*self.kCal.kl(m,self.ene,0.0)*self.kCal.kl(n,self.ene,1.0)*B
           Fin[m,n] = (t1-t2) / 2.0
           Fout[m,n] = (t1+t2) / 2.0
       #print str(self.ene) + " , " + str(Fin[0,0]) + " , " + str(Fin[0,1]) + " , " + str(Fin[1,0]) + " , " + str(Fin[1,1])
@@ -398,11 +398,13 @@ class RatSMat(sm.mat):
             for m in range(self.numChannels):
                 matLst.append([])
                 for n in range(self.numChannels):
-                    val = 0
+                    lm = self.kCal.l(m)
+                    ln = self.kCal.l(n)
+                    val = 0.0
                     for ci in range(self.numCoeffs):
                         A = alphas[ci][m,n]
                         B = betas[ci][m,n]
-                        val += (1.0/2.0)*(1.0/kConversionFactor)**(ci) * ( A*k**(2*ci) - 1.0j*B*k**(2*ci+1) )
+                        val += (1.0/2.0)*(1.0/kConversionFactor)**(ci) * ( A*k**(ln-lm+2*ci) - 1.0j*B*k**(ln+lm+1+2*ci) )
                     matLst[len(matLst)-1].append(val)
             deter = Matrix(matLst).det()
             coeffs = syp.Poly(deter, k).all_coeffs()
