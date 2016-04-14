@@ -1,13 +1,16 @@
 import sys
+import os
 sys.path.append("../Utilities")
 import Scattering.Matrices as sm
 import General.Numerical as num
 from RatSMat import *
 
 ZEROVALUE = 1E-7
+DOUBLE_N = 0
+INC_N = 1
 
 class PoleFinder:
-    def __init__(self, smats, kCal, resultsFolder, fitName, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None):
+    def __init__(self, smats, kCal, resultsFolder, fitName, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N):
         self.smats = smats
         self.kCal = kCal
         self.fitName = fitName
@@ -25,27 +28,43 @@ class PoleFinder:
         self.allNs = []
         self.cmpValue = cmpValue
 
-        rootss = self._doubleM()
+        if mode == DOUBLE_N:
+            self._doubleN()
+        else:
+            self._incN()
+        
         self.file_coeff.close()
         self.file_poles.close()
 
-    def _doubleM(self):
+    def _doubleN(self):
         Nmax = 64
         N = 4
         while N <= Nmax:
-            roots = self._getMroots(N)
-            self._locatePoles(roots)
-            self.allNs.append(N)
-            print str(len(roots)) + " roots.\n\n"
+            self._doForN(N)
             N = 2*N
-        return roots
 
-    def _getMroots(self, N):
-        smats, step, endIndex = sm.decimate(self.smats, self.startIndex+self.offset, self.endIndex+self.offset, N)
+    def _incN(self):
+        Nmax = 64
+        N = 4
+        while N <= Nmax:
+            self._doForN(N)
+            N = N+2
+
+    def _doForN(self, N):
+        roots = self._getNroots(N)
+        self._locatePoles(roots)
+        self.allNs.append(N)
+        print str(len(roots)) + " roots.\n\n"
+
+    def _getNroots(self, N):
+        actualStartIndex = self.startIndex+self.offset
+        smats, step, actualEndIndex, startEne, endEne = sm.decimate(self.smats, actualStartIndex, self.endIndex+self.offset, N)
         self.file_poles.write("\n")
         self._printSep2(self.file_poles)
-        writeStr = "N=%d, Emin=%d, Emax=%d, step=%d, stepOff=%d\n" % (N,self.startIndex,endIndex,step,self.offset)
-        self.file_poles.write(writeStr)
+        decStr = "N=%d, Emin=%d(%f), Emax=%d(%f), step=%d" % (N,actualStartIndex,startEne,actualEndIndex,endEne,step)
+        print "Decimation:"
+        print "  "+decStr
+        self.file_poles.write(decStr+"\n")
         ratSmat = RatSMat(smats, self.kCal, fitName=self.fitName)
         return ratSmat.findPolyRoots(self.kConversionFactor, False)
 

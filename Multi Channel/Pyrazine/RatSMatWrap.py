@@ -53,10 +53,10 @@ class RatSMatWrap:
     self.fitName = getFitName(self.kFitCal, startIndex, endIndex)
   
   def _decimate(self, startIndex, endIndex, N):
-    self.kmats, step, endIndex = sm.decimate(self.kmats, startIndex, endIndex, N)
+    self.kmats, step, actualEndIndex, startEne, endEne = sm.decimate(self.kmats, startIndex, endIndex, N)
     if not self.suppressCmdOut:
         print "Decimation:"
-        print "  step: " + str(step)
+        print "  N=%d, Emin=%d(%f), Emax=%d(%f), step=%d" % (N,startIndex,startEne,actualEndIndex,endEne,step)
 
   def setEnergy(self, ene):
     self.ene = ene

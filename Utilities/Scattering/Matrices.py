@@ -9,11 +9,14 @@ def decimate(mats, startIndex, endIndex, N):
     newMats = {}
     index = 0
     stepCnt = 0
+    startEne = None
     for ene in sorted(mats, key=lambda val: val.real):
         if index>endIndex:
             return None, None
         if index>=startIndex:
             if stepCnt == 0:
+                if startEne is None:
+                    startEne = ene
                 newMats[ene] = mats[ene]
             stepCnt += 1
             if stepCnt == step:
@@ -21,7 +24,7 @@ def decimate(mats, startIndex, endIndex, N):
         if len(newMats) == N:
             break
         index += 1
-    return newMats, step, index
+    return newMats, step, index, startEne, ene
 
 def getSfromKmatrices(kmats, numChannels):
     smats = {}
