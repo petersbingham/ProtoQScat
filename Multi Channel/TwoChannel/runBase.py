@@ -59,7 +59,7 @@ def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppr
                     ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut)
                     for ratSigns in ratSignList:
                         ratkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=ratSigns, eneFactor=ENEFACTOR)
-                        ratSmat.kFun = ratkCal.kl
+                        ratSmat.kCal = ratkCal
                         if signsAsList:
                             signs = [str(anakCal), str(fitkCal), str(ratkCal)]
                         else:

@@ -92,7 +92,7 @@ class RatSMatWrap:
   def _getRatSmat(self):
     smats = self._getSfromKmatrices()
     ratSmat = RatSMat(smats, self.kFitCal, fitName=self.fitName, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
-    ratSmat.kFun = self.kCal.kl
+    ratSmat.kCal = self.kCal
     return ratSmat
   
   def getRatXS(self, title=None, colourCycle=None):
