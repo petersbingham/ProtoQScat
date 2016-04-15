@@ -1,6 +1,5 @@
 from runBase import *
 from Analytical.runArgsRange import *
-import Scattering.Stran as S
 
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Pole find", parents=[tcp_range])
 spArgs.add_argument("startE_", help="Start Energy", type=complex)

@@ -61,7 +61,10 @@ class PoleFinder:
         smats, step, actualEndIndex, startEne, endEne = sm.decimate(self.smats, actualStartIndex, self.endIndex+self.offset, N)
         self.file_poles.write("\n")
         self._printSep2(self.file_poles)
-        decStr = "N=%d, Emin=%d(%f), Emax=%d(%f), step=%d" % (N,actualStartIndex,startEne,actualEndIndex,endEne,step)
+        try:
+            decStr = "N=%d, Emin=%d(%f), Emax=%d(%f), step=%d" % (N,actualStartIndex,startEne,actualEndIndex,endEne,step)
+        except TypeError:
+            decStr = "N=%d, Emin=%d(%f+%fi), Emax=%d(%f+%fi), step=%d" % (N,actualStartIndex,startEne.real,startEne.imag,actualEndIndex,endEne.real,endEne.imag,step)
         print "Decimation:"
         print "  "+decStr
         self.file_poles.write(decStr+"\n")

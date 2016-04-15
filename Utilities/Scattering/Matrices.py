@@ -51,7 +51,7 @@ class kCalculator:
     def __init__(self, thresholds, ls=None, ktype=K_POS, ksigns=None, eneFactor=EFROMK_RYDBERGS, invertChannel=False):  #invertChannel is for test purposes.
         self.thresholds = thresholds
         if ls is None:
-            self.ls = [0.0]*len(thresholds)
+            self.ls = [0]*len(thresholds)
         else:
             self.ls = ls
         self.eneFactor = eneFactor

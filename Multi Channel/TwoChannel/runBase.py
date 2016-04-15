@@ -3,9 +3,10 @@ import sys
 sys.path.append("..")
 from RatSMat import *
 from Analytical.DoubleChannel import *
+from PoleFinder import *
 
-def _getTypeName(anakCal, fitkCal, r0, v1, v2, lam, eneStart, eneEnd, eneComplex, eneSteps):
-  return "_" + str(anakCal) + "_" + str(fitkCal) + "_" + str(r0) + "_" + str(v1) + "_" + str(v2) + "_" + str(lam) + "_" + str(eneStart) + "_" + str(eneEnd) + "_" + str(eneComplex) + "_" + str(eneSteps)
+def _getTypeName(args, anakCal, fitkCal):
+  return "_" + str(anakCal) + "_" + str(fitkCal) + "_" + str(args.r0_) + "_" + str(args.v1_) + "_" + str(args.v2_) + "_" + str(args.lam_) + "_" + str(args.eneStart_) + "_" + str(args.eneEnd_) + "_" + str(args.eneComplex_) + "_" + str(args.eneSteps_)
 
 def getEnergy(type, x): 
   if type == "Lin":
@@ -17,21 +18,30 @@ def getAnaSmat(args, anakCal):
   mats = Mats(args.v1_, args.v2_, args.lam_, anakCal)
   return Smat(args.r0_, mats)
 
-def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
+def getDiscreteAnaSmats(args, anaSmat):
   dEne = (args.eneEnd_-args.eneStart_) / float(args.eneSteps_)
   ene = args.eneStart_ + args.eneComplex_*1.0j
   sMats = {}
   for i in range(0,args.eneSteps_+1,1):
     anaSmat.setEnergy(ene)
     sMats[ene] = anaSmat.getMatrix()
-    ene += dEne  
-  return RatSMat(sMats, fitkCal, fitName="Two Channel Radial Well" + _getTypeName(anakCal, fitkCal, args.r0_, args.v1_, args.v2_, args.lam_, args.eneStart_, args.eneEnd_, args.eneComplex_, args.eneSteps_), suppressCmdOut=suppressCmdOut)
+    ene += dEne
+  return sMats 
+
+def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
+  sMats = getDiscreteAnaSmats(args, anaSmat)  
+  return RatSMat(sMats, fitkCal, fitName="Two Channel Radial Well" + _getTypeName(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
 
 def getSmats(args, anakCal, fitkCal):
   anaSmat = getAnaSmat(args, anakCal)
   ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal)
   return (anaSmat, ratSmat)
-  
+
+def getPolyRoots(args, anakCal, fitkCal):
+    anaSmat = getAnaSmat(args, anakCal)
+    smats = getDiscreteAnaSmats(args, anaSmat)
+    PoleFinder(smats, fitkCal, "./Bats_1_2_2_0_0_1/Results", _getTypeName(args, anakCal, fitkCal), ENEFACTOR, 0, len(smats)-1, 0.05, 1)
+      
 def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppressCmdOut=False, signsAsList=False):
     try:
         for anaSigns in anaSignList:
