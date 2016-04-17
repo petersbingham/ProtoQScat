@@ -2,7 +2,7 @@
 import numpy as np
 import sympy
 import sympy.polys as syp
-import sympy.mpmath as mpm
+import sympy.mpmath as symp
 from sympy.matrices import Matrix
 import collections
 
@@ -197,6 +197,8 @@ class RatSMat(sm.mat):
       for n in range(self.numChannels):
         resVec = np.matrix([[0.0]]*self.fitSize*self.numChannels, dtype=np.complex128)
         sysMat = np.matrix([[0.0]*2*self.numPolyTerms*self.numChannels]*self.fitSize*self.numChannels, dtype=np.complex128)
+        #resVec = Matrix([[0.0]]*self.fitSize*self.numChannels)
+        #sysMat = Matrix([[0.0]*2*self.numPolyTerms*self.numChannels]*self.fitSize*self.numChannels)
         #print sysMat.shape
         #print resVec.shape
         #print self.numPolyTerms
@@ -221,6 +223,7 @@ class RatSMat(sm.mat):
         self._printToFile(sysMat)
         coeffVec = np.linalg.solve(sysMat, resVec)
         #coeffVec = np.linalg.lstsq(sysMat, resVec)[0]
+        #coeffVec = sysMat.QRsolve(resVec)
         #print coeffVec
         self._copyColumnCoeffs(fit, coeffVec, n)
       self._print("Calculated Fit: " + str(fit))
@@ -360,7 +363,7 @@ class RatSMat(sm.mat):
   def _findRoot(self, startingEne, multipler):
     self.setType(TYPE_FIN)
     try:
-        return complex(mpm.findroot(lambda e: self._getDet(e, multipler), (startingEne,startingEne+.001,startingEne+.002), solver='muller'))
+        return complex(symp.findroot(lambda e: self._getDet(e, multipler), (startingEne,startingEne+.001,startingEne+.002), solver='muller'))
     except ValueError:
         return None
           
@@ -407,12 +410,20 @@ class RatSMat(sm.mat):
                         val += (1.0/2.0)*(1.0/kConversionFactor)**(ci) * ( A*k**(ln-lm+2*ci) - 1.0j*B*k**(ln+lm+1+2*ci) )
                     matLst[len(matLst)-1].append(val)
             deter = Matrix(matLst).det()
-            coeffs = syp.Poly(deter, k).all_coeffs()
-            mappedCoeffs = map(lambda val: complex(val), coeffs)
-            roots = np.roots(mappedCoeffs)
+            roots = self._getRoots_numpy(deter, k)
             if convertToEne:
                 mappedRoots = map(lambda val: complex((1.0/kConversionFactor)*val**2), roots)
             else:
                 mappedRoots = map(lambda val: complex(val), roots)
             allRoots.extend(mappedRoots)
     return allRoots
+
+  def _getRoots_numpy(self, deter, k):
+    coeffs = syp.Poly(deter, k).all_coeffs()
+    mappedCoeffs = map(lambda val: complex(val), coeffs)
+    return np.roots(mappedCoeffs)     
+
+  def _getRoots_sympy(self, deter, k):
+      return syp.Poly(deter, k).nroots(n=25, maxsteps=500, cleanup=True)
+      #return syp.Poly(deter, k).all_roots(multiple=True, radicals=True)
+      #return syp.polyroots.roots(syp.Poly(deter, k).all_coeffs(), multiple=True)

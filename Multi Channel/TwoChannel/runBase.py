@@ -6,7 +6,7 @@ from Analytical.DoubleChannel import *
 from PoleFinder import *
 
 def _getTypeName(args, anakCal, fitkCal):
-  return "_" + str(anakCal) + "_" + str(fitkCal) + "_" + str(args.r0_) + "_" + str(args.v1_) + "_" + str(args.v2_) + "_" + str(args.lam_) + "_" + str(args.eneStart_) + "_" + str(args.eneEnd_) + "_" + str(args.eneComplex_) + "_" + str(args.eneSteps_)
+  return "Two Channel Radial Well_" + str(anakCal) + "_" + str(fitkCal) + "_" + str(args.r0_) + "_" + str(args.v1_) + "_" + str(args.v2_) + "_" + str(args.lam_) + "_" + str(args.eneStart_) + "_" + str(args.eneEnd_) + "_" + str(args.eneComplex_) + "_" + str(args.eneSteps_)
 
 def getEnergy(type, x): 
   if type == "Lin":
@@ -30,17 +30,17 @@ def getDiscreteAnaSmats(args, anaSmat):
 
 def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
   sMats = getDiscreteAnaSmats(args, anaSmat)  
-  return RatSMat(sMats, fitkCal, fitName="Two Channel Radial Well" + _getTypeName(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
+  return RatSMat(sMats, fitkCal, fitName=_getTypeName(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
 
 def getSmats(args, anakCal, fitkCal):
   anaSmat = getAnaSmat(args, anakCal)
   ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal)
   return (anaSmat, ratSmat)
 
-def getPolyRoots(args, anakCal, fitkCal):
+def getPolyRoots(args, anakCal, fitkCal, runFolder):
     anaSmat = getAnaSmat(args, anakCal)
     smats = getDiscreteAnaSmats(args, anaSmat)
-    PoleFinder(smats, fitkCal, "./Bats_1_2_2_0_0_1/Results", _getTypeName(args, anakCal, fitkCal), ENEFACTOR, 0, len(smats)-1, 0.05, 1)
+    PoleFinder(smats, fitkCal, "./"+runFolder+"/Results", _getTypeName(args, anakCal, fitkCal), ENEFACTOR, 0, len(smats)-1, 0, 0.05, 1)
       
 def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppressCmdOut=False, signsAsList=False):
     try:

@@ -6,7 +6,7 @@ args = spArgs.parse_args()
 
 try:
     kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,1.0], eneFactor=ENEFACTOR)
-    getPolyRoots(args, kCal, kCal)
+    getPolyRoots(args, kCal, kCal, "Bats_1_2_2_0_0_1")
 except (sm.MatException) as inst:
   print str(inst)
   sys.exit()
