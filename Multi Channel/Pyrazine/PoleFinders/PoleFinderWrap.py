@@ -15,7 +15,7 @@ parentArgs.add_argument("startIndex_", help="Start Index", type=int)
 parentArgs.add_argument("endIndex_", help="End Index", type=int)
 parentArgs.add_argument("offset_", help="Offset", type=int)
 parentArgs.add_argument("distFactor_", help="Distinguish Factor", type=float)
-parentArgs.add_argument("mode_", help="Offset", type=int)
+parentArgs.add_argument("mode_", help="Mode", type=int)
 parentArgs.add_argument("cmpValue_", help="Compare Value", type=complex, nargs='?', default=None)
 args = parentArgs.parse_args()
 

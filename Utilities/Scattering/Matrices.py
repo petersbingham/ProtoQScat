@@ -43,6 +43,7 @@ REDUCED_MASS = 1.0
 K_POS = "kPos"
 K_SIGN = "kSign"
 K_ROT = "kRot"
+K_COMP = "kComp"
 
 EFROMK_RYDBERGS = 1.0
 EFROMK_HARTREES = 2.0
@@ -73,6 +74,8 @@ class kCalculator:
             return self.ksign(ch, ene)
         elif self.ktype == K_ROT:
             return self.krot(ch, ene)
+        elif self.ktype == K_COMP:
+            return self.kcomp(ch, ene)
     def l(self, ch):
         return self.ls[ch]
     def kpos(self, ch, ene):
@@ -88,6 +91,19 @@ class kCalculator:
         k = self.kpos(ch, ene)
         absolute, argument = cmath.polar(k) 
         return absolute * cmath.exp(1j*(argument+self.getPhase(ch, ene)))
+    def kcomp(self, ch, ene):
+        k = self.kpos(ch, ene)
+        if ene.real <= self.thresholds[ch]:
+            if ene.imag >= 0.0:
+                sign = 1.0
+            else:
+                sign = -1.0
+        elif ene.real > self.thresholds[ch]:
+            if ene.imag >= 0.0:
+                sign = -1.0
+            else:
+                sign = 1.0
+        return sign*k
     def _getValue(self, ch, ene):
         return self.eneFactor*REDUCED_MASS*(ene - self.thresholds[ch])
     def getPhase(self, ch, ene):

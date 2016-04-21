@@ -9,17 +9,32 @@ ZEROVALUE = 1E-7
 DOUBLE_N = 0
 INC_N = 1
 
-class PoleFinder:
-    def __init__(self, smats, kCal, resultsFolder, fitName, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N):
-        self.smats = smats
-        self.kCal = kCal
-        self.fitName = fitName
-        self.kConversionFactor = kConversionFactor
+class Decimator():
+    def __init__(self, startIndex, endIndex, offset):
         self.startIndex = startIndex
         self.endIndex = endIndex
         self.offset = offset
+                 
+    def decimate(self, sMats, N):
+        actualStartIndex = self.startIndex+self.offset
+        sMats, step, actualEndIndex, startEne, endEne = sm.decimate(sMats, actualStartIndex, self.endIndex+self.offset, N)
+        try:
+            decStr = "N=%d, Emin=%d(%f), Emax=%d(%f), step=%d" % (N,actualStartIndex,startEne,actualEndIndex,endEne,step)
+        except TypeError:
+            decStr = "N=%d, Emin=%d(%f+%fi), Emax=%d(%f+%fi), step=%d" % (N,actualStartIndex,startEne.real,startEne.imag,actualEndIndex,endEne.real,endEne.imag,step)
+        print "Decimation:"
+        print "  "+decStr
+        return sMats, decStr     
+
+class PoleFinder:
+    def __init__(self, sMats, kCal, resultsFolder, fitName, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N):
+        self.sMats = sMats
+        self.kCal = kCal
+        self.fitName = fitName
+        self.kConversionFactor = kConversionFactor
+        self.decimator = Decimator(startIndex, endIndex, offset)
         self.numCmpSteps = numCmpSteps
-        idStr = str(startIndex)+"_"+str(endIndex)+"_"+str(offset)+"_"+str(distFactor)+"_"+str(self.kCal)+".dat"
+        idStr = str(startIndex)+"_"+str(endIndex)+"_"+str(offset)+"_"+str(distFactor)+"_"+str(numCmpSteps)+"_"+str(self.kCal)+".dat"
         self.file_coeff = open(resultsFolder+"/Output_Coeff_"+idStr, 'w')
         self.file_poles = open(resultsFolder+"/Output_"+idStr, 'w')
         self.ratCmp = num.RationalCompare(ZEROVALUE, distFactor)
@@ -57,18 +72,11 @@ class PoleFinder:
         print str(len(roots)) + " roots.\n\n"
 
     def _getNroots(self, N):
-        actualStartIndex = self.startIndex+self.offset
-        smats, step, actualEndIndex, startEne, endEne = sm.decimate(self.smats, actualStartIndex, self.endIndex+self.offset, N)
         self.file_poles.write("\n")
         self._printSep2(self.file_poles)
-        try:
-            decStr = "N=%d, Emin=%d(%f), Emax=%d(%f), step=%d" % (N,actualStartIndex,startEne,actualEndIndex,endEne,step)
-        except TypeError:
-            decStr = "N=%d, Emin=%d(%f+%fi), Emax=%d(%f+%fi), step=%d" % (N,actualStartIndex,startEne.real,startEne.imag,actualEndIndex,endEne.real,endEne.imag,step)
-        print "Decimation:"
-        print "  "+decStr
+        sMats, decStr = self.decimator.decimate(self.sMats, N)
         self.file_poles.write(decStr+"\n")
-        ratSmat = RatSMat(smats, self.kCal, fitName=self.fitName)
+        ratSmat = RatSMat(sMats, self.kCal, fitName=self.fitName)
         return ratSmat.findPolyRoots(self.kConversionFactor, False)
 
     def _locatePoles(self, roots):
