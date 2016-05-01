@@ -33,6 +33,10 @@ def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
     sMats = getDiscreteAnaSmats(args, anaSmat)  
     return RatSMat(sMats, fitkCal, fitName=_getTypeName(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
 
+def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
+  sMats = getDiscreteAnaSmats(args, anaSmat)  
+  return RatSMat(sMats, fitkCal, fitName=_getTypeName(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
+
 def getSmats(args, anakCal, fitkCal):
     anaSmat = getAnaSmat(args, anakCal)
     ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal)
