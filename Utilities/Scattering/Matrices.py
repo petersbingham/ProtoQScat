@@ -1,8 +1,14 @@
+import sys
+import os
+base = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0,base+'/..')
+
 import numpy as np
-import cmath
 import matplotlib.pyplot as plt
 import random
 import Conversions as conv
+import numpy as np
+from General.QSType import *
 
 def decimate(mats, startIndex, endIndex, N):
     step = int((endIndex-startIndex) / (N-1))
@@ -34,9 +40,9 @@ def getSfromKmatrices(kmats, numChannels):
     return smats
 
 def getSfromKmatrix(kmats, numChannels, ene):
-    num = np.identity(numChannels) + 1.0j*kmats[ene]
-    denum = np.identity(numChannels) - 1.0j*kmats[ene]
-    S = np.dot(num, np.linalg.inv(denum))
+    num = QSidentity(numChannels) + 1.0j*kmats[ene]
+    denum = QSidentity(numChannels) - 1.0j*kmats[ene]
+    S = QSdot(num, QSinvert(denum))
     return S
 
 REDUCED_MASS = 1.0     
@@ -63,10 +69,10 @@ class kCalculator:
         if self.ksigns is None:
             return self.ktype
         else:
-            return str(self.ksigns)
+            return QSfloatList(self.ksigns)
     def kl(self, ch, ene, add=0.0):
         k = self.k(ch, ene)
-        return pow(k, self.ls[ch]+add)
+        return QSpow(k, self.ls[ch]+add)
     def k(self, ch, ene):
         if self.ktype == K_POS:
             return self.kpos(ch, ene)
@@ -79,7 +85,7 @@ class kCalculator:
     def l(self, ch):
         return self.ls[ch]
     def kpos(self, ch, ene):
-        return cmath.sqrt(self._getValue(ch, ene))
+        return QSsqrt(self._getValue(ch, ene))
     def ksign(self, ch, ene):
         if self.invertChannel:
             ch = len(self.thresholds)-1 - ch
@@ -89,8 +95,8 @@ class kCalculator:
         return mult * self.kpos(ch, ene)
     def krot(self, ch, ene):
         k = self.kpos(ch, ene)
-        absolute, argument = cmath.polar(k) 
-        return absolute * cmath.exp(1j*(argument+self.getPhase(ch, ene)))
+        absolute, argument = QSpolar(k) 
+        return absolute * QSexp(1j*(argument+self.getPhase(ch, ene)))
     def kcomp(self, ch, ene):
         k = self.kpos(ch, ene)
         if ene.real <= self.thresholds[ch]:
@@ -110,7 +116,7 @@ class kCalculator:
         if ene.real <= self.thresholds[ch]:
             return 0.0
         else:
-            return cmath.pi
+            return QSPI
 
 class MatException(Exception):
     def __init__(self, string):
@@ -136,7 +142,7 @@ class matSequence:
         self.colourCycle = colourCycle
     
     def __setitem__(self, key, item):
-        self.size = item.size
+        self.size = QSsize(item)
         self.items[key] = item
     
     def __getitem__(self, key):
@@ -263,7 +269,7 @@ class matSequence:
     
     def _getSize(self):
         key = random.choice(self.items.keys())
-        return self.items[key].shape[0] 
+        return QSshape(self.items[key])[0] 
     
     def _convert(self):
         return self.items
@@ -440,9 +446,9 @@ class mat:
         for m in range(self.size):
             rlist = []
             for n in range(self.size):
-                rlist.append(complex(self[m][n]))
+                rlist.append(QScomplex(self[m][n]))
             mlist.append(rlist)
-        return np.matrix(mlist)
+        return QSmatrix(mlist)
     
     def __str__(self):
         isImag = self._isImag()
@@ -470,13 +476,13 @@ class mat:
     def _isImag(self):
         for m in range(0,self.size):
             for n in range(0,self.size):
-                if abs(float(complex(self[m][n]).imag)) > self.min:
+                if abs(float(QScomplex(self[m][n]).imag)) > self.min:
                     return True
         return False
     
     def _getFormattedStr(self, value, isImag):
         if isImag:
-            return "("+self.formatstr.format(complex(value).real) + self.formatstr.format(complex(value).imag)+"i)"
+            return "("+self.formatstr.format(QScomplex(value).real) + self.formatstr.format(QScomplex(value).imag)+"i)"
         else:
-            return self.formatstr.format(complex(value).real)
+            return self.formatstr.format(QScomplex(value).real)
     

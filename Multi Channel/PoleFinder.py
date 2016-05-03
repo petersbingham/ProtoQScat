@@ -4,6 +4,7 @@ sys.path.append("../Utilities")
 import Scattering.Matrices as sm
 import General.Numerical as num
 from RatSMat import *
+from General.QSType import *
 
 ZEROVALUE = 1E-7
 DOUBLE_N = 0
@@ -27,7 +28,7 @@ class Decimator():
         return sMats, decStr     
 
 class PoleFinder:
-    def __init__(self, sMats, kCal, resultsFolder, fitName, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N):
+    def __init__(self, sMats, kCal, resultsFolder, fitName, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, popSmatCB=None):
         self.sMats = sMats
         self.kCal = kCal
         self.fitName = fitName
@@ -42,6 +43,7 @@ class PoleFinder:
         self.allRoots = []
         self.allNs = []
         self.cmpValue = cmpValue
+        self.popSmatCB = popSmatCB
 
         if mode == DOUBLE_N:
             self._doubleN()
@@ -66,15 +68,23 @@ class PoleFinder:
             N = N+2
 
     def _doForN(self, N):
-        roots = self._getNroots(N)
-        self._locatePoles(roots)
-        self.allNs.append(N)
-        print str(len(roots)) + " roots.\n\n"
+        try:
+            roots = self._getNroots(N)
+            self._locatePoles(roots)
+            self.allNs.append(N)
+            print str(len(roots)) + " roots.\n\n"
+        except Exception as inst:
+            self.allRoots.append([])
+            string = "Unhandled Exception: " + str(inst) + "\n"
+            print string
+            self.file_poles.write(string)
 
     def _getNroots(self, N):
         self.file_poles.write("\n")
         self._printSep2(self.file_poles)
         sMats, decStr = self.decimator.decimate(self.sMats, N)
+        if self.popSmatCB is not None:
+            self.popSmatCB(sMats, self.sMats)
         self.file_poles.write(decStr+"\n")
         ratSmat = RatSMat(sMats, self.kCal, fitName=self.fitName)
         return ratSmat.findPolyRoots(self.kConversionFactor, False)
@@ -103,7 +113,7 @@ class PoleFinder:
                         cmpRoot = cmpRootSet[j]
                         cdiff = self.ratCmp.getComplexDiff(root, cmpRoot)
                         if self.ratCmp.checkComplexDiff(cdiff):
-                            endStr += " with N=%d[%d]: diff = %.14f%+.14fi" % (self.allNs[k], j, cdiff.real, cdiff.imag)
+                            endStr += (" with N=%d[%d]: diff = "+self._getComplexFormat()) % (self.allNs[k], j, cdiff.real, cdiff.imag)
                             break
                         if j==len(cmpRootSet)-1:
                             endStr = ""
@@ -164,7 +174,7 @@ class PoleFinder:
               endStr = "LOST"
               break
 
-          writeStr = "Pole_k[%d]=%.14f%+.14fi\tPole_E[%d]=%.14f%+.14fi\t%s\n" % (i,self.allPoles[i].real,self.allPoles[i].imag,i,enePole.real,enePole.imag,endStr)
+          writeStr = ("Pole_k[%d]="+self._getComplexFormat()+"\tPole_E[%d]="+self._getComplexFormat()+"\t%s\n") % (i,self.allPoles[i].real,self.allPoles[i].imag,i,enePole.real,enePole.imag,endStr)
           self.file_poles.write(writeStr)
     
     def _calEnergy(self, k):
@@ -175,7 +185,7 @@ class PoleFinder:
         if self.cmpValue is not None and closestIndex==i:
             endStr2 = " @<****>@"
         eneRoot = self._calEnergy(root)
-        writeStr = "Root_k[%d]=%.14f%+.14fi\tRoot_E[%d]=%.14f%+.14fi\t%s%s\n" % (i,root.real,root.imag,i,eneRoot.real,eneRoot.imag,endStr,endStr2)
+        writeStr = ("Root_k[%d]="+self._getComplexFormat()+"\tRoot_E[%d]="+self._getComplexFormat()+"\t%s%s\n") % (i,root.real,root.imag,i,eneRoot.real,eneRoot.imag,endStr,endStr2)
         self.file_poles.write(writeStr)
                 
     def _printSep1(self, file):
@@ -183,3 +193,9 @@ class PoleFinder:
 
     def _printSep2(self, file):
         file.write("@<**********************************************************************************************>@\n")
+        
+    def _getComplexFormat(self):
+        if QSMODE == MODE_NORM:
+            return "%.14f%+.14fi"
+        else:
+            return "%."+str(DPS)+"f%+."+str(DPS)+"fi"   

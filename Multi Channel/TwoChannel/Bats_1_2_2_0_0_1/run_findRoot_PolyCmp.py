@@ -10,9 +10,9 @@ from Analytical.runArgsRange import *
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Poly Root compare", parents=[tcp_range])
 args = spArgs.parse_args()
 
-kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_COMP, ksigns=[1.0,1.0], eneFactor=ENEFACTOR)
+kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_COMP, ksigns=[QSfloat(1.0),QSfloat(1.0)], eneFactor=QSfloat(ENEFACTOR))
 anaSmat = getAnaSmat(args, kCal)
-smats = getDiscreteAnaSmats(args, anaSmat)
+smats = getDiscreteAnaSmats(args)
 
 NUM_FND = 0
 TIME = 0
@@ -21,7 +21,7 @@ def _findRoot(N, starting):
     global NUM_FND
     global TIME
     try:
-        ratSmat = getDecimatedRatSmat(args, smats, kCal, kCal, N, True)
+        ratSmat = getDecimatedRatSmat(args, smats, kCal, kCal, N, anaSmat, True)
         try:
             startTime = time.clock()
             root = ratSmat.findRoot_Multi(starting)

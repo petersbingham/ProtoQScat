@@ -4,7 +4,7 @@ sys.path.append("../..")
 sys.path.append("../../Utilities")
 sys.path.append("../../../Utilities")
 import Scattering.Matrices as sm
-import numpy as np
+from General.QSType import *
 
 NUMCHANNELS = 3
 ENEFACTOR = sm.EFROMK_RYDBERGS
@@ -26,7 +26,7 @@ def readkMats(fileName):
         nums = line.split()
         if len(nums) == 4 and nums[0]=="3":
           ene = _num(nums[3])
-          kmats[ene] = np.matrix([[0.0]*numChannels]*numChannels, dtype=np.complex128)
+          kmats[ene] = QSsqZeros(numChannels)
         else:
           if len(line) == 81:
             kmats[ene][0,0] = _num(line[0:20])

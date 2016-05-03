@@ -19,13 +19,16 @@ def getAnaSmat(args, anakCal):
     mats = Mats(args.v1_, args.v2_, args.lam_, anakCal)
     return Smat(args.r0_, mats)
 
-def getDiscreteAnaSmats(args, anaSmat):
-    dEne = (args.eneEnd_-args.eneStart_) / float(args.eneSteps_)
+def getDiscreteAnaSmats(args, anaSmat=None):
+    dEne = (args.eneEnd_-args.eneStart_) / QSfloat(args.eneSteps_)
     ene = args.eneStart_ + args.eneComplex_*1.0j
     sMats = {}
     for i in range(0,args.eneSteps_+1,1):
-        anaSmat.setEnergy(ene)
-        sMats[ene] = anaSmat.getMatrix()
+        if anaSmat is not None:
+            anaSmat.setEnergy(ene)
+            sMats[ene] = anaSmat.getMatrix()
+        else:
+            sMats[ene] = None
         ene += dEne
     return sMats 
 
@@ -42,16 +45,27 @@ def getSmats(args, anakCal, fitkCal):
     ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal)
     return (anaSmat, ratSmat)
 
-def getDecimatedRatSmat(args, smats, anakCal, fitkCal, N, suppressCmdOut=False): #To get ratSmat for same data set as for getPolyRoots to allow comparison with Muller
+def getDecimatedRatSmat(args, smats, anakCal, fitkCal, N, anaSmat=None, suppressCmdOut=False): #To get ratSmat for same data set as for getPolyRoots to allow comparison with Muller
     decimator = Decimator(0, len(smats)-1, 0)
-    sMats, decStr = decimator.decimate(smats, N)
-    return RatSMat(sMats, fitkCal, fitName=_getTypeName(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
+    newSMats, decStr = decimator.decimate(smats, N)
+    if anaSmat is not None:
+        popSmat(anaSmat, newSMats, smats)
+    return RatSMat(newSMats, fitkCal, fitName=_getTypeName(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
 
 def getPolyRoots(args, anakCal, fitkCal, resultsPath, mode, cmpValue=None):
     anaSmat = getAnaSmat(args, anakCal)
-    smats = getDiscreteAnaSmats(args, anaSmat)
-    PoleFinder(smats, fitkCal, resultsPath, _getTypeName(args, anakCal, fitkCal), ENEFACTOR, 0, len(smats)-1, 0, 0.05, 1, cmpValue=cmpValue, mode=mode)
-      
+    smats = getDiscreteAnaSmats(args)
+    PoleFinder(smats, fitkCal, resultsPath, _getTypeName(args, anakCal, fitkCal), ENEFACTOR, 0, len(smats)-1, 0, 0.05, 1, cmpValue=cmpValue, mode=mode, popSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2))
+
+def popSmat(anaSmat, smats1, smats2=None):
+    for ene in smats1:
+        if smats1[ene] is None:
+            anaSmat.setEnergy(ene)
+            mat = anaSmat.getMatrix()
+            smats1[ene] = mat
+            if smats2 is not None:
+                smats2[ene] = mat     
+ 
 def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppressCmdOut=False, signsAsList=False):
     try:
         for anaSigns in anaSignList:

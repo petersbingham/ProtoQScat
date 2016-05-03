@@ -1,7 +1,7 @@
 import cmath
-import numpy as np
 import Matrices as sm
 import General.Numerical as num
+from General.QSType import *
 
 class TranMat(sm.mat):
     def __init__(self, sourceMat): 
@@ -18,13 +18,13 @@ class TranMat(sm.mat):
         if isinstance(self.sourceMat, TranMat):
             return self.sourceMat.getShape()
         else:
-            return self.sourceMat.getMatrix().shape
+            return QSshape(self.sourceMat.getMatrix())
     
     def getMatrix(self):
         return self.tranMat
       
     def _getRow(self, m):
-        return self.tranMat[m].tolist()[0]
+        return QSgetRow(self.tranMat, m)
 
 class Tmat(TranMat):
     def setEnergy(self, ene):
@@ -32,7 +32,7 @@ class Tmat(TranMat):
         self._calculate()
       
     def _calculate(self):
-        self.tranMat = self.sourceMat.getMatrix() - np.identity(self.sourceMat.numChannels)
+        self.tranMat = self.sourceMat.getMatrix() - QSidentity(self.sourceMat.numChannels)
     
 class UniOpmat(TranMat):
     def setEnergy(self, ene):
@@ -54,7 +54,7 @@ class XSmat(TranMat):
         self._calculate()
       
     def _calculate(self):
-        self.tranMat = np.zeros((self.sourceMat.sourceMat.numChannels, self.sourceMat.sourceMat.numChannels), dtype=np.complex128)
+        self.tranMat = QSsqZeros(self.sourceMat.sourceMat.numChannels)
         for m in range(self.size):
             for n in range(self.size):
                 self.tranMat[m,n] = self._getElement(m,n)
