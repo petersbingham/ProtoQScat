@@ -5,9 +5,11 @@ sys.path.insert(0,base+'/..')
 from RatSMat import *
 from Analytical.DoubleChannel import *
 from PoleFinder import *
+from ResultFileHandler import *
 
-def _getTypeName(args, anakCal, fitkCal):
-    return "Two Channel Radial Well_" + str(anakCal) + "_" + str(fitkCal) + "_" + str(args.r0_) + "_" + str(args.v1_) + "_" + str(args.v2_) + "_" + str(args.lam_) + "_" + str(args.eneStart_) + "_" + str(args.eneEnd_) + "_" + str(args.eneComplex_) + "_" + str(args.eneSteps_)
+def _getFileHandler(args, anakCal, fitkCal):
+    sysName = "Two Channel Radial Well_" + str(anakCal) + "_" + str(fitkCal) + "_" + str(args.r0_) + "_" + str(args.v1_) + "_" + str(args.v2_) + "_" + str(args.t1_) + "_" + str(args.t2_) + "_" + str(args.lam_) + "_" + str(args.eneStart_) + "_" + str(args.eneEnd_) + "_" + str(args.eneComplex_) + "_" + str(args.eneSteps_)
+    return ResultFileHandler(sysName)
 
 def getEnergy(type, x): 
     if type == "Lin":
@@ -34,11 +36,7 @@ def getDiscreteAnaSmats(args, anaSmat=None):
 
 def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
     sMats = getDiscreteAnaSmats(args, anaSmat)  
-    return RatSMat(sMats, fitkCal, fitName=_getTypeName(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
-
-def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
-  sMats = getDiscreteAnaSmats(args, anaSmat)  
-  return RatSMat(sMats, fitkCal, fitName=_getTypeName(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
+    return RatSMat(sMats, fitkCal, resultFileHandler=_getFileHandler(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
 
 def getSmats(args, anakCal, fitkCal):
     anaSmat = getAnaSmat(args, anakCal)
@@ -46,16 +44,17 @@ def getSmats(args, anakCal, fitkCal):
     return (anaSmat, ratSmat)
 
 def getDecimatedRatSmat(args, smats, anakCal, fitkCal, N, anaSmat=None, suppressCmdOut=False): #To get ratSmat for same data set as for getPolyRoots to allow comparison with Muller
-    decimator = Decimator(0, len(smats)-1, 0)
+    resultFileHandler = _getFileHandler(args, anakCal, fitkCal)
+    decimator = Decimator(0, len(smats)-1, 0, resultFileHandler)
     newSMats, decStr = decimator.decimate(smats, N)
     if anaSmat is not None:
         popSmat(anaSmat, newSMats, smats)
-    return RatSMat(newSMats, fitkCal, fitName=_getTypeName(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
+    return RatSMat(newSMats, fitkCal, resultFileHandler=resultFileHandler, suppressCmdOut=suppressCmdOut)
 
 def getPolyRoots(args, anakCal, fitkCal, resultsPath, mode, cmpValue=None):
     anaSmat = getAnaSmat(args, anakCal)
     smats = getDiscreteAnaSmats(args)
-    PoleFinder(smats, fitkCal, resultsPath, _getTypeName(args, anakCal, fitkCal), ENEFACTOR, 0, len(smats)-1, 0, 0.05, 1, cmpValue=cmpValue, mode=mode, popSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2))
+    PoleFinder(smats, fitkCal, _getFileHandler(args, anakCal, fitkCal), ENEFACTOR, 0, len(smats)-1, 0, 0.05, 1, cmpValue=cmpValue, mode=mode, populateSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2))
 
 def popSmat(anaSmat, smats1, smats2=None):
     for ene in smats1:
@@ -68,7 +67,11 @@ def popSmat(anaSmat, smats1, smats2=None):
  
 def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppressCmdOut=False, signsAsList=False):
     try:
+        first = True
         for anaSigns in anaSignList:
+            if not first:
+                print "\n"
+            first = False
             anakCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=anaSigns, eneFactor=ENEFACTOR)
             anaSmat = getAnaSmat(args, anakCal)
             if signsAsList:

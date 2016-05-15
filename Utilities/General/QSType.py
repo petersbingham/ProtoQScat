@@ -11,11 +11,13 @@ MODE_MPMATH = 1
 
 QSMODE = MODE_MPMATH
 DPS_MPMATH = 100
+DPS_PYTHONTYPES = 25
 
 ##########################################################
 ##########################################################
+
 if QSMODE == MODE_NORM:
-    DPS = 25
+    DPS = DPS_PYTHONTYPES
 else:
     DPS = DPS_MPMATH
 mpmath.mp.dps = DPS
@@ -87,13 +89,13 @@ def QSmatrix(val):
     
 def QSsqZeros(sz):
     if QSMODE == MODE_NORM:
-        return np.zeros((sz, sz), dtype=np.complex128)
+        return np.matrix(np.zeros((sz, sz), dtype=np.complex128))
     else:
         return mpmath.zeros(sz)
     
 def QSidentity(sz):
     if QSMODE == MODE_NORM:
-        return np.identity(sz)
+        return np.matrix(np.identity(sz, dtype=np.complex128))
     else:
         return mpmath.eye(sz)
 
@@ -137,6 +139,18 @@ def QSdet(mat):
         return np.linalg.det(mat)
     else:
         return mpmath.det(mat)
+
+def QSsumElements(mat):
+    if QSMODE == MODE_NORM:
+        XS = 0.0
+        for x in np.nditer(mat, flags=['refs_ok']):
+            XS += x
+    else:
+        XS = mpmath.mpc(0.0)
+        for i in range(mat.rows):
+            for j in range(mat.cols):
+                XS += mat[i,j]
+    return XS
     
 ############### OTHER ###############
 

@@ -23,11 +23,11 @@ args = parentArgs.parse_args()
 
 def _doPoleFind(kCal, mode, dirName):
     kmats = readkMats("../fort.19")
-    fitName = getFitName(kCal, args.startIndex_, args.endIndex_)
+    resultFileHandler = getFileHandler(kCal, args.startIndex_, args.endIndex_)
     path = "./Results/"+dirName
     if not os.path.exists(path):
         os.makedirs(path)
-    PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, path, fitName, ENEFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, 2, args.cmpValue_, mode)
+    PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, resultFileHandler, ENEFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, 2, args.cmpValue_, mode)
 
 def _polesForAllSigns(mode, dirName):
     for i in [1.0,-1.0]:

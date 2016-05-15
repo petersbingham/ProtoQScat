@@ -22,8 +22,7 @@ def _doPoleFind(mode, dirName):
         kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,1.0], eneFactor=ENEFACTOR)
         getPolyRoots(args, kCal, kCal, path, cmpValue=args.cmpValue_, mode=mode)
     except (sm.MatException) as inst:
-        print str(inst)
-        sys.exit()
+        raise inst
  
 if args.mode_ == MODE_DOUBLE:
     _doPoleFind(DOUBLE_N, "Double")

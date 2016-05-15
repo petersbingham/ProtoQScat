@@ -13,6 +13,28 @@ ____________
 
 The main routines can be found in Multi Channel\RatSMat.py. The pole location routines are in Multi Channel\PoleFinder.py.
  
+ 
+Result Archiving
+________________
+
+Depending on the calculation configuration significant time may be required to complete the calculations. For this reason and to assist with the organisation of results, generated files are automatically stored according to the structure below.
+
+ * Dir: Fit Type and Set ID String.
+  * Dir: Method and parameters of method used to calculated the coefficients.
+   * Dir: Nature of the fit (single or piecewise).
+    * Dir: Coefficient Files.
+     * Dir: Number of Points, start and end indices.
+      * Files: One for each coefficient matrix
+    * Dir: Nature of the method and parameters used to calculate the roots.
+     * Dir: Roots
+      * Files: One for each number of Points, start and end indices.
+     * Dir: Poles, according to technique (doubling or incrementing N) and the threshold comparison factor.
+      * Files: One for each number of Points, start and end indices.
+  
+The software will attempt to load any prior dependencies before doing calculations. So, for example, if we have already calculated a set of poles and then change only the threholds, the software will load the previously calculated roots as a starting point, rather than recalculating the coefficients and roots again.
+
+These files are by default, stored in the Results Folder in the "Multi Channel" directory. 
+
 Multi-channel Analytical Tests
 ______________________________
 

@@ -18,10 +18,8 @@ class PyXSmat(S.XSmat):
         return XS * conv.BOHRSQ_to_ANGSQ
 
 def getTotalXS(XSmat):
-    XS = 0.0
-    for x in np.nditer(XSmat.getMatrix(), flags=['refs_ok']):
-        XS += x
-    return np.matrix([[XS]])
+    XS = QSsumElements(XSmat.getMatrix())
+    return QSmatrix([[XS]])
 
 class RatSMatWrap:
   def __init__(self, fileName, N=None, startIndex=None, endIndex=None, kfitSigns=None, ksigns=None, suppressCmdOut=False):
@@ -48,9 +46,12 @@ class RatSMatWrap:
     if startIndex is not None and endIndex is not None and N is not None:
       self.mode = M_NORM
       self._decimate(startIndex, endIndex, N)
-    elif len(self.kmats)%2 != 0:
-      self.kmats.pop(ene)
-    self.fitName = getFitName(self.kFitCal, startIndex, endIndex)
+    else:
+      if len(self.kmats)%2 != 0:
+        self.kmats.pop(ene)
+      startIndex = 0
+      endIndex = len(self.kmats)-1
+    self.fileHandler = getFileHandler(self.kFitCal, startIndex, endIndex)
   
   def _decimate(self, startIndex, endIndex, N):
     self.kmats, step, actualEndIndex, startEne, endEne = sm.decimate(self.kmats, startIndex, endIndex, N)
@@ -63,7 +64,7 @@ class RatSMatWrap:
   
   def getMatrix(self):
     if self.ene is None:
-      return np.identity(NUMCHANNELS)
+      return QSidentity(NUMCHANNELS)
     else:
       return self._getSfromKmatrix(self.ene)
   
@@ -91,7 +92,7 @@ class RatSMatWrap:
   
   def _getRatSmat(self):
     smats = self._getSfromKmatrices()
-    ratSmat = RatSMat(smats, self.kFitCal, fitName=self.fitName, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
+    ratSmat = RatSMat(smats, self.kFitCal, resultFileHandler=self.fileHandler, fitSize=self._getRatSmatFitSize(), suppressCmdOut=self.suppressCmdOut)
     ratSmat.kCal = self.kCal
     return ratSmat
   

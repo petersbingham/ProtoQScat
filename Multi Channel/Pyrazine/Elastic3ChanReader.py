@@ -5,12 +5,13 @@ sys.path.append("../../Utilities")
 sys.path.append("../../../Utilities")
 import Scattering.Matrices as sm
 from General.QSType import *
+from ResultFileHandler import *
 
 NUMCHANNELS = 3
 ENEFACTOR = sm.EFROMK_RYDBERGS
-
-def getFitName(kCal, startIndex, endIndex):
-    return "Pyrazine" + "_" + str(kCal) + "_" + str(startIndex)+ "_" + str(endIndex)
+def getFileHandler(kCal, startIndex, endIndex):
+    sysName = "Pyrazine" + "_" + str(kCal) + "_" + str(startIndex)+ "_" + str(endIndex)
+    return ResultFileHandler(sysName)
 
 def readkMats(fileName):
     numChannels = 3

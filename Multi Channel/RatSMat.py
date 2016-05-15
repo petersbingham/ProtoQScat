@@ -13,6 +13,7 @@ import os
 base =  os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/../Utilities')
 import Scattering.Matrices as sm
+from General import *
 from General.QSType import *
 
 TYPE_S = 0
@@ -24,16 +25,17 @@ COEFFDIR = os.path.dirname(os.path.realpath(__file__)) + "/CoefficientFiles/"
 
 ALWAYS_CALCULATE = False
 
-COEFF_SOLVE_METHOD = 0
-ALLROOTS_FINDTYPE = 1   #0-numpy 1-sympy
-SINGLEROOT_FINDTYPE = 'muller' #'secant'
+PYTYPE_COEFF_SOLVE_METHOD = "numpy solve"   #"numpy solve""numpy lstsq""numpy sparse bicg""numpy sparse bicgstab""numpy sparse lgmres""numpy sparse minres""numpy sparse qmr""numpy qr"
+ALLROOTS_FINDTYPE = "sympy"                 #"numpy""sympy"
+SINGLEROOT_FINDTYPE = "muller"              #"muller""secant"
 
 DISPLAY_PRECISION = 8
 
 ##########################################################
 ##########################################################
 
-def _cacheCoefficients():
+
+def _canCacheCoefficients():
   if QSMODE == MODE_NORM:
       npVer = [int(val) for val in np.__version__.split('.')]
       if npVer[0]>1 or (npVer[0]==1 and npVer[1]>6) or (npVer[0]==1 and npVer[1]==6 and npVer[2]>1): #saveTxt not supported prior.
@@ -43,15 +45,54 @@ def _cacheCoefficients():
   return False
 
 
+class PolyRootSolve():
+  def __init__(self, suppressCmdOut):
+    self.suppressCmdOut = suppressCmdOut
+    self.numpyArgs = {}
+    self.sympyArgs = {'n':DPS, 'maxsteps':500, 'cleanup':True}
+    if ALLROOTS_FINDTYPE == "numpy":
+        self.typeStr = "numpy "+getArgDesc(np.roots, self.numpyArgs)
+    else:
+        self.typeStr = "sympy "+getArgDesc(sy_polys.polytools.nroots, self.sympyArgs)
+    self.printed = False
+    
+  def getRoots(self, deter, k):
+    if ALLROOTS_FINDTYPE == "numpy":
+        return self._getRoots_numpy(deter, k)
+    else:
+        return self._getRoots_sympy(deter, k)    
+    
+  def _getRoots_numpy(self, deter, k):
+    coeffs = sy_polys.Poly(deter, k).all_coeffs()
+    mappedCoeffs = map(lambda val: complex(val), coeffs)
+    ret = np.roots(mappedCoeffs)
+    self.printCalStr()
+    return ret 
+
+  def _getRoots_sympy(self, deter, k):
+    ret = sy_polys.Poly(deter, k).nroots(n=DPS, maxsteps=500, cleanup=True)    
+    self.printCalStr()
+    return ret 
+
+  def printCalStr(self, wereLoaded=False):
+    if not self.suppressCmdOut and not self.printed:
+        addStr = ""
+        if wereLoaded:
+            addStr = "had been "
+        print "Roots " + addStr + "calculated using " + self.typeStr 
+        self.printed = True
+
 class CoeffSolve():
-  def __init__(self, numPolyTerms, fitSize, numChannels, verbose):  
-    self.numPolyTerms = numPolyTerms
-    self.fitSize = fitSize
-    self.numChannels = numChannels 
-    self.verbose = verbose
+  def __init__(self, suppressCmdOut):
+    self.suppressCmdOut = suppressCmdOut
     self.printed = False
     self._action(0)
     self.coeffVec = None
+  
+  def setValues(self, numPolyTerms, fitSize, numChannels):  
+    self.numPolyTerms = numPolyTerms
+    self.fitSize = fitSize
+    self.numChannels = numChannels 
   
   def initialiseMatrices(self):
     if self.matrixType==0 or self.matrixType==1:
@@ -78,83 +119,96 @@ class CoeffSolve():
 
   def _action(self, act=1):
     if QSMODE == MODE_MPMATH:
+        args = {}
         if act==0:
-            self.typeStr = "mpmath qr_solve_dps"+str(DPS)
+            self.typeStr = "mpmath qr_solve_dps "+str(DPS)+" "+getArgDesc(mpmath.qr_solve, args)
             self.matrixType = 1
             self.indexType = 1
         else:
-            self.coeffVec = mpmath.qr_solve(self.sysMat, self.resVec)
-            self._calStr()
+            self.coeffVec = mpmath.qr_solve(self.sysMat, self.resVec, **args)
+            self.printCalStr()
     else:
-        if COEFF_SOLVE_METHOD == 0:
+        if PYTYPE_COEFF_SOLVE_METHOD == "numpy solve":
+            args = {}
             if act==0:
-                self.typeStr = "numpy solve"
+                self.typeStr = "numpy solve "+getArgDesc(np.linalg.solve, args)
                 self.matrixType = 0
                 self.indexType = 0
             else:
-                self.coeffVec = np.linalg.solve(self.sysMat, self.resVec)
-                self._calStr()
-        elif COEFF_SOLVE_METHOD == 1:
+                self.coeffVec = np.linalg.solve(self.sysMat, self.resVec, **args)
+                self.printCalStr()
+        elif PYTYPE_COEFF_SOLVE_METHOD == "numpy lstsq":
+            args = {}
             if act==0:
-                self.typeStr = "numpy lstsq"
+                self.typeStr = "numpy lstsq "+getArgDesc(np.linalg.lstsq, args)
                 self.matrixType = 0
                 self.indexType = 0
             else:
-                self.coeffVec = np.linalg.lstsq(self.sysMat, self.resVec)[0]
-                self._calStr()
-        elif COEFF_SOLVE_METHOD == 2:
+                self.coeffVec = np.linalg.lstsq(self.sysMat, self.resVec, **args)[0]
+                self.printCalStr()
+        elif PYTYPE_COEFF_SOLVE_METHOD == "numpy sparse bicg": 
+            args = {}
             if act==0:
-                self.typeStr = "numpy sparse bicg"
+                self.typeStr = "numpy sparse bicg "+getArgDesc(sp_sparse_linalg.bicg, args)
                 self.matrixType = 0
                 self.indexType = 1
             else:
-                self.coeffVec = self._sparseRet(sp_sparse_linalg.bicg(self.sysMat, self.resVec))#, tol=1e-05, maxiter=10*len(self.resVec)
-        elif COEFF_SOLVE_METHOD == 3:
+                self.coeffVec = self._sparseRet(sp_sparse_linalg.bicg(self.sysMat, self.resVec, **args))#, tol=1e-05, maxiter=10*len(self.resVec)
+        elif PYTYPE_COEFF_SOLVE_METHOD == "numpy sparse bicgstab":
+            args = {}
             if act==0:
-                self.typeStr = "numpy sparse bicgstab"
+                self.typeStr = "numpy sparse bicgstab "+getArgDesc(sp_sparse_linalg.bicgstab, args)
                 self.matrixType = 0
                 self.indexType = 1
             else:
-                self.coeffVec = self._sparseRet(sp_sparse_linalg.bicgstab(self.sysMat, self.resVec))#, tol=1e-05, maxiter=10*len(self.resVec)
-        elif COEFF_SOLVE_METHOD == 4:
+                self.coeffVec = self._sparseRet(sp_sparse_linalg.bicgstab(self.sysMat, self.resVec, **args))#, tol=1e-05, maxiter=10*len(self.resVec)
+        elif PYTYPE_COEFF_SOLVE_METHOD == "numpy sparse lgmres":
+            args = {}
             if act==0:
-                self.typeStr = "numpy sparse lgmres"
+                self.typeStr = "numpy sparse lgmres "+getArgDesc(sp_sparse_linalg.lgmres, args)
                 self.matrixType = 0
                 self.indexType = 1
             else:
-                self.coeffVec = self._sparseRet(sp_sparse_linalg.lgmres(self.sysMat, self.resVec))#, tol=1e-05, maxiter=1000
-        elif COEFF_SOLVE_METHOD == 5:
+                self.coeffVec = self._sparseRet(sp_sparse_linalg.lgmres(self.sysMat, self.resVec, **args))#, tol=1e-05, maxiter=1000
+        elif PYTYPE_COEFF_SOLVE_METHOD == "numpy sparse minres":
+            args = {}
             if act==0:
-                self.typeStr = "numpy sparse minres"
+                self.typeStr = "numpy sparse minres "+getArgDesc(sp_sparse_linalg.minres, args)
                 self.matrixType = 0
                 self.indexType = 1
             else:
-                self.coeffVec = self._sparseRet(sp_sparse_linalg.minres(self.sysMat, self.resVec))#, tol=1e-05, maxiter=5*self.sysMat.shape[0]
-        elif COEFF_SOLVE_METHOD == 6:
+                self.coeffVec = self._sparseRet(sp_sparse_linalg.minres(self.sysMat, self.resVec, **args))#, tol=1e-05, maxiter=5*self.sysMat.shape[0]
+        elif PYTYPE_COEFF_SOLVE_METHOD == "numpy sparse qmr":
+            args = {}
             if act==0:
-                self.typeStr = "numpy sparse qmr"
+                self.typeStr = "numpy sparse qmr "+getArgDesc(sp_sparse_linalg.qmr, args)
                 self.matrixType = 0
                 self.indexType = 1
             else:
-                self.coeffVec = self._sparseRet(sp_sparse_linalg.qmr(self.sysMat, self.resVec))#, tol=1e-05, maxiter=10*len(self.resVec)
-        elif COEFF_SOLVE_METHOD == 7:
+                self.coeffVec = self._sparseRet(sp_sparse_linalg.qmr(self.sysMat, self.resVec, **args))#, tol=1e-05, maxiter=10*len(self.resVec)
+        elif PYTYPE_COEFF_SOLVE_METHOD == "numpy qr":
+            args_qr = {}
+            args_s = {}
             if act==0:
-                self.typeStr = "numpy qr solve"
+                self.typeStr = "numpy qr "+getArgDesc(np.linalg.qr, args_qr)+" numpy solve "+getArgDesc(np.linalg.solve, args_s)
                 self.matrixType = 0
                 self.indexType = 0
             else:
-                Q,R = np.linalg.qr(self.sysMat)
+                Q,R = np.linalg.qr(self.sysMat, **args_qr)
                 y = np.dot(Q.T,self.resVec)
-                self.coeffVec = np.linalg.solve(R,y) 
-                self._calStr()
+                self.coeffVec = np.linalg.solve(R,y, **args_s) 
+                self.printCalStr()
 
-  def _calStr(self):
-    if self.verbose and not self.printed:
-        print "Coeffs calculated using " + self.typeStr 
+  def printCalStr(self, wereLoaded=False):
+    if not self.suppressCmdOut and not self.printed:
+        addStr = ""
+        if wereLoaded:
+            addStr = "had been "
+        print "Coeffs " + addStr + "calculated using " + self.typeStr 
         self.printed = True
 
   def _sparseRet(self, ret):
-    if self.verbose and not self.printed:
+    if not self.suppressCmdOut and not self.printed:
         print "Coeffs calculated using " + self.typeStr + ". Ret: " + str(ret[1])
         self.printed = True
     return ret[0]
@@ -178,7 +232,7 @@ class CoeffSolve():
             os.makedirs(path)
           
         if self.matrixType == 0:
-            if _cacheCoefficients():
+            if _canCacheCoefficients():
                 np.savetxt(path+"/"+str(N)+"_sysMat.txt", self.sysMat, delimiter=",")
                 np.savetxt(path+"/"+str(N)+"_resVec.txt", self.resVec, delimiter=",")
                 np.savetxt(path+"/"+str(N)+"_coeffVec.txt", self.coeffVec, delimiter=",")
@@ -190,22 +244,36 @@ class CoeffSolve():
             with open(path+"/"+str(N)+"_coeffVec.txt", 'w') as f:
                 f.write(str(self.coeffVec))
 
+
 class RatSMat(sm.mat):
-  def __init__(self, sMatData, kCal, fitSize=None, fitName=None, suppressCmdOut=False, verbose=False):
+  def __init__(self, sMatData, kCal, fitSize=None, resultFileHandler=None, suppressCmdOut=False, doCalc=True):
     self.sMatData = sMatData
     self.suppressCmdOut = suppressCmdOut
-    self.verbose = verbose
-    self._initData(fitSize)
+    self._initData1(fitSize)
     self.kCal = kCal
     self.type = TYPE_S
     self.hasCoeffs = False
     self.ene = None
+    
+    self.resultFileHandler = resultFileHandler
+    if self.resultFileHandler is not None and not ALWAYS_CALCULATE and _canCacheCoefficients():
+        self.resultFileHandler.setFitInfo(self.numFits, self.fitSize)
+        self.resultFileHandler.setCoeffRoutine(self.coeffSolve.typeStr)
+        self.resultFileHandler.setRootFindRoutine(self.polyRootSolve.typeStr)
+    else:
+        self.resultFileHandler = None
+    self.fitName = None
+    if doCalc:
+        self.doCalc()
+    
+  def doCalc(self):
+    self._initData2()
     self._initialiseMatrices()
-    self.fitName = fitName
     
     read = False
-    if not ALWAYS_CALCULATE and _cacheCoefficients() and self._doFilesExist():
+    if self.resultFileHandler and self.resultFileHandler.doCoeffFilesExist():
       try:
+        self.coeffSolve.printCalStr(True)
         self._readCoefficients()
         read = True
       except Exception as e:
@@ -213,12 +281,11 @@ class RatSMat(sm.mat):
 
     if not read:
       self._calculateCoefficients()
-      if _cacheCoefficients() and self.fitName:
+      if self.resultFileHandler:
         self._writeCoefficients() 
 
     self.lastPrintedEne = None
     sm.mat.__init__(self, self.numChannels, DISPLAY_PRECISION)
-    self._print("")
 
   def _print(self, msg):
     if not self.suppressCmdOut:
@@ -234,7 +301,7 @@ class RatSMat(sm.mat):
         print "  numFitPoints: " + str(self.numPolyTerms)
         print "  numCoeffs: " + str(self.numCoeffs)
   
-  def _initData(self, fitSize):
+  def _initData1(self, fitSize):
     self.numData = len(self.sMatData)
     if fitSize is None:
       self.fitSize = self.numData
@@ -245,7 +312,11 @@ class RatSMat(sm.mat):
     self.numFits = self.numData/self.fitSize
     self.numPolyTerms = self.fitSize / 2
     self.numCoeffs = self.numPolyTerms + 1
+    self.coeffSolve = CoeffSolve(self.suppressCmdOut)
+    self.polyRootSolve = PolyRootSolve(self.suppressCmdOut)
     self._datPrint()
+    
+  def _initData2(self):
     matShape = QSshape(self.sMatData.itervalues().next())    
     if matShape[0]>=1 and matShape[0]==matShape[1]:
       self.numChannels = matShape[0]
@@ -253,9 +324,9 @@ class RatSMat(sm.mat):
         matShape = QSshape(self.sMatData[ene])
         if matShape[0]!=self.numChannels or matShape[0]!=matShape[1]:
           raise sm.MatException("Bad Input: Inconsistent matrices")
+      self.coeffSolve.setValues(self.numPolyTerms, self.fitSize, self.numChannels)
     else:
       raise sm.MatException("Bad Input: Matrix not square")
-    self.coeffSolve = CoeffSolve(self.numPolyTerms, self.fitSize, self.numChannels, self.verbose)
   
   def _checkInput(self):
     if self.numData<2:
@@ -292,31 +363,16 @@ class RatSMat(sm.mat):
 
 ############# Coefficient Files ###############
     
-  def _doFilesExist(self):
-    if self.fitName:
-      if os.path.isdir(self._getDirName()):
-        for file in self._getAfitNames() + self._getBfitNames():
-          if not os.path.isfile(file):
-            return False
-        return True
-    return False
-  
-  def _getAfitNames(self): 
-    return self._getFitNames("A")
-    
-  def _getBfitNames(self): 
-    return self._getFitNames("B")
-  
   def _readCoefficients(self):
     for fit in range(self.numFits):
-      for i in range(0, self.numCoeffs):
-        self.alphas[self.enes[fit*self.fitSize]][i] = self._readCoefficientsForFit(fit, i, "A")
-        self.betas[self.enes[fit*self.fitSize]][i] = self._readCoefficientsForFit(fit, i, "B")
+      for ci in range(0, self.numCoeffs):
+        self.alphas[self.enes[fit*self.fitSize]][ci] = self._readCoefficientsForFit(fit, ci, "A")
+        self.betas[self.enes[fit*self.fitSize]][ci] = self._readCoefficientsForFit(fit, ci, "B")
       self._print("Loaded Fit: " + str(fit))
     self.hasCoeffs = True
 
-  def _readCoefficientsForFit(self, fit, i, typeString):
-    fileName = self._getFitName(fit, i, typeString)
+  def _readCoefficientsForFit(self, fit, ci, typeString):
+    fileName = self.resultFileHandler.getCoeffFilePath(fit, ci, typeString)
     if QSMODE == MODE_NORM:
         return np.asmatrix(np.loadtxt(fileName, dtype=np.complex128, delimiter=","))
     else:
@@ -335,15 +391,13 @@ class RatSMat(sm.mat):
   
   def _writeCoefficients(self):
     for fit in range(self.numFits):
-      for i in range(self.numCoeffs):
-        if not os.path.isdir(self._getDirName()):
-          os.makedirs(self._getDirName())
-        self._writeCoefficientsForFit(fit, i, "A", self.alphas)
-        self._writeCoefficientsForFit(fit, i, "B", self.betas)
+      for ci in range(self.numCoeffs):
+        self._writeCoefficientsForFit(fit, ci, "A", self.alphas)
+        self._writeCoefficientsForFit(fit, ci, "B", self.betas)
 
-  def _writeCoefficientsForFit(self, fit, i, typeString, matRef):
-    fileName = self._getFitName(fit, i, typeString)
-    mat = matRef[self.enes[fit*self.fitSize]][i]
+  def _writeCoefficientsForFit(self, fit, ci, typeString, matRef):
+    fileName = self.resultFileHandler.getCoeffFilePath(fit, ci, typeString)
+    mat = matRef[self.enes[fit*self.fitSize]][ci]
     if QSMODE == MODE_NORM:
         np.savetxt(fileName, mat, delimiter=",")
         self._fixFile(fileName)
@@ -351,31 +405,15 @@ class RatSMat(sm.mat):
         with open(fileName, 'w') as f:
             f.write(str(mat))
         
-  def _fixFile(self, fitName):
-    f1 = open(fitName, 'r')
-    f2 = open(fitName + "_temp", 'w')
+  def _fixFile(self, fileName):
+    f1 = open(fileName, 'r')
+    f2 = open(fileName + "_temp", 'w')
     for line in f1:
       f2.write(line.replace("+-", '-'))
     f1.close()
     f2.close()
-    os.remove(fitName)
-    os.rename(fitName + "_temp", fitName)
-    
-  def _getDirName(self):
-    return COEFFDIR + self.coeffSolve.typeStr + "/" + str(self.fitName) + "_" + str(len(self.sMatData)) + "_" + str(self.numFits) + "_" + str(self.numPolyTerms)
-  
-  def _baseCoeffFile(self): 
-    return self._getDirName() + "/"
-  
-  def _getFitNames(self, typeString): 
-    fitNames = []
-    for fit in range(self.numFits):
-      for i in range(0, self.numCoeffs):
-        fitNames.append(self._getFitName(fit, i, typeString))
-    return fitNames
-  
-  def _getFitName(self, fit, i, typeString, ext=".dat"):
-    return self._baseCoeffFile() + typeString + "_" + str(fit) + "_" + str(i) + ext
+    os.remove(fileName)
+    os.rename(fileName + "_temp", fileName)
         
 ############# Calculation of Coefficients ###############
  
@@ -611,21 +649,10 @@ class RatSMat(sm.mat):
                         val += (1.0/2.0)*(1.0/kConversionFactor)**(ci) * (QSToSympy(A)*k**(ln-lm+2*ci) - sy.I*QSToSympy(B)*k**(ln+lm+1+2*ci) )
                     matLst[len(matLst)-1].append(val)
             deter = sy_matrix(matLst).det()
-            if ALLROOTS_FINDTYPE == 0:
-                roots = self._getRoots_numpy(deter, k)
-            else:
-                roots = self._getRoots_sympy(deter, k)
+            roots = self.polyRootSolve.getRoots(deter, k)
             if convertToEne:
                 mappedRoots = map(lambda val: complex((1.0/kConversionFactor)*val**2), roots)
             else:
                 mappedRoots = map(lambda val: complex(val), roots)
             allRoots.extend(mappedRoots)
     return allRoots
-
-  def _getRoots_numpy(self, deter, k):
-    coeffs = sy_polys.Poly(deter, k).all_coeffs()
-    mappedCoeffs = map(lambda val: complex(val), coeffs)
-    return np.roots(mappedCoeffs)     
-
-  def _getRoots_sympy(self, deter, k):
-    return sy_polys.Poly(deter, k).nroots(n=DPS, maxsteps=500, cleanup=True)

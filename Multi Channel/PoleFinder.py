@@ -1,5 +1,6 @@
 import sys
 import os
+import traceback
 sys.path.append("../Utilities")
 import Scattering.Matrices as sm
 import General.Numerical as num
@@ -7,18 +8,20 @@ from RatSMat import *
 from General.QSType import *
 
 ZEROVALUE = 1E-7
-DOUBLE_N = 0
-INC_N = 1
+DOUBLE_N = 'doubleN'
+INC_N = 'incN'
 
 class Decimator():
-    def __init__(self, startIndex, endIndex, offset):
+    def __init__(self, startIndex, endIndex, offset, resultFileHandler):
         self.startIndex = startIndex
         self.endIndex = endIndex
         self.offset = offset
+        self.resultFileHandler = resultFileHandler
                  
     def decimate(self, sMats, N):
         actualStartIndex = self.startIndex+self.offset
         sMats, step, actualEndIndex, startEne, endEne = sm.decimate(sMats, actualStartIndex, self.endIndex+self.offset, N)
+        self.resultFileHandler.setDeciminationInfo(actualStartIndex, actualEndIndex)
         try:
             decStr = "N=%d, Emin=%d(%f), Emax=%d(%f), step=%d" % (N,actualStartIndex,startEne,actualEndIndex,endEne,step)
         except TypeError:
@@ -28,30 +31,30 @@ class Decimator():
         return sMats, decStr     
 
 class PoleFinder:
-    def __init__(self, sMats, kCal, resultsFolder, fitName, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, popSmatCB=None):
+    def __init__(self, sMats, kCal, resultFileHandler, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None):
         self.sMats = sMats
         self.kCal = kCal
-        self.fitName = fitName
+        self.resultFileHandler = resultFileHandler
         self.kConversionFactor = kConversionFactor
-        self.decimator = Decimator(startIndex, endIndex, offset)
+        self.decimator = Decimator(startIndex, endIndex, offset, resultFileHandler)
         self.numCmpSteps = numCmpSteps
-        idStr = str(startIndex)+"_"+str(endIndex)+"_"+str(offset)+"_"+str(distFactor)+"_"+str(numCmpSteps)+"_"+str(self.kCal)+".dat"
-        self.file_coeff = open(resultsFolder+"/Output_Coeff_"+idStr, 'w')
-        self.file_poles = open(resultsFolder+"/Output_"+idStr, 'w')
         self.ratCmp = num.RationalCompare(ZEROVALUE, distFactor)
         self.allPoles = []
+        self.allPolesInfoStrs = []
         self.allRoots = []
         self.allNs = []
         self.cmpValue = cmpValue
-        self.popSmatCB = popSmatCB
-
+        self.populateSmatCB = populateSmatCB
+        self.file_roots = None
+        self.file_poles = None
+        self.distFactor = distFactor
+        self.mode = mode
+        self.first = True
+        
         if mode == DOUBLE_N:
             self._doubleN()
         else:
             self._incN()
-        
-        self.file_coeff.close()
-        self.file_poles.close()
 
     def _doubleN(self):
         Nmax = 64
@@ -69,27 +72,66 @@ class PoleFinder:
 
     def _doForN(self, N):
         try:
+            if not self.first:
+                print "\n"
+            self.first = False
             roots = self._getNroots(N)
-            self._locatePoles(roots)
+            self._locatePoles(roots, N)
             self.allNs.append(N)
-            print str(len(roots)) + " roots.\n\n"
         except Exception as inst:
             self.allRoots.append([])
             string = "Unhandled Exception: " + str(inst) + "\n"
-            print string
-            self.file_poles.write(string)
+            traceback.print_exc(file=sys.stdout)
+            if self.file_roots is not None:
+                self.file_roots.write(string)
+            if self.file_poles is not None:
+                self.file_poles.write(string)
+        if self.file_roots is not None:
+            self.file_roots.close()
+            self.file_roots = None
+        if self.file_poles is not None:
+            self.file_poles.close()
+            self.file_poles = None
 
     def _getNroots(self, N):
-        self.file_poles.write("\n")
-        self._printSep2(self.file_poles)
         sMats, decStr = self.decimator.decimate(self.sMats, N)
-        if self.popSmatCB is not None:
-            self.popSmatCB(sMats, self.sMats)
-        self.file_poles.write(decStr+"\n")
-        ratSmat = RatSMat(sMats, self.kCal, fitName=self.fitName)
-        return ratSmat.findPolyRoots(self.kConversionFactor, False)
+        ratSmat = RatSMat(sMats, self.kCal, resultFileHandler=self.resultFileHandler, doCalc=False)
+        self.resultFileHandler.setPoleFindParameters(self.mode, self.distFactor)
+        roots = None
+        if self.resultFileHandler.doesRootFileExist():
+            ratSmat.coeffSolve.printCalStr(True)
+            try:
+                roots = self._readNroots(N)
+                ratSmat.polyRootSolve.printCalStr(True)
+                print "Loaded Roots for N=" + str(N) + ":"
+            except Exception as e:
+                print "Error reading roots will attempt to calculate"
+        if roots is None:
+            if self.populateSmatCB is not None:
+                self.populateSmatCB(sMats, self.sMats)
+            ratSmat.doCalc()
+            self.file_roots = open(self.resultFileHandler.getRootFilePath(), 'w')
+            self.file_roots.write(decStr+"\n")
+            roots = ratSmat.findPolyRoots(self.kConversionFactor, False)
+            print "Calculated Roots for N=" + str(N) + ":"
+        print "  " + str(len(roots)) + " roots."
+        self.file_poles = open(self.resultFileHandler.getPoleFilePath(), 'w')
+        return roots
 
-    def _locatePoles(self, roots):
+    def _readNroots(self, N):
+        roots = []
+        with open(self.resultFileHandler.getRootFilePath(), 'r') as f:
+            firstLine = True
+            for line in f:        
+                if not firstLine:
+                    str = line[line.find('=')+1:line.find('i')]+'j'
+                    roots.append(complex(str))
+                firstLine = False
+        if len(roots) != 2*N+2:
+            raise Exception()
+        return roots
+
+    def _locatePoles(self, roots, N):
         #This is when we know the position of a pole and want to mark the closest root to this value in the output file.
         closestIndex = None
         if self.cmpValue is not None:
@@ -101,36 +143,35 @@ class PoleFinder:
                     closestIndex = j
 
         newPoles = []
+        newPolesInfoStrs = []
         numNewPoles = 0
         if len(self.allRoots) >= self.numCmpSteps:  
             for i in range(len(roots)):
                 root = roots[i]
                 isPole = True
-                endStr = ""
+                infoStr = "with N=%d[%d]" % (N, i)
                 for k in range(len(self.allRoots)-self.numCmpSteps, len(self.allRoots)): #Look at the last sets
                     cmpRootSet = self.allRoots[k]
                     for j in range(len(cmpRootSet)):
                         cmpRoot = cmpRootSet[j]
                         cdiff = self.ratCmp.getComplexDiff(root, cmpRoot)
                         if self.ratCmp.checkComplexDiff(cdiff):
-                            endStr += (" with N=%d[%d]: diff = "+self._getComplexFormat()) % (self.allNs[k], j, cdiff.real, cdiff.imag)
+                            infoStr += " N=%d[%d]" % (self.allNs[k], j)
                             break
                         if j==len(cmpRootSet)-1:
-                            endStr = ""
                             isPole = False
                     if not isPole:
                         break
                 if isPole:        
                     newPoles.append(root)
+                    newPolesInfoStrs.append(infoStr)
                     numNewPoles += 1
-                self._printRoot(i, root, endStr, closestIndex)
+                self._printRoot(i, root, closestIndex)
         else:
             for i in range(len(roots)):
-                self._printRoot(i, roots[i], "", closestIndex)
+                self._printRoot(i, roots[i], closestIndex)
 
         self.allRoots.append(roots)
-        
-        self._printSep1(self.file_poles)
 
         #Determine if lost pole. If so then note.
         lostIndices = []
@@ -146,7 +187,9 @@ class PoleFinder:
 
         #Determine if new pole. If so then add to self.allPoles and note.
         newIndex = -1
-        for newPole in newPoles:
+        for i in range(len(newPoles)):
+          newPole = newPoles[i]
+          newPolesInfoStr = newPolesInfoStrs[i]
           isNew = True
           for i in range(len(self.allPoles)):
             pole = self.allPoles[i]
@@ -156,37 +199,51 @@ class PoleFinder:
 
           if isNew:
             self.allPoles.append(newPole)
+            self.allPolesInfoStrs.append(newPolesInfoStr)
             #Record when we start adding new poles
             if newIndex == -1:
               newIndex = len(self.allPoles)-1
           else:
             #If it's not new then just update the value
             self.allPoles[i] = newPole
+            self.allPolesInfoStrs[i] = newPolesInfoStr
 
+        poles = 0
+        newPoles = 0
+        lostPoles = 0
         for i in range(len(self.allPoles)):
+          poles += 1
           endStr = ""
           enePole = self._calEnergy(self.allPoles[i])
           if newIndex!=-1 and i>=newIndex:
-            endStr = "NEW"
+            endStr = "NEW "
+            newPoles += 1
             
           for j in range(len(lostIndices)):
             if i == lostIndices[j]:
-              endStr = "LOST"
+              endStr = "LOST "
+              poles -= 1
+              lostPoles += 1
               break
 
-          writeStr = ("Pole_k[%d]="+self._getComplexFormat()+"\tPole_E[%d]="+self._getComplexFormat()+"\t%s\n") % (i,self.allPoles[i].real,self.allPoles[i].imag,i,enePole.real,enePole.imag,endStr)
+          writeStr = ("Pole_k[%d]="+self._getComplexFormat()+"\tPole_E[%d]="+self._getComplexFormat()+"    \t%s%s\n") % (i,self.allPoles[i].real,self.allPoles[i].imag,i,enePole.real,enePole.imag,endStr,self.allPolesInfoStrs[i])
           self.file_poles.write(writeStr)
+          
+        print "Poles calculated in mode " + self.mode + ", using df=" + str(self.distFactor)
+        print "Calculated Poles for N=" + str(N) + ":"
+        print "  " + str(poles) + " poles, of which " + str(newPoles) + " are new. " + str(lostPoles) + (" has" if lostPoles==1 else " have") + " been lost."
     
     def _calEnergy(self, k):
         return complex((1.0/self.kConversionFactor)*k**2)
 
-    def _printRoot(self, i, root, endStr, closestIndex):
-        endStr2 = ""
+    def _printRoot(self, i, root, closestIndex):
+        endStr = ""
         if self.cmpValue is not None and closestIndex==i:
-            endStr2 = " @<****>@"
+            endStr = " @<****>@"
         eneRoot = self._calEnergy(root)
-        writeStr = ("Root_k[%d]="+self._getComplexFormat()+"\tRoot_E[%d]="+self._getComplexFormat()+"\t%s%s\n") % (i,root.real,root.imag,i,eneRoot.real,eneRoot.imag,endStr,endStr2)
-        self.file_poles.write(writeStr)
+        writeStr = ("Root_k[%d]="+self._getComplexFormat()+"\tRoot_E[%d]="+self._getComplexFormat()+"\t%s\n") % (i,root.real,root.imag,i,eneRoot.real,eneRoot.imag,endStr)
+        if self.file_roots is not None:
+            self.file_roots.write(writeStr)
                 
     def _printSep1(self, file):
         file.write("@<---------------------------------------------------------------------------------------------->@\n")
