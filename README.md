@@ -21,7 +21,7 @@ ________________
 Depending on the calculation configuration significant time may be required to complete the calculations. For this reason and to assist with the organisation of results, generated files are automatically stored according to the structure below.
 
  * Dir: Fit Type and Set ID String.
-   * Dir: Method and parameters of method used to calculated the coefficients.
+   * Dir: Method and parameters used to calculated the coefficients.
      * Dir: Nature of the fit (single or piecewise).
        * Dir: Coefficient Files.
          * Dir: Number of Points, start and end indices.
