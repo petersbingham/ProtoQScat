@@ -32,7 +32,7 @@ Depending on the calculation configuration significant time may be required to c
            * Dir: Poles, according to technique (doubling or incrementing N) and the threshold comparison factor.
              * Files: One for each number of Points, start and end indices.
   
-The software will attempt to load any prior dependencies before doing calculations. So, for example, if we have already calculated a set of poles and then change only the threholds, the software will load the previously calculated roots as a starting point, rather than recalculating the coefficients and roots again.
+The software will attempt to load any prior dependencies before doing calculations. So, for example, if we have already calculated a set of poles and then change only the threholds, the software will load the previously calculated roots as a starting point, rather than recalculating the coefficients and roots again. Similarly, if we've already calculated a set of roots and then only change the method or parameters for the root calculation the prior coefficients will be used as a starting point. 
 
 These files are by default, stored in the Results Folder in the "Multi Channel" directory. 
 
