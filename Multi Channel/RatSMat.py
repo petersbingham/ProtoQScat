@@ -4,8 +4,7 @@ import scipy.sparse.linalg as sp_sparse_linalg
 import sympy as sy
 from sympy.matrices import Matrix as sy_matrix
 import sympy.polys as sy_polys
-import sympy.mpmath as sy_mp
-import mpmath
+import sympy.mpmath as mpmath
 import collections
 
 import sys
@@ -603,9 +602,9 @@ class RatSMat(sm.mat):
     try:
         fun = lambda e: self._getDet(e, multipler)
         if type == 'muller':
-            return complex(sy_mp.findroot(fun, startingEne, solver='muller', maxsteps=10000, tol=2.16840434497100886801e-19))
+            return complex(mpmath.findroot(fun, startingEne, solver='muller', maxsteps=10000, tol=2.16840434497100886801e-19))
         else:
-            return complex(sy_mp.findroot(fun, startingEne[0], solver='secant'))
+            return complex(mpmath.findroot(fun, startingEne[0], solver='secant'))
     except ValueError:
         return None
           

@@ -3,7 +3,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import pylab
 import numpy as np
-import mpmath
+import sympy.mpmath as mpmath
 mpmath.dps = 5
 
 REMOVEDISCONT = True
