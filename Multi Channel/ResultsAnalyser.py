@@ -83,13 +83,13 @@ class ResultsAnalyser:
                     if typeClass==Pole:
                         post = " "
                     Estr = line[line.rfind(']=')+2:line.rfind('i'+post)]+'j' 
-                    print kstr + "\t" + Estr  
+                    #print kstr + "\t" + Estr  
                     if typeClass==Root:
                         type = Root(QSType.QScomplex(kstr), QSType.QScomplex(Estr))
                     else:
                         convRootsStrs = line[line.find("with")+5:].split(" ")
                         convRoots = map(lambda x: map(lambda y: int(y), x[2:-1].replace("]","").split("[")), convRootsStrs)
-                        print convRoots
+                        #print convRoots
                         type = Pole(QSType.QScomplex(kstr), QSType.QScomplex(Estr), POLE_STATUS_NEW in line, POLE_STATUS_LOST in line, convRoots)
                     container.append(type) 
                 first = False      

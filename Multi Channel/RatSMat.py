@@ -50,9 +50,9 @@ class PolyRootSolve():
     self.numpyArgs = {}
     self.sympyArgs = {'n':DPS, 'maxsteps':500, 'cleanup':True}
     if ALLROOTS_FINDTYPE == "numpy":
-        self.typeStr = "numpy "+getArgDesc(np.roots, self.numpyArgs)
+        self.typeStr = "numpy"+getArgDesc(np.roots, self.numpyArgs)
     else:
-        self.typeStr = "sympy "+getArgDesc(sy_polys.polytools.nroots, self.sympyArgs)
+        self.typeStr = "sympy"+getArgDesc(sy_polys.polytools.nroots, self.sympyArgs)
     self.printed = False
     
   def getRoots(self, deter, k):
@@ -120,7 +120,7 @@ class CoeffSolve():
     if QSMODE == MODE_MPMATH:
         args = {}
         if act==0:
-            self.typeStr = "mpmath qr_solve_dps "+str(DPS)+" "+getArgDesc(mpmath.qr_solve, args)
+            self.typeStr = "mpmath_qr_solve_dps"+getArgDesc(mpmath.qr_solve, args)+" DPS"+str(DPS)
             self.matrixType = 1
             self.indexType = 1
         else:
@@ -130,7 +130,7 @@ class CoeffSolve():
         if PYTYPE_COEFF_SOLVE_METHOD == "numpy solve":
             args = {}
             if act==0:
-                self.typeStr = "numpy solve "+getArgDesc(np.linalg.solve, args)
+                self.typeStr = "numpy_solve"+getArgDesc(np.linalg.solve, args)
                 self.matrixType = 0
                 self.indexType = 0
             else:
@@ -139,7 +139,7 @@ class CoeffSolve():
         elif PYTYPE_COEFF_SOLVE_METHOD == "numpy lstsq":
             args = {}
             if act==0:
-                self.typeStr = "numpy lstsq "+getArgDesc(np.linalg.lstsq, args)
+                self.typeStr = "numpy_lstsq"+getArgDesc(np.linalg.lstsq, args)
                 self.matrixType = 0
                 self.indexType = 0
             else:
@@ -148,7 +148,7 @@ class CoeffSolve():
         elif PYTYPE_COEFF_SOLVE_METHOD == "numpy sparse bicg": 
             args = {}
             if act==0:
-                self.typeStr = "numpy sparse bicg "+getArgDesc(sp_sparse_linalg.bicg, args)
+                self.typeStr = "numpy_sparse_bicg"+getArgDesc(sp_sparse_linalg.bicg, args)
                 self.matrixType = 0
                 self.indexType = 1
             else:
@@ -156,7 +156,7 @@ class CoeffSolve():
         elif PYTYPE_COEFF_SOLVE_METHOD == "numpy sparse bicgstab":
             args = {}
             if act==0:
-                self.typeStr = "numpy sparse bicgstab "+getArgDesc(sp_sparse_linalg.bicgstab, args)
+                self.typeStr = "numpy_sparse_bicgstab"+getArgDesc(sp_sparse_linalg.bicgstab, args)
                 self.matrixType = 0
                 self.indexType = 1
             else:
@@ -164,7 +164,7 @@ class CoeffSolve():
         elif PYTYPE_COEFF_SOLVE_METHOD == "numpy sparse lgmres":
             args = {}
             if act==0:
-                self.typeStr = "numpy sparse lgmres "+getArgDesc(sp_sparse_linalg.lgmres, args)
+                self.typeStr = "numpy_sparse_lgmres"+getArgDesc(sp_sparse_linalg.lgmres, args)
                 self.matrixType = 0
                 self.indexType = 1
             else:
@@ -172,7 +172,7 @@ class CoeffSolve():
         elif PYTYPE_COEFF_SOLVE_METHOD == "numpy sparse minres":
             args = {}
             if act==0:
-                self.typeStr = "numpy sparse minres "+getArgDesc(sp_sparse_linalg.minres, args)
+                self.typeStr = "numpy_sparse_minres"+getArgDesc(sp_sparse_linalg.minres, args)
                 self.matrixType = 0
                 self.indexType = 1
             else:
@@ -180,7 +180,7 @@ class CoeffSolve():
         elif PYTYPE_COEFF_SOLVE_METHOD == "numpy sparse qmr":
             args = {}
             if act==0:
-                self.typeStr = "numpy sparse qmr "+getArgDesc(sp_sparse_linalg.qmr, args)
+                self.typeStr = "numpy_sparse_qmr"+getArgDesc(sp_sparse_linalg.qmr, args)
                 self.matrixType = 0
                 self.indexType = 1
             else:
@@ -189,7 +189,7 @@ class CoeffSolve():
             args_qr = {}
             args_s = {}
             if act==0:
-                self.typeStr = "numpy qr "+getArgDesc(np.linalg.qr, args_qr)+" numpy solve "+getArgDesc(np.linalg.solve, args_s)
+                self.typeStr = "numpy_qr"+getArgDesc(np.linalg.qr, args_qr)+" numpy_solve"+getArgDesc(np.linalg.solve, args_s)
                 self.matrixType = 0
                 self.indexType = 0
             else:

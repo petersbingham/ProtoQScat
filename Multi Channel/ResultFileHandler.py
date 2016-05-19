@@ -43,7 +43,7 @@ class ResultFileHandler:
     
     def setPoleFindParameters(self, mode, distFactor):
         base = self._getRootsBaseString()
-        self.polesPath = base + POLESDIR + "_" + str(mode) + "_" + str(distFactor) + sep()
+        self.polesPath = base + POLESDIR + "_" + str(mode) + "_df" + str(distFactor) + sep()
         self._makeDir(self.polesPath)
         self.polesPath += self.getPostStr()
     

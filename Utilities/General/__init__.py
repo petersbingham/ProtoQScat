@@ -7,4 +7,4 @@ def getArgDesc(func, args):
     else:
         d = {}
     d.update(args)
-    return str(d).replace(':', '').replace('\'', '')
+    return str(d).replace(':', '').replace('\'', '').replace('{', '(').replace('}', ')')
