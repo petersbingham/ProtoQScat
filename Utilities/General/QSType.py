@@ -9,7 +9,7 @@ MODE_MPMATH = 1
 ##########################################################
 ################### Configuration Here ###################
 
-QSMODE = MODE_MPMATH
+QSMODE = MODE_NORM
 DPS_MPMATH = 100
 DPS_PYTHONTYPES = 25
 
