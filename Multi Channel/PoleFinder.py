@@ -116,6 +116,7 @@ class PoleFinder:
             print "Calculated Roots for N=" + str(N) + ":"
         print "  " + str(len(roots)) + " roots."
         self.file_poles = open(self.resultFileHandler.getPoleFilePath(), 'w')
+        self.file_poles.write(decStr+"\n")
         return roots
 
     def _readNroots(self, N):

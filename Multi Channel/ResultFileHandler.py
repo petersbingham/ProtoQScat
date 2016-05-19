@@ -1,17 +1,15 @@
 import os
+import sys
 from sys import platform as _platform
 
-def _sep():
-    if _platform == "win32":
-        return "\\"
-    else:
-        return "/"
-
 baseDir = os.path.dirname(os.path.realpath(__file__))
-RESULTSDIR = baseDir + _sep() + "Results" + _sep()
-COEFFDIR = _sep() + "CoefficientFiles" + _sep()
-ROOTSDIR = _sep() + "Roots" + _sep()
-POLESDIR = _sep() + "Poles"
+sys.path.insert(0,baseDir+'/../Utilities')
+from General.File import *
+
+RESULTSDIR = baseDir + sep() + "Results" + sep()
+COEFFDIR = sep() + "CoefficientFiles" + sep()
+ROOTSDIR = sep() + "Roots" + sep()
+POLESDIR = sep() + "Poles"
 
 #Note to exceed the old max file path in win we must use \\?\ prefix, unicode and double slashes.
 class ResultFileHandler:
@@ -30,10 +28,10 @@ class ResultFileHandler:
         self.endIndex = endIndex
     
     def setCoeffRoutine(self, coeffRoutine):
-        self.coeffRoutinePath = self.sysPath + _sep() + "COEFFS-" + coeffRoutine
+        self.coeffRoutinePath = self.sysPath + sep() + "COEFFS-" + coeffRoutine
         
         base = self._getBaseString()
-        self.coeffPath = base+COEFFDIR+self.getPostStr()+_sep()
+        self.coeffPath = base+COEFFDIR+self.getPostStr()+sep()
         self._makeDir(self.coeffPath)
     
     def setRootFindRoutine(self, rootFindRoutine):
@@ -45,7 +43,7 @@ class ResultFileHandler:
     
     def setPoleFindParameters(self, mode, distFactor):
         base = self._getRootsBaseString()
-        self.polesPath = base + POLESDIR + "_" + str(mode) + "_" + str(distFactor) + _sep()
+        self.polesPath = base + POLESDIR + "_" + str(mode) + "_" + str(distFactor) + sep()
         self._makeDir(self.polesPath)
         self.polesPath += self.getPostStr()
     
@@ -57,13 +55,13 @@ class ResultFileHandler:
         return "N=" + str(self.fitSize) + "_" + "S=" + str(self.startIndex) + "_" + "E=" + str((self.endIndex+1*self.numFits)-1)
     
     def _getRootsBaseString(self):
-        return self._getBaseString() + _sep() + "ROOTS-" + self.rootFindRoutine
+        return self._getBaseString() + sep() + "ROOTS-" + self.rootFindRoutine
     
     def _getBaseString(self):
         if self.numFits == 1:
-            return self.coeffRoutinePath + _sep() + "SingleFit"
+            return self.coeffRoutinePath + sep() + "SingleFit"
         else:
-            return self.coeffRoutinePath + _sep() + str(self.numFits) + "Fits"
+            return self.coeffRoutinePath + sep() + str(self.numFits) + "Fits"
                      
     def doCoeffFilesExist(self):
         if os.path.isdir(self.coeffPath):
@@ -74,16 +72,16 @@ class ResultFileHandler:
         return False  
     
     def getCoeffFilePath(self, fit, ci, typeString, ext=".dat"):
-        return self._fixPath(self.coeffPath + typeString + "_" + str(fit) + "_" + str(ci) + ext)
+        return fixPath(self.coeffPath + typeString + "_" + str(fit) + "_" + str(ci) + ext)
 
     def doesRootFileExist(self, ext=".dat"):
         return os.path.isfile(self.getRootFilePath(ext))
 
     def getRootFilePath(self, ext=".dat"):
-        return self._fixPath(self.rootPath + ext) 
+        return fixPath(self.rootPath + ext) 
 
     def getPoleFilePath(self, ext=".dat"):
-        return self._fixPath(self.polesPath + ext)
+        return fixPath(self.polesPath + ext)
 
     def _getAfitNames(self): 
         return self._getFitNames("A")
@@ -99,11 +97,5 @@ class ResultFileHandler:
         return fitNames  
     
     def _makeDir(self, path):
-        if not os.path.isdir(self._fixPath(path)):
-          os.makedirs(self._fixPath(path))
-      
-    def _fixPath(self, path):
-        if _platform == "win32":
-            return u"\\\\?\\"+unicode(path)
-        else:
-            return path
+        if not os.path.isdir(fixPath(path)):
+          os.makedirs(fixPath(path))
