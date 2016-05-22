@@ -7,9 +7,11 @@ import General.Numerical as num
 from RatSMat import *
 from General.QSType import *
 
-ZEROVALUE = 1E-7
+
+ZEROVALEXP = 7
 DOUBLE_N = 'doubleN'
 INC_N = 'incN'
+COMPLETE_STR = "Complete"
 
 class Decimator():
     def __init__(self, startIndex, endIndex, offset, resultFileHandler):
@@ -31,14 +33,16 @@ class Decimator():
         return sMats, decStr     
 
 class PoleFinder:
-    def __init__(self, sMats, kCal, resultFileHandler, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None):
+    def __init__(self, sMats, kCal, resultFileHandler, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP):
         self.sMats = sMats
         self.kCal = kCal
         self.resultFileHandler = resultFileHandler
         self.kConversionFactor = kConversionFactor
         self.decimator = Decimator(startIndex, endIndex, offset, resultFileHandler)
         self.numCmpSteps = numCmpSteps
-        self.ratCmp = num.RationalCompare(ZEROVALUE, distFactor)
+        self.zeroValExp = zeroValExp
+        self.zeroValue = 10**(-zeroValExp)
+        self.ratCmp = num.RationalCompare(self.zeroValue, distFactor)
         self.allPoles = []
         self.allPolesInfoStrs = []
         self.allRoots = []
@@ -96,7 +100,7 @@ class PoleFinder:
     def _getNroots(self, N):
         sMats, decStr = self.decimator.decimate(self.sMats, N)
         ratSmat = RatSMat(sMats, self.kCal, resultFileHandler=self.resultFileHandler, doCalc=False)
-        self.resultFileHandler.setPoleFindParameters(self.mode, self.distFactor)
+        self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distFactor, self.zeroValExp)
         roots = None
         if self.resultFileHandler.doesRootFileExist():
             ratSmat.coeffSolve.printCalStr(True)
@@ -105,7 +109,7 @@ class PoleFinder:
                 ratSmat.polyRootSolve.printCalStr(True)
                 print "Loaded Roots for N=" + str(N) + ":"
             except Exception as e:
-                print "Error reading roots will attempt to calculate"
+                print "Error reading roots will attempt to recalculate"
         if roots is None:
             if self.populateSmatCB is not None:
                 self.populateSmatCB(sMats, self.sMats)
@@ -121,16 +125,17 @@ class PoleFinder:
 
     def _readNroots(self, N):
         roots = []
+        fileComplete = False
         with open(self.resultFileHandler.getRootFilePath(), 'r') as f:
             firstLine = True
             for line in f:        
-                if not firstLine:
+                if COMPLETE_STR in line:
+                    return roots
+                elif not firstLine:
                     str = line[line.find('=')+1:line.find('i')]+'j'
                     roots.append(complex(str))
                 firstLine = False
-        if len(roots) != 2*N+2:
-            raise Exception()
-        return roots
+        raise Exception("Incomplete Root File")
 
     def _locatePoles(self, roots, N):
         #This is when we know the position of a pole and want to mark the closest root to this value in the output file.
@@ -171,6 +176,9 @@ class PoleFinder:
         else:
             for i in range(len(roots)):
                 self._printRoot(i, roots[i], closestIndex)
+        if self.file_roots is not None:
+            self.file_roots.write(COMPLETE_STR)
+        
 
         self.allRoots.append(roots)
 
@@ -230,6 +238,7 @@ class PoleFinder:
           writeStr = ("Pole_k[%d]="+self._getComplexFormat()+"\tPole_E[%d]="+self._getComplexFormat()+"    \t%s%s\n") % (i,self.allPoles[i].real,self.allPoles[i].imag,i,enePole.real,enePole.imag,endStr,self.allPolesInfoStrs[i])
           self.file_poles.write(writeStr)
           
+        self.file_poles.write(COMPLETE_STR)
         print "Poles calculated in mode " + self.mode + ", using df=" + str(self.distFactor)
         print "Calculated Poles for N=" + str(N) + ":"
         print "  " + str(poles) + " poles, of which " + str(newPoles) + " are new. " + str(lostPoles) + (" has" if lostPoles==1 else " have") + " been lost."

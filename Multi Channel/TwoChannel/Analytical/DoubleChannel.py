@@ -9,6 +9,7 @@ base = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/../../../Utilities')
 import Scattering.Matrices as sm
 import General.Numerical as num
+import General.SimpPlot3D as plot3D
 from General.QSType import *
 
 EQUIVALENT_TESTS = False
@@ -134,6 +135,16 @@ class Smat(sm.mat):
       return self._denum(False)
     return mpm.findroot(lambda ene: eneEqu(self, ene), start)
   
+  def plotPoles(self, Rs, Is, real):
+    self.i = 0
+    @np.vectorize
+    def eneEqu(self, R, I):
+      print self.i
+      self.i += 1
+      self.setEnergy(R+I*1.0j, False)
+      return 1.0 / self._denum(False)
+    plot3D.plot(Rs, Is, lambda R, I: eneEqu(self, R, I), real, "Energy", "1/Denum")
+      
   #######
       
   def abs(self):

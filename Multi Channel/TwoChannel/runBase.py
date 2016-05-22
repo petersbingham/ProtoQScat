@@ -54,7 +54,7 @@ def getDecimatedRatSmat(args, smats, anakCal, fitkCal, N, anaSmat=None, suppress
 def getPolyRoots(args, anakCal, fitkCal, resultsPath, mode, cmpValue=None):
     anaSmat = getAnaSmat(args, anakCal)
     smats = getDiscreteAnaSmats(args)
-    PoleFinder(smats, fitkCal, _getFileHandler(args, anakCal, fitkCal), ENEFACTOR, 0, len(smats)-1, 0, 0.05, 1, cmpValue=cmpValue, mode=mode, populateSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2))
+    PoleFinder(smats, fitkCal, _getFileHandler(args, anakCal, fitkCal), ENEFACTOR, 0, len(smats)-1, 0, args.distFactor_, args.cfSteps_, cmpValue=cmpValue, mode=mode, populateSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2), zeroValExp=args.zeroValExp_)
 
 def popSmat(anaSmat, smats1, smats2=None):
     for ene in smats1:

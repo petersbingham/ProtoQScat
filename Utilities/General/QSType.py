@@ -39,7 +39,26 @@ def QScomplex(val):
     if QSMODE == MODE_NORM:
         return complex(val)
     else:
-        return mpmath.mpc(val)
+        if type(val) is str or type(val) is unicode:
+            real = None
+            imag = None
+            delim = None
+            if '+' in val[1:]:
+                delim = '+'
+            elif '-' in val[1:]:
+                delim = '-'
+            if delim is None:
+                if 'j' in val:
+                    imag = val.replace('j','')
+                else:
+                    real = val
+            else:
+                index = val[1:].find(delim) + 1
+                real = val[:index]
+                imag = val[index:].replace('j','')
+            return mpmath.mpc(real=real,imag=imag)
+        else:
+            return mpmath.mpc(val)
 
 def QSToSympy(val):
     if QSMODE == MODE_NORM:
@@ -156,3 +175,18 @@ def QSsumElements(mat):
 
 def QSfloatList(lst):
     return str(map(lambda x:str(x),lst)).replace("'","")
+
+def mpIntDigits(num):
+    if not mpmath.almosteq(num,0):
+        a = mpmath.log(abs(num), b=10)
+        b = mpmath.nint(a)
+        if mpmath.almosteq(a,b):
+            return int(b)+1
+        else:
+            c = mpmath.ceil(a)
+            try:
+                return int(c)
+            except:
+                pass
+    else:
+        return 0

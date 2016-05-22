@@ -103,7 +103,7 @@ class RationalCompare:
         else:
             return self._calDiff(self.zeroValue, val2)
 
-    def _calDiff(self, val1, val2):
+    def _calDiff(self, val1, val2): #https://en.wikipedia.org/wiki/Relative_change_and_difference
         absVal1 = abs(val1)
         absVal2 = abs(val2)
         valMax = absVal2 if (absVal1 < absVal2) else absVal1
@@ -115,3 +115,9 @@ def absDiff(c1, c2):
 
 def complexDiff(c1, c2):
     return c1-c2
+
+def truncateFloat(dps, val):
+    return float(("{0:."+str(dps)+"f}").format(val))
+
+def truncateComplex(dps, val):
+    return truncateFloat(dps,val.real) + truncateFloat(dps,val.imag)*1.0j

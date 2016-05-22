@@ -633,7 +633,6 @@ class RatSMat(sm.mat):
         for eKey in self.alphas:
             alphas = self.alphas[eKey]
             betas = self.betas[eKey]
-            Fin = np.matrix(self._getZeroListMats(), dtype=np.complex128)
             k = sy.symbols('k')
             matLst = []
             for m in range(self.numChannels):

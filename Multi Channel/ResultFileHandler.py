@@ -41,9 +41,9 @@ class ResultFileHandler:
         self._makeDir(self.rootPath)
         self.rootPath += self.getPostStr()
     
-    def setPoleFindParameters(self, mode, distFactor):
+    def setPoleFindParameters(self, mode, numCmpSteps, distFactor, zeroPre):
         base = self._getRootsBaseString()
-        self.polesPath = base + POLESDIR + "_" + str(mode) + "_df" + str(distFactor) + sep()
+        self.polesPath = base + POLESDIR + "_" + str(mode) + "_cfStep" + str(numCmpSteps) + "_df" + str(distFactor) + "_zeroE-" + str(zeroPre) + sep() 
         self._makeDir(self.polesPath)
         self.polesPath += self.getPostStr()
     

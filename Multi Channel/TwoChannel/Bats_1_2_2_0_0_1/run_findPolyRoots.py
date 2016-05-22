@@ -8,7 +8,11 @@ from runBase import *
 from Analytical.runArgsRange import *
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Poly Root find", parents=[tcp_range])
 spArgs.add_argument("mode_", help="Mode", type=int)
+spArgs.add_argument("cfSteps_", help="Compare Steps", type=int)
+spArgs.add_argument("distFactor_", help="Distinguish Factor", type=float)
+spArgs.add_argument("zeroValExp_", help="Zero Value Precision", type=int)
 spArgs.add_argument("cmpValue_", help="Compare Value", type=complex, nargs='?', default=None)
+
 args = spArgs.parse_args()
 
 MODE_DOUBLE = 0
