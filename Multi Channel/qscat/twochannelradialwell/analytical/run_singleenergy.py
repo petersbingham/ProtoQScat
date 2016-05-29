@@ -1,4 +1,4 @@
-from runArgsCommon import *
+from runargscommon import *
 
 seArgs = argparse.ArgumentParser(description="Two Channel Radial Well - Single Energy", parents=[parentArgs])
 seArgs.add_argument("ene_", help="Energy", type=complex)
@@ -14,10 +14,11 @@ print "\n|S|:"
 print str(smat.abs())
 print "\nS'S:"
 print str(smat.uniOp())
-print "\na:"
-print str(mats.a)
-print "\na^2:"
-print str(mats.aSq)
+if LIN_ALGEBRA:
+    print "\na:"
+    print str(mats.a)
+    print "\na^2:"
+    print str(mats.aSq)
 print "\nA:"
 print str(mats.A)
 print "\nV:"

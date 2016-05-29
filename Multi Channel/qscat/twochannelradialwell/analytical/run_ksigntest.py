@@ -1,4 +1,4 @@
-from runArgsCommon import *
+from runargscommon import *
 
 seArgs = argparse.ArgumentParser(description="Two Channel Radial Well - Single Energy", parents=[parentArgs])
 args = seArgs.parse_args()

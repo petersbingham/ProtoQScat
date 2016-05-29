@@ -1,4 +1,4 @@
-from runArgsCommon import *
+from runargscommon import *
 
 rootArgs = argparse.ArgumentParser(description="Two Channel Radial Well - Find Bound Roots", parents=[parentArgs])
 args = rootArgs.parse_args()

@@ -1,4 +1,4 @@
-from runArgsCommon import *
+from runargscommon import *
 
 tcp_range = argparse.ArgumentParser(parents=[parentArgs], add_help=False)
 tcp_range.add_argument("eneStart_", help="Energy Start",type=QSfloat)

@@ -1,4 +1,4 @@
-from runArgsRange import *
+from runargsrange import *
 tcp_range_type = argparse.ArgumentParser(description="Two Channel Radial Well - Energy Range File", parents=[tcp_range])
 tcp_range_type.add_argument("type_", help="Type to Plot")
 args = tcp_range_type.parse_args()
@@ -21,7 +21,7 @@ ene = args.eneStart_+args.eneComplex_*1j
 f = open("res.txt","w")
 
 for i in range(0,args.eneSteps_+1,1):
-  eneStr = "{:1.6f}".format(ene.real) + "+{:1.6f}i".format(ene.imag)
+  eneStr = formattedComplexString(ene, 6)
   try:
     smat.setEnergy(ene)
     if args.type_ == "S":

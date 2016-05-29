@@ -9,7 +9,7 @@ MODE_MPMATH = 1
 ##########################################################
 ################### Configuration Here ###################
 
-QSMODE = MODE_MPMATH
+QSMODE = MODE_NORM
 DPS_MPMATH = 100
 DPS_PYTHONTYPES = 25
 
@@ -173,6 +173,19 @@ def QSsumElements(mat):
     
 ############### OTHER ###############
 
+def formattedFloatString(val, dps):
+    if QSMODE == MODE_NORM:
+        return ("{:1."+str(dps)+"f}").format(val)
+    else:
+        return mpmath.nstr(val, mpIntDigits(val)+dps)
+
+def formattedComplexString(val, dps):
+    if val.imag < 0.0:
+        signStr = ""
+    else:
+        signStr = "+"
+    return formattedFloatString(val.real, dps) + signStr + formattedFloatString(val.imag, dps)+"j"
+        
 def QSfloatList(lst):
     return str(map(lambda x:str(x),lst)).replace("'","")
 

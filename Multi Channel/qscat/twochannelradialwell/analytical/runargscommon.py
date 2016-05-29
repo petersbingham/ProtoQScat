@@ -1,4 +1,4 @@
-from DoubleChannel import *
+from doublechannel import *
 from General.QSType import *
 import argparse
 

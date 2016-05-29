@@ -1,4 +1,4 @@
-from runArgsCommon import *
+from runargscommon import *
 
 rootArgs = argparse.ArgumentParser(description="Two Channel Radial Well - Root Find", parents=[parentArgs])
 rootArgs.add_argument("findStart_", help="Start Energy", type=complex)

@@ -436,7 +436,6 @@ class mat:
         self.size = size
         self.precision = precision
         self.min = pow(10,-self.precision)
-        self.formatstr = "{:+."+str(self.precision)+"f}"
         
     def __getitem__(self, i):
         return self._getRow(i)
@@ -482,7 +481,7 @@ class mat:
     
     def _getFormattedStr(self, value, isImag):
         if isImag:
-            return "("+self.formatstr.format(QScomplex(value).real) + self.formatstr.format(QScomplex(value).imag)+"i)"
+            return formattedComplexString(QScomplex(value), self.precision)
         else:
-            return self.formatstr.format(QScomplex(value).real)
+            return formattedFloatString(QScomplex(value).real, self.precision)
     
