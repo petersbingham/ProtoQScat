@@ -1,6 +1,6 @@
 from RatSMatWrap import *
 import matplotlib.pyplot as plt
-from runBase import *
+from runbase import *
 
 childArgs = argparse.ArgumentParser(parents=[parentArgs])
 childArgs.add_argument("m_", help="m element", type=int)

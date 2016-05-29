@@ -1,6 +1,6 @@
 from RatSMatWrap import *
 import General.SimpPlot as sp
-from runArgsPlot import *
+from runargsplot import *
 
 kmat = RatSMatWrap("fort.19",args.subN_,args.subStart_,args.subEnd_)
 vals = kmat.getFinDetRange(args.plotStart_, args.plotEnd_, args.plotComplex_, args.steps_)

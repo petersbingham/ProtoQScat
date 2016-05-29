@@ -1,5 +1,5 @@
 from RatSMatWrap import *
-from runBase import *
+from runbase import *
 args = parentArgs.parse_args()
 
 try:

@@ -3,9 +3,9 @@ import os
 base = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/..')
 from RatSMat import *
-from Analytical.DoubleChannel import *
-from PoleFinder import *
-from ResultFileHandler import *
+from analytical.doublechannel import *
+from polefinder import *
+from resultfilehandler import *
 
 def _getFileHandler(args, anakCal, fitkCal):
     sysName = "Two Channel Radial Well_" + str(anakCal) + "_" + str(fitkCal) + "_" + str(args.r0_) + "_" + str(args.v1_) + "_" + str(args.v2_) + "_" + str(args.t1_) + "_" + str(args.t2_) + "_" + str(args.lam_) + "_" + str(args.eneStart_) + "_" + str(args.eneEnd_) + "_" + str(args.eneComplex_) + "_" + str(args.eneSteps_)

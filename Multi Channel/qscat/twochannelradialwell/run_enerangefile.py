@@ -1,5 +1,5 @@
-from runBase import *
-from Analytical.runArgsRange import *
+from runbase import *
+from analytical.runargsrange import *
 import Scattering.Stran as S
 
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - S-matrix Range", parents=[tcp_range])

@@ -1,5 +1,5 @@
-from runBase import *
-from Analytical.runArgsRange import *
+from runbase import *
+from analytical.runargsrange import *
 
 seArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Single Energy", parents=[tcp_range])
 seArgs.add_argument("ene_", help="Energy", type=complex)

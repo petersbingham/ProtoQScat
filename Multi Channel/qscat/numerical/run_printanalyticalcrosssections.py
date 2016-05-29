@@ -1,6 +1,6 @@
 from RatSMatWrap import *
 import matplotlib.pyplot as plt
-from runBase import *
+from runbase import *
 args = parentArgs.parse_args()
 
 sm.setParams(0.12, 0.07, 0.90, 0.93, 0.20, 0.11)

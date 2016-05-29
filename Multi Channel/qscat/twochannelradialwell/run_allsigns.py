@@ -1,5 +1,5 @@
-from runBase import *
-from Analytical.runArgsRange import *
+from runbase import *
+from analytical.runargsrange import *
 
 seArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - All Signs", parents=[tcp_range])
 args = seArgs.parse_args()

@@ -1,6 +1,6 @@
 from RatSMatWrap import *
 import matplotlib.pyplot as plt
-from runBase import *
+from runbase import *
 
 childArgs = argparse.ArgumentParser(description="Pyrazine Fit - Root find", parents=[parentArgs])
 childArgs.add_argument("sene_", help="start energy", type=complex)

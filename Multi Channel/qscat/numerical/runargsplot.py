@@ -1,4 +1,4 @@
-from runBase import *
+from runbase import *
 
 args_range = argparse.ArgumentParser(description="Pyrazine Fit Plot", parents=[parentArgs], add_help=False)
 args_range.add_argument("plotStart_", help="Plot Start Energy", type=float, nargs='?', default=None)

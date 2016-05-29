@@ -12,7 +12,7 @@ ROOTSDIR = sep() + "Roots" + sep()
 POLESDIR = sep() + "Poles"
 
 #Note to exceed the old max file path in win we must use \\?\ prefix, unicode and double slashes.
-class ResultFileHandler:
+class resultfilehandler:
     def __init__(self, sysName):
         self.sysPath = RESULTSDIR + sysName
         self.startIndex = None

@@ -1,5 +1,5 @@
 from RatSMatWrap import *
-from runArgsPlot import *
+from runargsplot import *
 
 try:
   kmat = RatSMatWrap("fort.19")

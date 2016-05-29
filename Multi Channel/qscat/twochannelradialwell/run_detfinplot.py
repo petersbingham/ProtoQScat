@@ -1,6 +1,6 @@
-from runBase import *
+from runbase import *
 import matplotlib.pyplot as plt
-from Analytical.runArgsRange import *
+from analytical.runargsrange import *
 import Scattering.Stran as S
 import General.SimpPlot as sp
 

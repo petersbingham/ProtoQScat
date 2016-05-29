@@ -1,5 +1,5 @@
-from Analytical.runArgsRange import *
-from runBase import *
+from analytical.runargsrange import *
+from runbase import *
 from cmath import *
 
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Plot", parents=[tcp_range])

@@ -1,7 +1,7 @@
 import sys
 sys.path.append("..")
 from Elastic3ChanReader import *
-from PoleFinder import *
+from polefinder import *
 from Pyrazine import *
 
 MODE_ALLSIGNS_DOUBLE = 0

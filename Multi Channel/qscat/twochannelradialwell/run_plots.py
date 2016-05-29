@@ -1,4 +1,4 @@
-from runArgsPlot import *
+from runargsplot import *
 
 anaSignList = [[1.0,1.0],[1.0,-1.0],[-1.0,1.0],[-1.0,-1.0]]
 fitSignList = [[1.0,1.0]]

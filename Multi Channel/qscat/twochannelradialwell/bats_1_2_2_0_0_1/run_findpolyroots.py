@@ -3,9 +3,9 @@ import os
 base = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/..')
 
-from runBase import *
+from runbase import *
 
-from Analytical.runArgsRange import *
+from analytical.runargsrange import *
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Poly Root find", parents=[tcp_range])
 spArgs.add_argument("mode_", help="Mode", type=int)
 spArgs.add_argument("cfSteps_", help="Compare Steps", type=int)

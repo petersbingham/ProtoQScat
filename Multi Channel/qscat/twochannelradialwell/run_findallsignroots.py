@@ -1,5 +1,5 @@
-from runBase import *
-from Analytical.runArgsRange import *
+from runbase import *
+from analytical.runargsrange import *
 import Scattering.Stran as S
 import General.Numerical as num
 import tabulate

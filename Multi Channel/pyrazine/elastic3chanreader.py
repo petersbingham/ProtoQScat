@@ -5,7 +5,7 @@ sys.path.append("../../Utilities")
 sys.path.append("../../../Utilities")
 import Scattering.Matrices as sm
 from General.QSType import *
-from ResultFileHandler import *
+from resultfilehandler import *
 
 NUMCHANNELS = 3
 ENEFACTOR = sm.EFROMK_RYDBERGS

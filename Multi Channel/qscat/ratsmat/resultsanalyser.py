@@ -6,7 +6,7 @@ sys.path.insert(0,base+'/../Utilities')
 from General import *
 from General.File import *
 import General.Numerical as num
-import PoleFinder
+import polefinder
 import General.QSType as QSType
 
 POLE_STATUS_NEW = "NEW"
@@ -87,7 +87,7 @@ class ResultsAnalyser:
         with open(path, 'r') as f:
             first = True
             for line in f:
-                if not first and PoleFinder.COMPLETE_STR not in line:
+                if not first and polefinder.COMPLETE_STR not in line:
                     kstr = line[line.find(']=')+2:line.find('i')]+'j'
                     post = ""
                     if typeClass==Pole:

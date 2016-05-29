@@ -1,5 +1,5 @@
-from runArgsPlot import *
-from runBase import *
+from runargsplot import *
+from runbase import *
 import Scattering.Stran as S
 
 anaSignList = [[1.0,1.0],[1.0,-1.0],[-1.0,1.0],[-1.0,-1.0]]

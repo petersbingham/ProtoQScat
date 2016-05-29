@@ -1,5 +1,5 @@
-from runBase import *
-from Analytical.runArgsRange import *
+from runbase import *
+from analytical.runargsrange import *
 
 rtArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Range Test", parents=[tcp_range])
 args = rtArgs.parse_args()

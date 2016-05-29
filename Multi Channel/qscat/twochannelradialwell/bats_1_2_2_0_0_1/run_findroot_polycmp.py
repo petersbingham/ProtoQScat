@@ -4,9 +4,9 @@ import time
 base = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/..')
 
-from runBase import *
+from runbase import *
 
-from Analytical.runArgsRange import *
+from analytical.runargsrange import *
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Poly Root compare", parents=[tcp_range])
 args = spArgs.parse_args()
 
