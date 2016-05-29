@@ -1,4 +1,4 @@
-from RatSMatWrap import *
+from ratsmatWrap import *
 import matplotlib.pyplot as plt
 from runbase import *
 args = parentArgs.parse_args()

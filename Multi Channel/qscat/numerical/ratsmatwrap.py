@@ -3,7 +3,7 @@ import cmath
 from Elastic3ChanReader import *
 import Scattering.Conversions as conv
 import Scattering.Stran as S
-from RatSMat import *
+from ratsmat import *
 from Pyrazine import *
 
 M_NORM = 0

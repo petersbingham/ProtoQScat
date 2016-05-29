@@ -1,4 +1,4 @@
-from RatSMatWrap import *
+from ratsmatWrap import *
 import General.SimpPlot as sp
 from runargsplot import *
 

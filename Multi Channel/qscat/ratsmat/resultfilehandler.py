@@ -3,7 +3,7 @@ import sys
 from sys import platform as _platform
 
 baseDir = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0,baseDir+'/../Utilities')
+sys.path.insert(0,baseDir+'/../../../Utilities')
 from General.File import *
 
 RESULTSDIR = baseDir + sep() + "Results" + sep()
@@ -12,7 +12,7 @@ ROOTSDIR = sep() + "Roots" + sep()
 POLESDIR = sep() + "Poles"
 
 #Note to exceed the old max file path in win we must use \\?\ prefix, unicode and double slashes.
-class resultfilehandler:
+class ResultFileHandler:
     def __init__(self, sysName):
         self.sysPath = RESULTSDIR + sysName
         self.startIndex = None

@@ -4,7 +4,7 @@ import traceback
 sys.path.append("../Utilities")
 import Scattering.Matrices as sm
 import General.Numerical as num
-from RatSMat import *
+from ratsmat import *
 from General.QSType import *
 
 
