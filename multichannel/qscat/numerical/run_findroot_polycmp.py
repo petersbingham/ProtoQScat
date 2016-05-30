@@ -11,16 +11,16 @@ KNOWN = True
 NUM_FND = 0
 
 def _findRoot(N, starting):
-  kmat = RatSMatWrap("fort.19",N,args.subStart_,args.subEnd_, kfitSigns=[1.0,1.0,1.0])
-  new = round(starting.real,3) + round(starting.imag,4)*1.0j
-  root = kmat.findRoot_(new)
-  print str(new) + "   " + str(root) + "\n\n"
+    kmat = RatSMatWrap("fort.19",N,args.subStart_,args.subEnd_, kfitSigns=[1.0,1.0,1.0])
+    new = round(starting.real,3) + round(starting.imag,4)*1.0j
+    root = kmat.findRoot_(new)
+    print str(new) + "   " + str(root) + "\n\n"
           
 def _findKnownRoot(N):
-  kmat = RatSMatWrap("fort.19",N,args.subStart_,args.subEnd_, kfitSigns=[1.0,1.0,1.0])
-  starting = 0.076641273-0.0006538903j
-  print str(starting) + "   " + str(kmat.findRoot(starting)) + "\n\n"
-          
+    kmat = RatSMatWrap("fort.19",N,args.subStart_,args.subEnd_, kfitSigns=[1.0,1.0,1.0])
+    starting = 0.076641273-0.0006538903j
+    print str(starting) + "   " + str(kmat.findRoot(starting)) + "\n\n"
+        
 try:
     if KNOWN:
         _findKnownRoot(4)
@@ -53,5 +53,5 @@ try:
         _findRoot(28, 0.00162780117706+0.00153073193941j)
         _findRoot(30, 0.02350318740315-0.00755343673500j)
 except (sm.MatException) as inst:
-  print str(inst)
-  sys.exit()
+    print str(inst)
+    sys.exit()

@@ -185,58 +185,58 @@ class PoleFinder:
         #Determine if lost pole. If so then note.
         lostIndices = []
         for i in range(len(self.allPoles)):
-          pole = self.allPoles[i]
-          lostPole = True;
-          for newPole in newPoles:
-            if self.ratCmp.isClose(pole, newPole):
-              lostPole = False
-              break
-          if lostPole:
-            lostIndices.append(i)
+            pole = self.allPoles[i]
+            lostPole = True;
+            for newPole in newPoles:
+                if self.ratCmp.isClose(pole, newPole):
+                    lostPole = False
+                    break
+            if lostPole:
+                lostIndices.append(i)
 
         #Determine if new pole. If so then add to self.allPoles and note.
         newIndex = -1
         for i in range(len(newPoles)):
-          newPole = newPoles[i]
-          newPolesInfoStr = newPolesInfoStrs[i]
-          isNew = True
-          for i in range(len(self.allPoles)):
-            pole = self.allPoles[i]
-            if self.ratCmp.isClose(newPole, pole):
-              isNew = False
-              break
+            newPole = newPoles[i]
+            newPolesInfoStr = newPolesInfoStrs[i]
+            isNew = True
+            for i in range(len(self.allPoles)):
+                pole = self.allPoles[i]
+                if self.ratCmp.isClose(newPole, pole):
+                    isNew = False
+                    break
 
-          if isNew:
-            self.allPoles.append(newPole)
-            self.allPolesInfoStrs.append(newPolesInfoStr)
-            #Record when we start adding new poles
-            if newIndex == -1:
-              newIndex = len(self.allPoles)-1
-          else:
-            #If it's not new then just update the value
-            self.allPoles[i] = newPole
-            self.allPolesInfoStrs[i] = newPolesInfoStr
+            if isNew:
+                self.allPoles.append(newPole)
+                self.allPolesInfoStrs.append(newPolesInfoStr)
+                #Record when we start adding new poles
+                if newIndex == -1:
+                    newIndex = len(self.allPoles)-1
+            else:
+                #If it's not new then just update the value
+                self.allPoles[i] = newPole
+                self.allPolesInfoStrs[i] = newPolesInfoStr
 
         poles = 0
         newPoles = 0
         lostPoles = 0
         for i in range(len(self.allPoles)):
-          poles += 1
-          endStr = ""
-          enePole = self._calEnergy(self.allPoles[i])
-          if newIndex!=-1 and i>=newIndex:
-            endStr = "NEW "
-            newPoles += 1
+            poles += 1
+            endStr = ""
+            enePole = self._calEnergy(self.allPoles[i])
+            if newIndex!=-1 and i>=newIndex:
+                endStr = "NEW "
+                newPoles += 1
+              
+            for j in range(len(lostIndices)):
+                if i == lostIndices[j]:
+                    endStr = "LOST "
+                    poles -= 1
+                    lostPoles += 1
+                    break
             
-          for j in range(len(lostIndices)):
-            if i == lostIndices[j]:
-              endStr = "LOST "
-              poles -= 1
-              lostPoles += 1
-              break
-
-          writeStr = ("Pole_k[%d]="+self._getComplexFormat()+"\tPole_E[%d]="+self._getComplexFormat()+"    \t%s%s\n") % (i,self.allPoles[i].real,self.allPoles[i].imag,i,enePole.real,enePole.imag,endStr,self.allPolesInfoStrs[i])
-          self.file_poles.write(writeStr)
+            writeStr = ("Pole_k[%d]="+self._getComplexFormat()+"\tPole_E[%d]="+self._getComplexFormat()+"    \t%s%s\n") % (i,self.allPoles[i].real,self.allPoles[i].imag,i,enePole.real,enePole.imag,endStr,self.allPolesInfoStrs[i])
+            self.file_poles.write(writeStr)
           
         self.file_poles.write(COMPLETE_STR)
         print "Poles calculated in mode " + self.mode + ", using df=" + str(self.distFactor)

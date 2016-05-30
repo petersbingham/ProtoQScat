@@ -45,5 +45,5 @@ try:
                                 print str(ksigns)+"   \t"+getRootStr(roots[0])+"   \t"+getRootStr(roots[1])
                                 
 except (sm.MatException) as inst:
-  print str(inst)
-  sys.exit()
+    print str(inst)
+    sys.exit()

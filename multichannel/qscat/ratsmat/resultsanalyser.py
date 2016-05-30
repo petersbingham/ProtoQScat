@@ -25,25 +25,25 @@ class Poles(Vals):
     pass
 
 class Val:
-  def __init__(self, k, E):
-    self.k = k
-    self.E = E
+    def __init__(self, k, E):
+        self.k = k
+        self.E = E
 class Root(Val):
-  def __init__(self, k, E):
-    Val.__init__(self, k, E)
+    def __init__(self, k, E):
+        Val.__init__(self, k, E)
 class Pole(Val):
-  def __init__(self, k, E, isNew, isLost, convRoots):
-    Val.__init__(self, k, E)
-    self.isNew = isNew
-    self.isLost = isLost
-    self.convRoots = convRoots
-  def getStatus(self):
-    if self.isNew:
-      return POLE_STATUS_NEW
-    elif self.isLost:
-      return POLE_STATUS_LOST
-    else:
-      return POLE_STATUS_REP
+    def __init__(self, k, E, isNew, isLost, convRoots):
+        Val.__init__(self, k, E)
+        self.isNew = isNew
+        self.isLost = isLost
+        self.convRoots = convRoots
+    def getStatus(self):
+        if self.isNew:
+            return POLE_STATUS_NEW
+        elif self.isLost:
+            return POLE_STATUS_LOST
+        else:
+            return POLE_STATUS_REP
   
 DISPLAY_DIFFPRESISION = 16
 

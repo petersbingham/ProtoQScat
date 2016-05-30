@@ -22,5 +22,5 @@ try:
     print getRootStr(roots[0])+" || "+getRootStr(roots[1])+" ||"
                                 
 except (sm.MatException) as inst:
-  print str(inst)
-  sys.exit()
+    print str(inst)
+    sys.exit()

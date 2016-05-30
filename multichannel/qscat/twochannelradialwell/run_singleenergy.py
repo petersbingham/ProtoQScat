@@ -6,10 +6,10 @@ seArgs.add_argument("ene_", help="Energy", type=complex)
 args = seArgs.parse_args()
 
 try:
-  kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
-  sMats, ratSmat = getSmats(args, kCal, kCal)
-  ratSmat.setEnergy(args.ene_)  
-  print str(ratSmat.getMatrix()) 
+    kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
+    sMats, ratSmat = getSmats(args, kCal, kCal)
+    ratSmat.setEnergy(args.ene_)  
+    print str(ratSmat.getMatrix()) 
 except (DCException, sm.MatException) as inst:
-  print str(inst)
-  sys.exit()
+    print str(inst)
+    sys.exit()

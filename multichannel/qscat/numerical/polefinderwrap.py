@@ -34,11 +34,11 @@ def _doPoleFind(kCal, mode, dirName):
 
 def _polesForAllSigns(mode, dirName):
     for i in [1.0,-1.0]:
-      for j in [1.0,-1.0]:
-        for k in [1.0,-1.0]:
-          ksigns = [i,j,k]
-          kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=ksigns, eneFactor=ENEFACTOR)
-          _doPoleFind(kCal, mode, dirName)
+        for j in [1.0,-1.0]:
+            for k in [1.0,-1.0]:
+                ksigns = [i,j,k]
+                kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=ksigns, eneFactor=ENEFACTOR)
+                _doPoleFind(kCal, mode, dirName)
 
 def _polesForRot(mode, dirName):
     kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_ROT, eneFactor=ENEFACTOR)

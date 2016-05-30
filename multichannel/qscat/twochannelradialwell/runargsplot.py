@@ -12,26 +12,26 @@ args = spArgs.parse_args()
 
 def initPlotVars():
     if args.plotType_=="Lin":
-      x = args.plotStart_+args.plotComplex_*1.0j
-      dx = (args.plotEnd_-args.plotStart_) / args.plotSteps_
+        x = args.plotStart_+args.plotComplex_*1.0j
+        dx = (args.plotEnd_-args.plotStart_) / args.plotSteps_
     else:
-      x = log10(args.plotStart_)
-      dx = (log10(args.plotEnd_)-log10(args.plotStart_)) / args.plotSteps_
+        x = log10(args.plotStart_)
+        dx = (log10(args.plotEnd_)-log10(args.plotStart_)) / args.plotSteps_
     return x, dx
 x, dx = initPlotVars()
 
 def getParameterDesc(args):
     c = num.Compare()
     if not c.floatCompare(args.lam_,0.0):
-      if not c.floatCompare(args.t1_,0.0) or not c.floatCompare(args.t2_,0.0):
-        s = "Coupled Inelastic"
-      else:
-        s = "Coupled Elastic"
+        if not c.floatCompare(args.t1_,0.0) or not c.floatCompare(args.t2_,0.0):
+            s = "Coupled Inelastic"
+        else:
+            s = "Coupled Elastic"
     else:
-      if not c.floatCompare(args.t1_,0.0) or not c.floatCompare(args.t2_,0.0):
-        s = "Uncoupled Inelastic"
-      else:
-        s = "Uncoupled Elastic"
+        if not c.floatCompare(args.t1_,0.0) or not c.floatCompare(args.t2_,0.0):
+            s = "Uncoupled Inelastic"
+        else:
+            s = "Uncoupled Elastic"
     return s + " (" + QSfloatList([args.r0_, args.v1_, args.v2_, args.t1_, args.t2_, args.lam_]) + ") Radial Well "
 
 def doMatPlot(args, mat, imag, title, signString):
@@ -39,10 +39,10 @@ def doMatPlot(args, mat, imag, title, signString):
 
     x, dx = initPlotVars()
     for i in range(0,args.plotSteps_+1,1):
-      ene = getEnergy(args.plotType_, x)
-      mat.setEnergy(ene)
-      matSeq[ene] = mat.getMatrix()
-      x += dx
+        ene = getEnergy(args.plotType_, x)
+        mat.setEnergy(ene)
+        matSeq[ene] = mat.getMatrix()
+        x += dx
       
     matSeq.setDetails("", ['red', 'green', 'blue', 'purple'])
 

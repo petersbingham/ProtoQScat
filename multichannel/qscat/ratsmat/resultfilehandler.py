@@ -49,9 +49,9 @@ class ResultFileHandler:
     
     def getPostStr(self):
         if self.startIndex == None:
-           self.startIndex = 0
+            self.startIndex = 0
         if self.endIndex == None:
-           self.endIndex = self.fitSize-1
+            self.endIndex = self.fitSize-1
         return "N=" + str(self.fitSize) + "_" + "S=" + str(self.startIndex) + "_" + "E=" + str((self.endIndex+1*self.numFits)-1)
     
     def _getRootsBaseString(self):
@@ -98,4 +98,4 @@ class ResultFileHandler:
     
     def _makeDir(self, path):
         if not os.path.isdir(fixPath(path)):
-          os.makedirs(fixPath(path))
+            os.makedirs(fixPath(path))

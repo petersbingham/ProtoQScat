@@ -14,22 +14,22 @@ x = args.rangeStart_+args.rangeComplex_*1j
 dx = (args.rangeEnd_-args.rangeStart_) / args.rangeSteps_
 
 try:
-  kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
-  matSeq = sm.matSequence() 
-  anaSmat, ratSmat = getSmats(args, kCal, kCal)
-  
-  if args.rangeType_ == "S":
-    rangeMat = ratSmat
-  elif args.rangeType_ == "UnitaryOp": 
-    rangeMat = S.UniOpmat(ratSmat)
+    kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
+    matSeq = sm.matSequence() 
+    anaSmat, ratSmat = getSmats(args, kCal, kCal)
     
-  for i in range(0,args.rangeSteps_+1,1):
-    ene = getEnergy("Lin", x)
-    rangeMat.setEnergy(ene)
-    matSeq[ene] = rangeMat.getMatrix()
-    x += dx
-  matSeq.writeAllToFile()
+    if args.rangeType_ == "S":
+        rangeMat = ratSmat
+    elif args.rangeType_ == "UnitaryOp": 
+        rangeMat = S.UniOpmat(ratSmat)
+      
+    for i in range(0,args.rangeSteps_+1,1):
+        ene = getEnergy("Lin", x)
+        rangeMat.setEnergy(ene)
+        matSeq[ene] = rangeMat.getMatrix()
+        x += dx
+    matSeq.writeAllToFile()
   
 except (DCException, sm.MatException) as inst:
-  print str(inst)
-  sys.exit()
+    print str(inst)
+    sys.exit()

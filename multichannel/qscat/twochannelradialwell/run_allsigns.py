@@ -5,10 +5,10 @@ seArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - All 
 args = seArgs.parse_args()
 
 try:
-  for i in [1.0,-1.0]:
-    for j in [1.0,-1.0]:
-      kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[i,j], eneFactor=ENEFACTOR)
-      sMats, ratSmat = getSmats(args, kCal, kCal)
+    for i in [1.0,-1.0]:
+        for j in [1.0,-1.0]:
+            kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[i,j], eneFactor=ENEFACTOR)
+            sMats, ratSmat = getSmats(args, kCal, kCal)
 except (DCException, sm.MatException) as inst:
-  print str(inst)
-  sys.exit()
+    print str(inst)
+    sys.exit()

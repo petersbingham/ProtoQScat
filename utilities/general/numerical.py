@@ -2,76 +2,76 @@ PRECISION = 8
 MIN = pow(10,-PRECISION)
 
 def removeduplicateFloats(lst,comparator,accessor=None):
-  def _getVal(lst,i,accessor):
-    if accessor:
-      return accessor(lst[i])
-    else:
-      return lst[i]
-    
-  if len(lst) > 0:
-    iStart = 0
-    while iStart<len(lst)-1:
-      comVal = _getVal(lst,iStart,accessor)
-      for i in range(iStart+1, len(lst)):
-        if comparator.complexCompare(comVal,_getVal(lst,i,accessor)):
-          lst.pop(i)
-          break
-        elif i == len(lst)-1:
-          iStart += 1          
+    def _getVal(lst,i,accessor):
+        if accessor:
+            return accessor(lst[i])
+        else:
+            return lst[i]
+      
+    if len(lst) > 0:
+        iStart = 0
+        while iStart<len(lst)-1:
+            comVal = _getVal(lst,iStart,accessor)
+            for i in range(iStart+1, len(lst)):
+                if comparator.complexCompare(comVal,_getVal(lst,i,accessor)):
+                    lst.pop(i)
+                    break
+                elif i == len(lst)-1:
+                    iStart += 1          
           
 class Compare:
-  TYPE_ABSOLUTE = 0
-  TYPE_PERCENT = 1
-  def __init__(self, *args):
-    if len(args) == 0:
-      self.realType = self.TYPE_ABSOLUTE
-      self.realVal = MIN
-      self.imagType = self.TYPE_ABSOLUTE
-      self.imagVal = MIN
-    if len(args) == 1:
-      self.realType = self.TYPE_ABSOLUTE
-      self.realVal = args[0]
-      self.imagType = self.TYPE_ABSOLUTE
-      self.imagVal = args[0]
-    elif len(args) == 2:
-      self.realType = args[0]
-      self.realVal = args[1]
-      self.imagType = args[0]
-      self.imagVal = args[1]
-    elif len(args) == 4:
-      self.realType = args[0]
-      self.realVal = args[1]
-      self.imagType = args[2]
-      self.imagVal = args[3]
-
-  def floatCompare(self, f1, f2, complex=False):
-    if complex:
-      return self._compare(f1, f2, self.imagType, self.imagVal)
-    else:
-      return self._compare(f1, f2, self.realType, self.realVal)
+    TYPE_ABSOLUTE = 0
+    TYPE_PERCENT = 1
+    def __init__(self, *args):
+        if len(args) == 0:
+            self.realType = self.TYPE_ABSOLUTE
+            self.realVal = MIN
+            self.imagType = self.TYPE_ABSOLUTE
+            self.imagVal = MIN
+        if len(args) == 1:
+            self.realType = self.TYPE_ABSOLUTE
+            self.realVal = args[0]
+            self.imagType = self.TYPE_ABSOLUTE
+            self.imagVal = args[0]
+        elif len(args) == 2:
+            self.realType = args[0]
+            self.realVal = args[1]
+            self.imagType = args[0]
+            self.imagVal = args[1]
+        elif len(args) == 4:
+            self.realType = args[0]
+            self.realVal = args[1]
+            self.imagType = args[2]
+            self.imagVal = args[3]
     
-  def complexCompare(self, c1, c2):
-    if not self.floatCompare(complex(c1).real, complex(c2).real, False):
-      return False
-    if not self.floatCompare(complex(c1).imag, complex(c2).imag, True):
-      return False
-    return True
-
-  def _compare(self, f1, f2, type, val):
-    if type == self.TYPE_ABSOLUTE:
-      return self._absCmp(f1, f2, val)
-    else:
-      return self._relCmp(f1, f2, val)    
-        
-  def _absCmp(self, f1, f2, cmpVal):
-    if abs(f1-f2) > cmpVal:
-      return False
-    return True
-
-  def _relCmp(self, f1, f2, cmpVal):
-    if abs(f1-f2)/f1*100 > cmpVal:
-      return False
-    return True
+    def floatCompare(self, f1, f2, complex=False):
+        if complex:
+            return self._compare(f1, f2, self.imagType, self.imagVal)
+        else:
+            return self._compare(f1, f2, self.realType, self.realVal)
+      
+    def complexCompare(self, c1, c2):
+        if not self.floatCompare(complex(c1).real, complex(c2).real, False):
+            return False
+        if not self.floatCompare(complex(c1).imag, complex(c2).imag, True):
+            return False
+        return True
+    
+    def _compare(self, f1, f2, type, val):
+        if type == self.TYPE_ABSOLUTE:
+            return self._absCmp(f1, f2, val)
+        else:
+            return self._relCmp(f1, f2, val)    
+          
+    def _absCmp(self, f1, f2, cmpVal):
+        if abs(f1-f2) > cmpVal:
+            return False
+        return True
+    
+    def _relCmp(self, f1, f2, cmpVal):
+        if abs(f1-f2)/f1*100 > cmpVal:
+            return False
+        return True
 
 
 class RationalCompare:
