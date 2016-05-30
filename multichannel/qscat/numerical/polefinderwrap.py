@@ -16,7 +16,7 @@ MODE_POS_DOUBLE = 4
 MODE_POS_INC = 5
 
 import argparse
-parentArgs = argparse.ArgumentParser(description="Pyrazine Fit - Pole find")
+parentArgs = argparse.ArgumentParser(description="Numercal Data Fit - Pole find")
 parentArgs.add_argument("startIndex_", help="Start Index", type=int)
 parentArgs.add_argument("endIndex_", help="End Index", type=int)
 parentArgs.add_argument("offset_", help="Offset", type=int)
@@ -28,17 +28,15 @@ parentArgs.add_argument("cmpValue_", help="Compare Value", type=complex, nargs='
 args = parentArgs.parse_args()
 
 def _doPoleFind(kCal, mode, dirName):
-    kmats = readkMats("./fort.19")
+    kmats = readkMats(FILENAME)
     resultFileHandler = getFileHandler(kCal, args.startIndex_, args.endIndex_)
     PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, resultFileHandler, ENEFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, args.cfSteps_, args.cmpValue_, mode)
 
 def _polesForAllSigns(mode, dirName):
-    for i in [1.0,-1.0]:
-        for j in [1.0,-1.0]:
-            for k in [1.0,-1.0]:
-                ksigns = [i,j,k]
-                kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=ksigns, eneFactor=ENEFACTOR)
-                _doPoleFind(kCal, mode, dirName)
+    kperms = num.getPermutations([1.0,-1.0], len(THRESHOLDS))
+    for kperm in kperms:
+        kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=kperm, eneFactor=ENEFACTOR)
+        _doPoleFind(kCal, mode, dirName)
 
 def _polesForRot(mode, dirName):
     kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_ROT, eneFactor=ENEFACTOR)

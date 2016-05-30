@@ -7,6 +7,8 @@ import scattering.matrices as sm
 from general.qstype import *
 from ratsmat.resultfilehandler import *
 
+FILENAME = "fort.19"
+
 NUMCHANNELS = 3
 ENEFACTOR = sm.EFROMK_RYDBERGS
 def getFileHandler(kCal, startIndex, endIndex):

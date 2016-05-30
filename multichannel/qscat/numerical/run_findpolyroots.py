@@ -4,7 +4,7 @@ from runbase import *
 args = parentArgs.parse_args()
 
 try:
-    kmat = RatSMatWrap("fort.19",args.subN_,args.subStart_,args.subEnd_)
+    kmat = RatSMatWrap(FILENAME,args.subN_,args.subStart_,args.subEnd_)
     roots = kmat.findPolyRoots()
     for root in roots:
         print root

@@ -121,3 +121,15 @@ def truncateFloat(dps, val):
 
 def truncateComplex(dps, val):
     return truncateFloat(dps,val.real) + truncateFloat(dps,val.imag)*1.0j
+
+def getPermutations(possVals, numOf):
+    if numOf == 1:
+        perms = [[x] for x in possVals]
+    else:
+        perms = []
+        nextPerms = getPermutations(possVals, numOf-1)
+        for val in possVals:
+            for nextPerm in nextPerms:
+                perms.append([val]+nextPerm)
+    return perms
+            

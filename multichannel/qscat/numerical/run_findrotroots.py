@@ -2,7 +2,7 @@ from ratsmatwrap import *
 import matplotlib.pyplot as plt
 from runbase import *
 
-childArgs = argparse.ArgumentParser(description="Pyrazine Fit - All Sign Root find", parents=[parentArgs])
+childArgs = argparse.ArgumentParser(description="Numercal Data Fit - All Sign Root find", parents=[parentArgs])
 childArgs.add_argument("sene_", help="start energy", type=complex)
 args = childArgs.parse_args()
 
@@ -17,7 +17,7 @@ def getRootStr(root):
 print "\n\n"
 first = True
 try:
-    kmat = RatSMatWrap("fort.19",args.subN_,args.subStart_,args.subEnd_)
+    kmat = RatSMatWrap(FILENAME,args.subN_,args.subStart_,args.subEnd_)
     roots = kmat.findConjRoots(args.sene_)
     print getRootStr(roots[0])+" || "+getRootStr(roots[1])+" ||"
                                 

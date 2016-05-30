@@ -1,6 +1,6 @@
 import cmath
-import Matrices as sm
-import General.Numerical as num
+import matrices as sm
+import general.numerical as num
 from general.qstype import *
 
 class TranMat(sm.mat):
