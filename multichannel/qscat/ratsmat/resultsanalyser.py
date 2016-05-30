@@ -3,7 +3,7 @@ import sys
 from tabulate import tabulate
 base =  os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/../Utilities')
-from General import *
+from general import *
 from general.file import *
 import general.numerical as num
 import polefinder

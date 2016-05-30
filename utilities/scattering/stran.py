@@ -1,7 +1,7 @@
 import cmath
 import Matrices as sm
 import General.Numerical as num
-from General.QSType import *
+from general.qstype import *
 
 class TranMat(sm.mat):
     def __init__(self, sourceMat): 

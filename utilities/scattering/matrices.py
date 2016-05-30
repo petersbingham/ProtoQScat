@@ -6,9 +6,9 @@ sys.path.insert(0,base+'/..')
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-import Conversions as conv
+import conversions as conv
 import numpy as np
-from General.QSType import *
+from general.qstype import *
 
 def decimate(mats, startIndex, endIndex, N):
     step = int((endIndex-startIndex) / (N-1))

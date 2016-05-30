@@ -1,5 +1,5 @@
 from runargscommon import *
-from General import *
+from general import *
 import general.numerical as num
 from tabulate import tabulate
 import numpy as np

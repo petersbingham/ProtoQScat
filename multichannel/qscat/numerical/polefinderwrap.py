@@ -4,8 +4,8 @@ base =  os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/..')
 sys.path.insert(0,os.getcwd()) #We assume that the specific kreader and description (below) will be here.
 
-from elastic3chanreader import *
-from description import *
+from matreader import *
+from sysdesc import *
 from polefinder import *
 
 MODE_ALLSIGNS_DOUBLE = 0

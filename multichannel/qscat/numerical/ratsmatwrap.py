@@ -8,8 +8,8 @@ sys.path.insert(0,base+'/..')
 sys.path.insert(0,os.getcwd()) #We assume that the specific kreader and description (below) will be here.
 
 from ratsmat import *
-from elastic3chanreader import *
-from description import *
+from matreader import *
+from sysdesc import *
 import scattering.conversions as conv
 import scattering.stran as S
 
