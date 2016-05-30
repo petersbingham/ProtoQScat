@@ -1,4 +1,4 @@
-from ratsmatWrap import *
+from ratsmatwrap import *
 from runargsplot import *
 
 try:

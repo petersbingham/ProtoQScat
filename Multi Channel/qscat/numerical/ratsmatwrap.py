@@ -1,10 +1,17 @@
 import numpy as np
 import cmath
-from Elastic3ChanReader import *
+
+import sys
+import os
+base =  os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0,base+'/..')
+sys.path.insert(0,os.getcwd()) #We assume that the specific kreader and description (below) will be here.
+
+from ratsmat import *
+from elastic3chanreader import *
+from description import *
 import Scattering.Conversions as conv
 import Scattering.Stran as S
-from ratsmat import *
-from Pyrazine import *
 
 M_NORM = 0
 M_PIECEWISE = 1

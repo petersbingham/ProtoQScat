@@ -1,4 +1,4 @@
-from ratsmatWrap import *
+from ratsmatwrap import *
 from runbase import *
 args = parentArgs.parse_args()
 

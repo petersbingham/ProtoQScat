@@ -1,8 +1,12 @@
 import sys
-sys.path.append("..")
-from Elastic3ChanReader import *
+import os
+base =  os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0,base+'/..')
+sys.path.insert(0,os.getcwd()) #We assume that the specific kreader and description (below) will be here.
+
+from elastic3chanreader import *
+from description import *
 from polefinder import *
-from Pyrazine import *
 
 MODE_ALLSIGNS_DOUBLE = 0
 MODE_ALLSIGNS_INC = 1
@@ -24,11 +28,8 @@ parentArgs.add_argument("cmpValue_", help="Compare Value", type=complex, nargs='
 args = parentArgs.parse_args()
 
 def _doPoleFind(kCal, mode, dirName):
-    kmats = readkMats("../fort.19")
+    kmats = readkMats("./fort.19")
     resultFileHandler = getFileHandler(kCal, args.startIndex_, args.endIndex_)
-    path = "./Results/"+dirName
-    if not os.path.exists(path):
-        os.makedirs(path)
     PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, resultFileHandler, ENEFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, args.cfSteps_, args.cmpValue_, mode)
 
 def _polesForAllSigns(mode, dirName):

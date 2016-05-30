@@ -1,4 +1,4 @@
-from ratsmatWrap import *
+from ratsmatwrap import *
 import matplotlib.pyplot as plt
 from runbase import *
 
