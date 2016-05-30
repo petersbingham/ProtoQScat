@@ -14,7 +14,7 @@ base_kvar =  os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base_kvar+'./../..')
 from Base import *
 
-import General.SimpPlot as sp
+import general.simpplot as sp
 sp.setSubPlotParameters(left=0.12, bottom=0.12, right=0.96, top=0.9, wspace=0.2, hspace=0.2)
 sp.setImgSize(5,4)
 

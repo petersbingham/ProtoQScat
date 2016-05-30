@@ -8,7 +8,7 @@ from fileinput import filename
 base = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/../../../Utilities')
 sys.path.insert(0,base+'/../..')
-import General.Numerical as num
+import general.numerical as num
 from GenDat import *
   
 LVL_A = 0

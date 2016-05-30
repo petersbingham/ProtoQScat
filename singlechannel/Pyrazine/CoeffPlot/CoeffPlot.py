@@ -10,7 +10,7 @@ import cmath
 import numpy as np
 import math
 
-import General.SimpPlot as sp
+import general.simpplot as sp
 sp.setImgSize(15,6)
 from PyrazineDataVals import *
 

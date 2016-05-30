@@ -2,7 +2,7 @@ import sys
 import os
 base = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/../../../Utilities/General')
-import SimpPlot as sp
+import simpplot as sp
 sp.setSubPlotParameters(left=0.12, bottom=0.16, right=0.96, top=0.9, wspace=0.2, hspace=0.2)
 sp.setImgSize(6,3)
 

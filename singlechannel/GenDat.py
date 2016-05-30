@@ -1,5 +1,5 @@
 from tabulate import tabulate
-import General.Numerical as num
+import general.numerical as num
 INDEX_ROOT = 0
 INDEX_POLE = 1
 
