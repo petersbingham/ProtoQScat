@@ -10,8 +10,8 @@ sys.path.insert(0,os.getcwd()) #We assume that the specific kreader and descript
 from ratsmat import *
 from elastic3chanreader import *
 from description import *
-import Scattering.Conversions as conv
-import Scattering.Stran as S
+import scattering.conversions as conv
+import scattering.stran as S
 
 M_NORM = 0
 M_PIECEWISE = 1

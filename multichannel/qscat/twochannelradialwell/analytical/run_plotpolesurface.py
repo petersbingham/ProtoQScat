@@ -1,6 +1,6 @@
 from runargscommon import *
 from General import *
-import General.Numerical as num
+import general.numerical as num
 from tabulate import tabulate
 import numpy as np
 

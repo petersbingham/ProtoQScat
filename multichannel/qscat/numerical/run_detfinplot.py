@@ -1,5 +1,5 @@
 from ratsmatwrap import *
-import General.SimpPlot as sp
+import general.simpplot as sp
 from runargsplot import *
 
 kmat = RatSMatWrap("fort.19",args.subN_,args.subStart_,args.subEnd_)

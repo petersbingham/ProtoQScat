@@ -1,6 +1,6 @@
 from runargsplot import *
 from runbase import *
-import Scattering.Stran as S
+import scattering.stran as S
 
 anaSignList = [[1.0,1.0],[1.0,-1.0],[-1.0,1.0],[-1.0,-1.0]]
 fitSignList = [[1.0,1.0]]

@@ -3,8 +3,8 @@ sys.path.append("..")
 sys.path.append("../..")
 sys.path.append("../../Utilities")
 sys.path.append("../../../Utilities")
-import Scattering.Matrices as sm
-from General.QSType import *
+import scattering.matrices as sm
+from general.qstype import *
 from ratsmat.resultfilehandler import *
 
 NUMCHANNELS = 3

@@ -12,9 +12,9 @@ import os
 base =  os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/../../../Utilities')
 sys.path.insert(0,base+'.')
-import Scattering.Matrices as sm
+import scattering.matrices as sm
 from General import *
-from General.QSType import *
+from general.qstype import *
 
 TYPE_S = 0
 TYPE_FIN = 1

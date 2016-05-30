@@ -2,10 +2,10 @@ import sys
 import os
 import traceback
 sys.path.append("../Utilities")
-import Scattering.Matrices as sm
-import General.Numerical as num
+import scattering.matrices as sm
+import general.numerical as num
 from ratsmat import *
-from General.QSType import *
+from general.qstype import *
 
 
 ZEROVALEXP = 7

@@ -1,7 +1,7 @@
 from runbase import *
 from analytical.runargsrange import *
-import Scattering.Stran as S
-import General.Numerical as num
+import scattering.stran as S
+import general.numerical as num
 import tabulate
 
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Pole find", parents=[tcp_range])

@@ -7,10 +7,10 @@ import sys
 import os
 base = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/../../../../Utilities')
-import Scattering.Matrices as sm
-import General.Numerical as num
-import General.SimpPlot3D as plot3D
-from General.QSType import *
+import scattering.matrices as sm
+import general.numerical as num
+import general.simpplot3D as plot3D
+from general.qstype import *
 
 EQUIVALENT_TESTS = False
 LIN_ALGEBRA = False

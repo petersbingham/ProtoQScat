@@ -1,5 +1,5 @@
 from doublechannel import *
-from General.QSType import *
+from general.qstype import *
 import argparse
 
 parentArgs = argparse.ArgumentParser(add_help=False)

@@ -4,7 +4,7 @@ from sys import platform as _platform
 
 baseDir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,baseDir+'/../../../Utilities')
-from General.File import *
+from general.file import *
 
 RESULTSDIR = baseDir + sep() + "Results" + sep()
 COEFFDIR = sep() + "CoefficientFiles" + sep()

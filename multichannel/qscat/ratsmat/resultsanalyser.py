@@ -4,10 +4,10 @@ from tabulate import tabulate
 base =  os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/../Utilities')
 from General import *
-from General.File import *
-import General.Numerical as num
+from general.file import *
+import general.numerical as num
 import polefinder
-import General.QSType as QSType
+import general.qstype as QSType
 
 POLE_STATUS_NEW = "NEW"
 POLE_STATUS_LOST = "LOST"
