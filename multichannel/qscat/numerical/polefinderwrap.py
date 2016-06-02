@@ -43,7 +43,7 @@ def _polesForRot(mode, dirName):
     _doPoleFind(kCal, mode, dirName)
 
 def _polesForPos(mode, dirName):
-    kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=[1.0,1.0,1.0], eneFactor=ENEFACTOR)
+    kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=[1.0]*len(THRESHOLDS), eneFactor=ENEFACTOR)
     _doPoleFind(kCal, mode, dirName)
 
 if args.mode_ == MODE_ALLSIGNS_DOUBLE:

@@ -17,6 +17,7 @@ class ResultFileHandler:
         self.sysPath = RESULTSDIR + sysName
         self.startIndex = None
         self.endIndex = None
+        self.numFits = None
     
     def setFitInfo(self, numFits, fitSize):
         self.numFits = numFits
@@ -71,7 +72,10 @@ class ResultFileHandler:
             return True
         return False  
     
-    def getCoeffFilePath(self, fit, ci, typeString, ext=".dat"):
+    def getCoeffFilePath(self):
+        return fixPath(self.coeffPath)
+    
+    def getCoeffFileName(self, fit, ci, typeString, ext=".dat"):
         return fixPath(self.coeffPath + typeString + "_" + str(fit) + "_" + str(ci) + ext)
 
     def doesRootFileExist(self, ext=".dat"):
@@ -93,7 +97,7 @@ class ResultFileHandler:
         fitNames = []
         for fit in range(self.numFits):
             for ci in range(0, self.numCoeffs):
-                fitNames.append(self.getCoeffFilePath(fit, ci, typeString))
+                fitNames.append(self.getCoeffFileName(fit, ci, typeString))
         return fitNames  
     
     def _makeDir(self, path):

@@ -16,7 +16,6 @@ def getFileHandler(kCal, startIndex, endIndex):
     return ResultFileHandler(sysName)
 
 def readkMats(fileName):
-    numChannels = 3
     kmats = {}
     with open(fileName, 'rb') as file:
         linNum = 0
@@ -29,18 +28,18 @@ def readkMats(fileName):
             nums = line.split()
             if len(nums) == 4 and nums[0]=="3":
                 ene = _num(nums[3])
-                kmats[ene] = QSsqZeros(numChannels)
+                kmats[ene] = QSsqZeros(NUMCHANNELS)
             else:
                 if len(line) == 81:
                     kmats[ene][0,0] = _num(line[0:20])
-                    kmats[ene][1,0] = _num(line[21:40])
-                    kmats[ene][1,1] = _num(line[41:60])
-                    kmats[ene][2,0] = _num(line[61:80])
+                    kmats[ene][1,0] = _num(line[20:40])
+                    kmats[ene][1,1] = _num(line[40:60])
+                    kmats[ene][2,0] = _num(line[60:80])
                     kmats[ene][0,1] = kmats[ene][1,0]  
                     kmats[ene][0,2] = kmats[ene][2,0]
                 elif len(line) == 41:
                     kmats[ene][2,1] = _num(line[0:20])
-                    kmats[ene][2,2] = _num(line[21:40])
+                    kmats[ene][2,2] = _num(line[20:40])
                     kmats[ene][1,2] = kmats[ene][2,1]
                 elif len(line) != 0:
                     raise Exception("Line " + str(linNum) + " bad: " + str(line) + "  Len: " + str(len(line)))
