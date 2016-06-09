@@ -1,0 +1,2 @@
+python ../qscat/ratsmat/ResultsAnalyser.py "E:\\Peter's Documents\\PhD\\Code\\Git\\ProtoQScat\\multichannel\\qscat\\ratsmat\\Results\\Pyrazine_[1.0, 1.0, 1.0]_0_1000\\COEFFS-numpy_solve()\\SingleFit" "ROOTS-sympy_det(method berkowitz),sympy_nroots(cleanup True, maxsteps 500, n 25)" "Poles_doubleN_cfStep1_dk0.1_zk1e-07"
+read -n1 -r -p "Press any key to continue..." key
