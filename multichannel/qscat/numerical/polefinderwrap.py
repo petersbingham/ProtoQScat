@@ -30,7 +30,7 @@ args = parentArgs.parse_args()
 def _doPoleFind(kCal, mode, dirName):
     kmats = readkMats(FILENAME)
     resultFileHandler = getFileHandler(kCal, args.startIndex_, args.endIndex_)
-    PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, resultFileHandler, ENEFACTOR, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, args.cfSteps_, args.cmpValue_, mode)
+    PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, resultFileHandler, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, args.cfSteps_, args.cmpValue_, mode)
 
 def _polesForAllSigns(mode, dirName):
     kperms = num.getPermutations([1.0,-1.0], len(THRESHOLDS))

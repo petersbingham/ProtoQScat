@@ -140,7 +140,7 @@ class RatSMatWrap:
       
     def findPolyRoots(self):
         ratSmat = self._getRatSmat()
-        return ratSmat.findPolyRoots(ENEFACTOR)
+        return ratSmat.findPolyRoots()
       
     def getFinDetRange(self, startEne, endEne, complexOffset, steps):
         ratSmat = self._getRatSmat()

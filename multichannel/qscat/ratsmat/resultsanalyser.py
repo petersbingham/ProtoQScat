@@ -2,7 +2,8 @@ import os
 import sys
 from tabulate import tabulate
 base =  os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0,base+'/../Utilities')
+sys.path.insert(0,base+'/..')
+sys.path.insert(0,base+'/../../../Utilities')
 from general import *
 from general.file import *
 import general.numerical as num
@@ -12,6 +13,8 @@ import general.qstype as QSType
 POLE_STATUS_NEW = "NEW"
 POLE_STATUS_LOST = "LOST"
 POLE_STATUS_REP = "REP"
+
+FIXPATH = True #When debugging the path seems to get screwed up, so I pull into a shorter path and remove the fix when debugging.
 
 class Vals(list):
     def __init__(self, N, S, E):
@@ -45,7 +48,7 @@ class Pole(Val):
         else:
             return POLE_STATUS_REP
   
-DISPLAY_DIFFPRESISION = 16
+DISPLAY_DIFFPRECISION = 16
 
 class ResultsAnalyser:
     def __init__(self, basePath, rootsDir=None, polesDir=None):
@@ -59,20 +62,28 @@ class ResultsAnalyser:
         if polesDir is not None:
             fileBase = basePath+sep()+rootsDir+sep()+polesDir+sep()
             self.allPoles = self._parseFiles(fileBase, Poles, Pole)
-        self.distFactor = float(polesDir[polesDir.find("_df")+3:polesDir.find("_zero")])
-        self.zeroValExp = int(polesDir[polesDir.find("_zero")+6:])
-        zeroVal = 10**(self.zeroValExp)
-        self.ratCmp = num.RationalCompare(zeroVal, self.distFactor)
+        self.distFactor = float(polesDir[polesDir.find("_dk")+3:polesDir.find("_zk")])
+        self.zeroVal = float(polesDir[polesDir.find("_zk")+3:])
+        self.ratCmp = num.RationalCompare(self.zeroVal, self.distFactor)
 
     def _parseFiles(self, fileBase, subContainerClass, typeClass):
         containerClass = []
-        for fileName in os.listdir(fixPath(fileBase)):
+        keyedFileNames = {}
+        fileNames = os.listdir(self._fixPath(fileBase))
+        for fileName in fileNames:
             if fileName.endswith(".dat"):
-                N, S, E = self._getFileParameters(fileName)
-                subContainer = subContainerClass(N,S,E)
-                containerClass.append(subContainer)
-                self._extractValues(fileBase+fileName, subContainer, typeClass)
+                keyedFileNames[self._extractN(fileName)] = fileName
+        
+        for N in sorted(keyedFileNames.keys()):
+            fileName = keyedFileNames[N]
+            N, S, E = self._getFileParameters(fileName)
+            subContainer = subContainerClass(N,S,E)
+            containerClass.append(subContainer)
+            self._extractValues(fileBase+fileName, subContainer, typeClass)
         return containerClass
+
+    def _extractN(self, fileName):
+        return int(fileName.split("=")[1].split("_")[0])
 
     def _getFileParameters(self, fileName):
         params = fileName.split("_")
@@ -83,7 +94,7 @@ class ResultsAnalyser:
         return N, S, E
     
     def _extractValues(self, path, container, typeClass):
-        path = fixPath(path)
+        path = self._fixPath(path)
         with open(path, 'r') as f:
             first = True
             for line in f:
@@ -102,6 +113,12 @@ class ResultsAnalyser:
                         type = Pole(QSType.QScomplex(kstr), QSType.QScomplex(Estr), POLE_STATUS_NEW in line, POLE_STATUS_LOST in line, convRoots)
                     container.append(type) 
                 first = False      
+    
+    def _fixPath(self, path):
+        if FIXPATH:
+            return fixPath(path)
+        else:
+            return path
                 
     def createPoleTable(self):
         poleSets = []
@@ -129,15 +146,15 @@ class ResultsAnalyser:
                     self._writePriorRoots(table, pole)
                 first = False
                 table.append([N, pole.getStatus(), self._v(pole.E.real), self._v(pole.E.imag)])
-        outStr = getFormattedHTMLTable(table,'.'+str(self.zeroValExp)+'f', headers=["N","Status", "pole.E.real", "pole.E.imag"])
-        with open("PoleAnalysers/out.txt", 'w') as f:
+        outStr = getFormattedHTMLTable(table,'.'+str(self.zeroVal)+'f', headers=["N","Status", "pole.E.real", "pole.E.imag"])
+        with open("out.txt", 'w') as f:
             f.write(outStr)
         print outStr
     
     def _writePriorRoots(self, table, initPole):
         for priorRoot in initPole.convRoots[1:]:
-            N = priorRoot[0]
-            I = priorRoot[1]
+            N = priorRoot[0] #N of root
+            I = priorRoot[1] #Index of root
             Nroots = self._getRootsForN(N)
             table.append([N, "ROOT", self._v(Nroots[I].E.real), self._v(Nroots[I].E.imag)])
             
@@ -147,7 +164,7 @@ class ResultsAnalyser:
                 return roots
     
     def _v(self, num):
-        return self._f(num, DISPLAY_DIFFPRESISION)
+        return self._f(num, DISPLAY_DIFFPRECISION)
     
     def _f(self, num, precision):
         if abs(num) < pow(10,-precision):

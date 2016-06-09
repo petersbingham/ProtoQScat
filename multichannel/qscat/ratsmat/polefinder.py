@@ -33,14 +33,12 @@ class Decimator():
         return sMats, decStr     
 
 class PoleFinder:
-    def __init__(self, sMats, kCal, resultFileHandler, kConversionFactor, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP):
+    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP):
         self.sMats = sMats
         self.kCal = kCal
         self.resultFileHandler = resultFileHandler
-        self.kConversionFactor = kConversionFactor
         self.decimator = Decimator(startIndex, endIndex, offset, resultFileHandler)
         self.numCmpSteps = numCmpSteps
-        self.zeroValExp = zeroValExp
         self.zeroValue = 10**(-zeroValExp)
         self.ratCmp = num.RationalCompare(self.zeroValue, distFactor)
         self.allPoles = []
@@ -100,7 +98,7 @@ class PoleFinder:
     def _getNroots(self, N):
         sMats, decStr = self.decimator.decimate(self.sMats, N)
         ratSmat = RatSMat(sMats, self.kCal, resultFileHandler=self.resultFileHandler, doCalc=False)
-        self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distFactor, self.zeroValExp)
+        self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distFactor, self.zeroValue)
         roots = None
         if self.resultFileHandler.doesRootFileExist():
             ratSmat.coeffSolve.printCalStr(True)
@@ -116,7 +114,7 @@ class PoleFinder:
             ratSmat.doCalc()
             self.file_roots = open(self.resultFileHandler.getRootFilePath(), 'w')
             self.file_roots.write(decStr+"\n")
-            roots = ratSmat.findPolyRoots(self.kConversionFactor, False)
+            roots = ratSmat.findPolyRoots(False)
             print "Calculated Roots for N=" + str(N) + ":"
         print "  " + str(len(roots)) + " roots."
         self.file_poles = open(self.resultFileHandler.getPoleFilePath(), 'w')
@@ -239,12 +237,12 @@ class PoleFinder:
             self.file_poles.write(writeStr)
           
         self.file_poles.write(COMPLETE_STR)
-        print "Poles calculated in mode " + self.mode + ", using df=" + str(self.distFactor)
+        print "Poles calculated in mode " + self.mode + ", using dk=" + str(self.distFactor)
         print "Calculated Poles for N=" + str(N) + ":"
         print "  " + str(poles) + " poles, of which " + str(newPoles) + " are new. " + str(lostPoles) + (" has" if lostPoles==1 else " have") + " been lost."
     
-    def _calEnergy(self, k):
-        return complex((1.0/self.kConversionFactor)*k**2)
+    def _calEnergy(self, k, primType=False):
+        return self.kCal.e(k, primType)
 
     def _printRoot(self, i, root, closestIndex):
         endStr = ""

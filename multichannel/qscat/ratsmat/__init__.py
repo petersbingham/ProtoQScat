@@ -48,7 +48,7 @@ def _canCacheCoefficients():
 class PolyRootSolve():
     def __init__(self, suppressCmdOut):
         self.suppressCmdOut = suppressCmdOut
-        self.sympy_detArgs = {'method':'berkowitz'}
+        self.sympy_detArgs = {'method':'berkowitz'} #'bareis''berkowitz'
         self.numpy_rootsArgs = {}
         self.sympy_nrootsArgs = {'n':DPS, 'maxsteps':500, 'cleanup':True}
         if ALLROOTS_FINDTYPE == "numpy_roots":
@@ -73,9 +73,6 @@ class PolyRootSolve():
     
     def _getRoots_sympy_Poly_nroots(self, mat, k):
         deter = mat.det(**self.sympy_detArgs)
-        with open("deter.txt", 'w') as f:
-            f.write(str(deter))
-        print "FIN"
         a = sy_polys.Poly(deter, k)
         ret = a.nroots(**self.sympy_nrootsArgs)    
         self.printCalStr()
@@ -639,7 +636,7 @@ class RatSMat(sm.mat):
             ene += dene
         return (xs, ys, zs)
     
-    def findPolyRoots(self, kConversionFactor, convertToEne=True): #kConversionFactor for when converting from k to energy. eg 2.0 for Hartrees.
+    def findPolyRoots(self, convertToEne=True):
         if self.hasCoeffs:
             allRoots = []
             for eKey in self.alphas:
@@ -656,12 +653,12 @@ class RatSMat(sm.mat):
                         for ci in range(self.numCoeffs):
                             A = alphas[ci][m,n]
                             B = betas[ci][m,n]
-                            val += (1.0/2.0)*(1.0/kConversionFactor)**(ci) * (QSToSympy(A)*k**(ln-lm+2*ci) - sy.I*QSToSympy(B)*k**(ln+lm+1+2*ci) )
+                            val += (1.0/2.0)*(1.0/self.kCal.eneFactor)**(ci) * (QSToSympy(A)*k**(ln-lm+2*ci) - sy.I*QSToSympy(B)*k**(ln+lm+1+2*ci) )
                         matLst[len(matLst)-1].append(val)
                 mat = sy_matrix(matLst)
                 roots = self.polyRootSolve.getRoots(mat, k)
                 if convertToEne:
-                    mappedRoots = map(lambda val: complex((1.0/kConversionFactor)*val**2), roots)
+                    mappedRoots = map(lambda val: complex((1.0/self.kCal.eneFactor)*val**2), roots)
                 else:
                     mappedRoots = map(lambda val: complex(val), roots)
                 allRoots.extend(mappedRoots)
