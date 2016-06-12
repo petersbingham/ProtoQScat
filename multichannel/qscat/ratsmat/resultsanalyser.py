@@ -76,7 +76,7 @@ class ResultsAnalyser:
         
         for N in sorted(keyedFileNames.keys()):
             fileName = keyedFileNames[N]
-            N, S, E = self._getFileParameters(fileName)
+            S, E = self._getFileParameters(fileName)
             subContainer = subContainerClass(N,S,E)
             containerClass.append(subContainer)
             self._extractValues(fileBase+fileName, subContainer, typeClass)
@@ -88,10 +88,9 @@ class ResultsAnalyser:
     def _getFileParameters(self, fileName):
         params = fileName.split("_")
         params[2] = params[2].replace(".dat","")
-        N = int(params[0].split("=")[1])
         S = int(params[1].split("=")[1])
         E = int(params[2].split("=")[1])
-        return N, S, E
+        return S, E
     
     def _extractValues(self, path, container, typeClass):
         path = self._fixPath(path)
@@ -121,6 +120,12 @@ class ResultsAnalyser:
             return path
                 
     def createPoleTable(self):
+        poleSets = self._createPoleSets()
+        poleSets = sorted(poleSets, key=self._getFinalImag)
+        poleSets = sorted(poleSets, key=self._getFinalImag, cmp=self._poleCmp)  #Do two sorts since we want to both group by pole/antiploe and then ensure that the pole comes first.
+        self._writePoleSets(poleSets)
+    
+    def _createPoleSets(self):
         poleSets = []
         poleLastValues = []
         for poles in self.allPoles:
@@ -136,6 +141,30 @@ class ResultsAnalyser:
                 if not found:
                     poleSets.append({poles.N:pole})
                     poleLastValues.append(pole.k)
+        return poleSets
+    
+    def _getFinalImag(self, poleSet): #Sort on pole at highest N
+        for N in sorted(poleSet.keys(),reverse=True):
+            pole = poleSet[N]
+            if pole.getStatus() != POLE_STATUS_LOST:
+                return pole.E.imag
+        assert False,"LOST pole when none were ever found!"
+    
+    def _poleCmp(self, v1, v2):
+        if abs(v1) < self.zeroVal and abs(v2) < self.zeroVal:
+            return 0
+        elif abs(v1) < self.zeroVal:
+            return -1
+        elif abs(v2) < self.zeroVal:
+            return 1
+        elif abs(v1) < abs(v2):
+            return -1
+        elif abs(v1) > abs(v2):
+            return 1
+        else:
+            return 0
+    
+    def _writePoleSets(self, poleSets):
         table = []
         for poleSet in poleSets:
             table.append([" ", "_", "_", "_"])
@@ -144,19 +173,34 @@ class ResultsAnalyser:
                 pole = poleSet[N]
                 if first:
                     self._writePriorRoots(table, pole)
+                if pole.getStatus() == POLE_STATUS_LOST:
+                    self._setClosestRoot(N, pole)
                 first = False
                 table.append([N, pole.getStatus(), self._v(pole.E.real), self._v(pole.E.imag)])
         outStr = getFormattedHTMLTable(table,'.'+str(self.zeroVal)+'f', headers=["N","Status", "pole.E.real", "pole.E.imag"])
         with open("out.txt", 'w') as f:
             f.write(outStr)
         print outStr
-    
+            
     def _writePriorRoots(self, table, initPole):
-        for priorRoot in initPole.convRoots[1:]:
+        for priorRoot in reversed(initPole.convRoots[1:]):
             N = priorRoot[0] #N of root
             I = priorRoot[1] #Index of root
             Nroots = self._getRootsForN(N)
             table.append([N, "ROOT", self._v(Nroots[I].E.real), self._v(Nroots[I].E.imag)])
+            
+    def _setClosestRoot(self, N, pole):
+        Nroots = self._getRootsForN(N)
+        smallestDiff = None
+        smallestIndex = None
+        for i in range(len(Nroots)):
+            root = Nroots[i]
+            diff = num.absDiff(root.k, pole.k)
+            if smallestDiff is None or diff<smallestDiff:
+                smallestDiff = diff
+                smallestIndex = i
+        pole.k = Nroots[smallestIndex].k
+        pole.E = Nroots[smallestIndex].E
             
     def _getRootsForN(self, N):
         for roots in self.allRoots:

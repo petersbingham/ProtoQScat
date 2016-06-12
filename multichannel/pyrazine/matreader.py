@@ -30,14 +30,14 @@ def readkMats(fileName):
                 ene = _num(nums[3])
                 kmats[ene] = QSsqZeros(NUMCHANNELS)
             else:
-                if len(line) == 81:
+                if len(line)==81 or len(line)==82: #Depending on new line sequence
                     kmats[ene][0,0] = _num(line[0:20])
                     kmats[ene][1,0] = _num(line[20:40])
                     kmats[ene][1,1] = _num(line[40:60])
                     kmats[ene][2,0] = _num(line[60:80])
                     kmats[ene][0,1] = kmats[ene][1,0]  
                     kmats[ene][0,2] = kmats[ene][2,0]
-                elif len(line) == 41:
+                elif len(line)==41 or len(line)==42:
                     kmats[ene][2,1] = _num(line[0:20])
                     kmats[ene][2,2] = _num(line[20:40])
                     kmats[ene][1,2] = kmats[ene][2,1]

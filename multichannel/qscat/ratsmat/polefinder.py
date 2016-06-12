@@ -138,6 +138,7 @@ class PoleFinder:
     def _locatePoles(self, roots, N):
         #This is when we know the position of a pole and want to mark the closest root to this value in the output file.
         closestIndex = None
+        closestDiff = None
         if self.cmpValue is not None:
             for j in range(len(roots)):
                 eneRoot = self._calEnergy(roots[j])
@@ -154,18 +155,24 @@ class PoleFinder:
                 root = roots[i]
                 isPole = True
                 infoStr = "with N=%d[%d]" % (N, i)
-                for k in range(len(self.allRoots)-self.numCmpSteps, len(self.allRoots)): #Look at the last sets
+                for k in reversed(range(len(self.allRoots)-self.numCmpSteps, len(self.allRoots))): #Look at the last sets
                     cmpRootSet = self.allRoots[k]
+                    smallestAbsCdiff = None
+                    infoStr2 = ""
                     for j in range(len(cmpRootSet)):
                         cmpRoot = cmpRootSet[j]
                         cdiff = self.ratCmp.getComplexDiff(root, cmpRoot)
+                        absCdiff = num.absDiff(root, cmpRoot)
                         if self.ratCmp.checkComplexDiff(cdiff):
-                            infoStr += " N=%d[%d]" % (self.allNs[k], j)
-                            break
-                        if j==len(cmpRootSet)-1:
+                            if smallestAbsCdiff is None or absCdiff < smallestAbsCdiff:
+                                infoStr2 = " N=%d[%d]" % (self.allNs[k], j)
+                                smallestAbsCdiff = absCdiff
+                        if j==len(cmpRootSet)-1 and smallestAbsCdiff is None:
                             isPole = False
                     if not isPole:
                         break
+                    else:
+                        infoStr += infoStr2
                 if isPole:        
                     newPoles.append(root)
                     newPolesInfoStrs.append(infoStr)
