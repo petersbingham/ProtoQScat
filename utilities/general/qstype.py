@@ -118,7 +118,7 @@ def QSidentity(sz):
     else:
         return mpmath.eye(sz)
 
-############### MATRIX OPERATIONS ###############
+############# MATRIX CHARACTERISTICS #############
     
 def QSshape(mat):
     if QSMODE == MODE_NORM:
@@ -131,6 +131,18 @@ def QSsize(mat):
         return mat.size
     else:
         return mat.rows*mat.cols
+
+############### MATRIX OPERATIONS ###############
+    
+def QSdiagonalise(mat):
+    if QSMODE == MODE_NORM:
+        w, v = np.linalg.eig(mat)
+        P = np.transpose(np.matrix(v, dtype=np.complex128))
+        return np.dot(P, np.dot(mat, np.linalg.inv(P)))
+    else:
+        w, v = mpmath.eig(mat)
+        P = mpmath.matrix(v).T
+        return P * mat * P**-1
 
 def QSinvert(mat):
     if QSMODE == MODE_NORM:
@@ -170,6 +182,25 @@ def QSsumElements(mat):
             for j in range(mat.cols):
                 XS += mat[i,j]
     return XS
+   
+def QStrace(mat):
+    if QSMODE == MODE_NORM:
+        return np.trace(mat)
+    else:
+        t = mpmath.mpc(0.0)
+        for i in range(mat.rows):
+            t += mat[i,i]
+        return t
+    
+def QSatanElements(mat):
+    if QSMODE == MODE_NORM:
+        return np.arctan(mat)
+    else:
+        at = mpmath.matrix(mat.rows, mat.cols)
+        for i in range(mat.rows):
+            for j in range(mat.cols):
+                at[i,j] = mpmath.atan(mat[i,j])
+        return at
     
 ############### OTHER ###############
 
@@ -186,7 +217,7 @@ def formattedComplexString(val, dps):
         signStr = "+"
     return formattedFloatString(val.real, dps) + signStr + formattedFloatString(val.imag, dps)+"j"
         
-def QSfloatList(lst):
+def floatList(lst):
     return str(map(lambda x:str(x),lst)).replace("'","")
 
 def mpIntDigits(num):

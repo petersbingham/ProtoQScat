@@ -69,7 +69,7 @@ class kCalculator:
         if self.ksigns is None:
             return self.ktype
         else:
-            return QSfloatList(self.ksigns)
+            return floatList(self.ksigns)
     def e(self, k, primType=False):
         val = (1.0/self.eneFactor)*k**2
         if primType:
@@ -136,6 +136,9 @@ RYDs = 1
 eVs = 2
    
 class matSequence:
+    PLOT_TYPE_ELEMENT = 0
+    PLOT_TYPE_TRACE = 1
+    
     def __init__(self, title=None, colourCycle=None, units=RYDs):
         if colourCycle is None:
             colourCycle = ['red', 'green', 'blue', 'purple']
@@ -202,13 +205,21 @@ class matSequence:
     
     def plot(self, m, n, logx=False, logy=False, imag=False, ax=plt):
         self._init(ax)
-        l1,s1 = self._plot(m, n, logx, logy, imag, ax)
+        l1,s1 = self._plot(logx, logy, imag, ax, matSequence.PLOT_TYPE_ELEMENT, m, n)
         if ax==plt and self.title is not None:
             ax.legend([l1], [s1])
             ax.draw()
         return (l1,s1)
     
-    def _plot(self, m, n, logx, logy, imag, ax):
+    def plotSum(self, logx=False, logy=False, imag=False, ax=plt):
+        self._init(ax)
+        l1,s1 = self._plot(logx, logy, imag, ax, matSequence.PLOT_TYPE_TRACE)
+        if ax==plt and self.title is not None:
+            ax.legend([l1], [s1])
+            ax.draw()
+        return (l1,s1)
+    
+    def _plot(self, logx, logy, imag, ax, pt, m=None, n=None):
         items = self._convert()
         xs = np.ndarray((len(items),), dtype=float)
         ys = np.ndarray((len(items),), dtype=float)
@@ -216,11 +227,19 @@ class matSequence:
         for x in sorted(items.keys(), key=lambda val: val.real):
             xx = self._convertEnergy(x)
             xs[i] = xx.real
-            if not imag:
-                ys[i] = items[x][m,n].real
-            else:
-                ys[i] = items[x][m,n].imag
+            if pt==matSequence.PLOT_TYPE_ELEMENT:
+                if not imag:
+                    ys[i] = items[x][m,n].real
+                else:
+                    ys[i] = items[x][m,n].imag
+            elif pt==matSequence.PLOT_TYPE_TRACE:
+                trace = QStrace(items[x])
+                if not imag:
+                    ys[i] = trace.real
+                else:
+                    ys[i] = trace.imag
             i+=1
+            
         if self.marker:
             ma = "x"
             li = "None"
@@ -235,7 +254,10 @@ class matSequence:
             lne, = ax.semilogy(xs, ys, linestyle=li, marker=ma, basey=10)
         else:
             lne, = ax.plot(xs, ys, linestyle=li, marker=ma)
-        return (lne, self.legPrefix+": "+str(m)+","+str(n))
+        legStr = self.legPrefix
+        if m is not None and n is not None:
+            legStr += ": "+str(m)+","+str(n)
+        return (lne, legStr)
         
     def plotRow(self, m, logx=False, logy=False, imag=False, ax=plt):
         self._init(ax)
@@ -258,7 +280,7 @@ class matSequence:
         strings = []
         for m in range(size):
             for n in range(size):
-                l,s = self._plot(m, n, logx, logy, imag, ax)
+                l,s = self._plot(logx, logy, imag, ax, matSequence.PLOT_TYPE_ELEMENT, m, n)
                 lines.append(l)
                 strings.append(s)
         return (lines, strings)
@@ -268,7 +290,7 @@ class matSequence:
         lines = []
         strings = []
         for n in range(size):
-            l,s = self._plot(args[0], n, logx, logy, imag, ax)
+            l,s = self._plot(logx, logy, imag, ax, matSequence.PLOT_TYPE_ELEMENT, args[0], n)
             lines.append(l)
             strings.append(s)
         return (lines, strings)
@@ -361,6 +383,9 @@ def plot(type, matSequences, m, n, imag=False, title=None, xlabel="", ylabel="")
 def plotAll(type, matSequences, imag=False, title=None, xlabel="", ylabel=""):
     _plot(_plotAll, type, matSequences, title, xlabel, ylabel, imag)  
     
+def plotSum(type, matSequences, imag=False, title=None, xlabel="", ylabel=""):
+    _plot(_plotSum, type, matSequences, title, xlabel, ylabel, imag) 
+    
 def plotSingle(type, matSequences, m, n, imag=False, title=None, xlabel="", ylabel=""):
     _plot(_plotSingle, type, matSequences, title, xlabel, ylabel, imag, m, n) 
     
@@ -406,6 +431,21 @@ def _plotAll(type, matSequences, imag):
         strings += s
     return (lines, strings)
 
+def _plotSum(type, matSequences, imag):
+    lines = []
+    strings = []
+    for matSequence in matSequences:
+        ax = _getAxis()
+        if type == "Lin":
+            l,s = matSequence.plotSum(False, False, imag, ax)
+        elif type=="Log":
+            l,s = matSequence.plotSum(False, True, imag, ax)
+        elif type=="LogLog":
+            l,s = matSequence.plotSum(True, True, imag, ax)
+        lines += l
+        strings += s
+    return (lines, strings)
+
 def _plotSingle(type, matSequences, imag, *args):
     lines = []
     strings = []
@@ -417,6 +457,21 @@ def _plotSingle(type, matSequences, imag, *args):
             l,s = matSequence.plot(args[0], args[1], False, True, imag, ax)
         elif type=="LogLog":
             l,s = matSequence.plot(args[0], args[1], True, True, imag, ax)
+        lines.append(l)
+        strings.append(s)
+    return (lines, strings)
+
+def _plotSum(type, matSequences, imag, *args):
+    lines = []
+    strings = []
+    for matSequence in matSequences:
+        ax = _getAxis()
+        if type == "Lin":
+            l,s = matSequence.plotSum(False, False, imag, ax)
+        elif type=="Log":
+            l,s = matSequence.plotSum(False, True, imag, ax)
+        elif type=="LogLog":
+            l,s = matSequence.plotSum(True, True, imag, ax)
         lines.append(l)
         strings.append(s)
     return (lines, strings)

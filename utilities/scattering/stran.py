@@ -43,6 +43,27 @@ class UniOpmat(TranMat):
         m1 = self.sourceMat.getMatrix()
         m2 = m1.transpose().conjugate()
         self.tranMat = m1 * m2
+    
+class EPhaseMat_fromK(TranMat):
+    def setEnergy(self, ene):
+        self.sourceMat.setEnergy(ene)
+        self._calculate()
+      
+    def _calculate(self):
+        self.tranMat = QSatanElements(QSdiagonalise(self.sourceMat.getMatrix()))
+        pass
+    
+class EPhaseMat(TranMat):
+    def setEnergy(self, ene):
+        self.sourceMat.setEnergy(ene)
+        self._calculate()
+      
+    def _calculate(self):
+        num = QSidentity(self.sourceMat.numChannels) - self.sourceMat.getMatrix()
+        denum = QSidentity(self.sourceMat.numChannels) + self.sourceMat.getMatrix()
+        K = 1.0j*QSdot(num, QSinvert(denum))
+        self.tranMat = QSatanElements(QSdiagonalise(K))
+        pass
  
 class XSmat(TranMat):
     def __init__(self, tMat, kCal):
