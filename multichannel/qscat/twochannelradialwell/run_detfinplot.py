@@ -1,7 +1,7 @@
 from runbase import *
 import matplotlib.pyplot as plt
 from analytical.runargsrange import *
-import scattering.stran as S
+from scattering.stran import *
 import general.simpplot as sp
 
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Plot det(Fin)", parents=[tcp_range])

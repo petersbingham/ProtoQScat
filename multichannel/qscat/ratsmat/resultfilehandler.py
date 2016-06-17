@@ -1,12 +1,13 @@
 import os
 import sys
+import datetime
 from sys import platform as _platform
 
-baseDir = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0,baseDir+'/../../../Utilities')
+BASEDIR = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0,BASEDIR+'/../../../Utilities')
 from general.file import *
 
-RESULTSDIR = baseDir + sep() + "Results" + sep()
+RESULTSDIR = BASEDIR + sep() + "Results" + sep()
 COEFFDIR = sep() + "CoefficientFiles" + sep()
 ROOTSDIR = sep() + "Roots" + sep()
 POLESDIR = sep() + "Poles"
@@ -15,6 +16,7 @@ POLESDIR = sep() + "Poles"
 class ResultFileHandler:
     def __init__(self, sysName):
         self.sysPath = RESULTSDIR + sysName
+        self.logFile = open(BASEDIR+"/path.log", 'w')
         self.startIndex = None
         self.endIndex = None
         self.numFits = None
@@ -73,19 +75,27 @@ class ResultFileHandler:
         return False  
     
     def getCoeffFilePath(self):
-        return fixPath(self.coeffPath)
+        s = self.coeffPath
+        self._printLogStr(s)
+        return fixPath(s)
     
     def getCoeffFileName(self, fit, ci, typeString, ext=".dat"):
-        return fixPath(self.coeffPath + typeString + "_" + str(fit) + "_" + str(ci) + ext)
+        s = self.coeffPath + typeString + "_" + str(fit) + "_" + str(ci) + ext
+        self._printLogStr(s)
+        return fixPath(s)
 
     def doesRootFileExist(self, ext=".dat"):
         return os.path.isfile(self.getRootFilePath(ext))
 
     def getRootFilePath(self, ext=".dat"):
-        return fixPath(self.rootPath + ext) 
+        s = self.polesPath + ext
+        self._printLogStr(s)
+        return fixPath(s) 
 
     def getPoleFilePath(self, ext=".dat"):
-        return fixPath(self.polesPath + ext)
+        s = self.polesPath + ext
+        self._printLogStr(s)
+        return fixPath(s)
 
     def _getAfitNames(self): 
         return self._getFitNames("A")
@@ -99,6 +109,10 @@ class ResultFileHandler:
             for ci in range(0, self.numCoeffs):
                 fitNames.append(self.getCoeffFileName(fit, ci, typeString))
         return fitNames  
+    
+    def _printLogStr(self, string):
+        s = str(datetime.datetime.now().time()) + "\t" + string + "\n"
+        self.logFile.write(s)
     
     def _makeDir(self, path):
         if not os.path.isdir(fixPath(path)):

@@ -2,36 +2,16 @@ import sys
 import os
 import traceback
 sys.path.append("../Utilities")
-import scattering.matrices as sm
 import general.numerical as num
 from ratsmat import *
+from decimator import *
 from general.qstype import *
-
 
 ZEROVALEXP = 7
 DOUBLE_N = 'doubleN'
 INC_N = 'incN'
 COMPLETE_STR = "Complete"
-
-class Decimator():
-    def __init__(self, startIndex, endIndex, offset, resultFileHandler):
-        self.startIndex = startIndex
-        self.endIndex = endIndex
-        self.offset = offset
-        self.resultFileHandler = resultFileHandler
-                 
-    def decimate(self, sMats, N):
-        actualStartIndex = self.startIndex+self.offset
-        sMats, step, actualEndIndex, startEne, endEne = sm.decimate(sMats, actualStartIndex, self.endIndex+self.offset, N)
-        self.resultFileHandler.setDeciminationInfo(actualStartIndex, actualEndIndex)
-        try:
-            decStr = "N=%d, Emin=%d(%f), Emax=%d(%f), step=%d" % (N,actualStartIndex,startEne,actualEndIndex,endEne,step)
-        except TypeError:
-            decStr = "N=%d, Emin=%d(%f+%fi), Emax=%d(%f+%fi), step=%d" % (N,actualStartIndex,startEne.real,startEne.imag,actualEndIndex,endEne.real,endEne.imag,step)
-        print "Decimation:"
-        print "  "+decStr
-        return sMats, decStr     
-
+   
 class PoleFinder:
     def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP):
         self.sMats = sMats

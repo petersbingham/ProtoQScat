@@ -1,6 +1,6 @@
 from runbase import *
 from analytical.runargsrange import *
-import scattering.stran as S
+from scattering.stran import *
 
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - S-matrix Range", parents=[tcp_range])
 spArgs.add_argument("rangeStart_", help="Range Start", type=float)
@@ -21,7 +21,7 @@ try:
     if args.rangeType_ == "S":
         rangeMat = ratSmat
     elif args.rangeType_ == "UnitaryOp": 
-        rangeMat = S.UniOpmat(ratSmat)
+        rangeMat = S_to_UniOp(ratSmat)
       
     for i in range(0,args.rangeSteps_+1,1):
         ene = getEnergy("Lin", x)

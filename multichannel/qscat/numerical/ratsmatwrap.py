@@ -8,16 +8,16 @@ sys.path.insert(0,base+'/..')
 sys.path.insert(0,os.getcwd()) #We assume that the specific kreader and description (below) will be here.
 
 from ratsmat import *
-from ratsmat.polefinder import *
+from ratsmat.decimator import *
 from matreader import *
 from sysdesc import *
 import scattering.conversions as conv
-import scattering.stran as S
+from scattering.stran import *
 
 M_NORM = 0
 M_PIECEWISE = 1
 
-class PyXSmat(S.XSmat):
+class T_to_XSmol(T_to_XS):
     def _getElement(self, m, n):
         self.sourceMat.setEnergy(self.ene)
         t = self.sourceMat[m][n]
@@ -25,8 +25,8 @@ class PyXSmat(S.XSmat):
         XS = cmath.pi / pow(k,2.0) * pow(abs(t),2.0)
         return XS * conv.BOHRSQ_to_ANGSQ
 
-def getTotalXS(XSmat):
-    XS = QSsumElements(XSmat.getMatrix())
+def getTotalXS(T_to_XS):
+    XS = QSsumElements(T_to_XS.getMatrix())
     return QSmatrix([[XS]])
 
 class RatSMatWrap:
@@ -51,15 +51,13 @@ class RatSMatWrap:
         self.mode = M_PIECEWISE
         self.N = N
         self.suppressCmdOut = suppressCmdOut
-        self.fileHandler = getFileHandler(self.kFitCal, startIndex, endIndex)
+        self.fileHandler = getFileHandler(self.kFitCal, startIndex if startIndex is not None else 0, endIndex if endIndex is not None else len(self.kmats)-1)
         if startIndex is not None and endIndex is not None and N is not None:
             self.mode = M_NORM
             self._decimate(startIndex, endIndex, N)
         else:
             if len(self.kmats)%2 != 0:
                 self.kmats.pop(ene)
-            startIndex = 0
-            endIndex = len(self.kmats)-1
   
     def _decimate(self, startIndex, endIndex, N):
         decimator = Decimator(startIndex, endIndex, 0, self.fileHandler)
@@ -78,7 +76,7 @@ class RatSMatWrap:
     
     def getDiscreteXS(self, title=None, colourCycle=None):
         XSmats = sm.matSequence(title, colourCycle)
-        xs = PyXSmat(S.Tmat(self), self.kFitCal)
+        xs = T_to_XSmol(S_to_T(self), self.kFitCal)
         for ene in sorted(self.kmats, key=lambda val: val.real):
             xs.setEnergy(ene)
             XSmats[ene] = xs.getMatrix()
@@ -86,7 +84,7 @@ class RatSMatWrap:
     
     def getTotalDiscreteXS(self, title=None, colourCycle=None):
         totXSmats = sm.matSequence(title, colourCycle)
-        xs = PyXSmat(S.Tmat(self), self.kFitCal)
+        xs = T_to_XSmol(S_to_T(self), self.kFitCal)
         for ene in sorted(self.kmats, key=lambda val: val.real):
             xs.setEnergy(ene)
             totXSmats[ene] = getTotalXS(xs)
@@ -94,7 +92,7 @@ class RatSMatWrap:
     
     def getDiscreteEigenSum(self, title=None, colourCycle=None):
         ratEPhaseMats = sm.matSequence(title, colourCycle)
-        ratEPhaseMat = S.EPhaseMat(self)
+        ratEPhaseMat = S_to_EPhase(self)
         i = 0 
         for ene in sorted(self.kmats, key=lambda val: val.real):
             ratEPhaseMat.setEnergy(ene)
@@ -118,7 +116,7 @@ class RatSMatWrap:
     def getRatXS(self, title=None, colourCycle=None):
         ratSmat = self._getRatSmat()
         ratXSMats = sm.matSequence(title, colourCycle)
-        ratXSmat = PyXSmat(S.Tmat(ratSmat), self.kCal)
+        ratXSmat = T_to_XSmol(S_to_T(ratSmat), self.kCal)
         for ene in self.kmats:
             ratXSmat.setEnergy(ene)
             ratXSMats[ene] = ratXSmat.getMatrix()
@@ -127,7 +125,7 @@ class RatSMatWrap:
     def getTotalRatXS(self, title=None, colourCycle=None, eneStart=None, eneEnd=None, eneComplexOffset=None, eneSteps=None):
         ratSmat = self._getRatSmat()
         ratTotXSMats = sm.matSequence(title, colourCycle)
-        ratXSmat = PyXSmat(S.Tmat(ratSmat), self.kCal)
+        ratXSmat = T_to_XSmol(S_to_T(ratSmat), self.kCal)
         if eneStart is None and eneEnd is None and eneSteps is None and eneComplexOffset is None:
             eneRange = self.kmats.keys()
         else:
@@ -141,7 +139,7 @@ class RatSMatWrap:
     def getRatEigenSum(self, title=None, colourCycle=None, eneStart=None, eneEnd=None, eneComplexOffset=None, eneSteps=None):
         ratSmat = self._getRatSmat()
         ratEPhaseMats = sm.matSequence(title, colourCycle)
-        ratEPhaseMat = S.EPhaseMat(ratSmat)
+        ratEPhaseMat = S_to_EPhase(ratSmat)
         if eneStart is None and eneEnd is None and eneSteps is None and eneComplexOffset is None:
             eneRange = self.kmats.keys()
         else:

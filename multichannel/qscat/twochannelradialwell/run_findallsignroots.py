@@ -1,6 +1,6 @@
 from runbase import *
 from analytical.runargsrange import *
-import scattering.stran as S
+from scattering.stran import *
 import general.numerical as num
 import tabulate
 
