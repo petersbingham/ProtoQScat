@@ -87,7 +87,7 @@ class PoleFinder:
                 ratSmat.polyRootSolve.printCalStr(True)
                 print "Loaded Roots for N=" + str(N) + ":"
             except Exception as e:
-                print "Error reading roots will attempt to recalculate"
+                print "Error reading roots will attempt to recalculate: " + str(e)
         if roots is None:
             if self.populateSmatCB is not None:
                 self.populateSmatCB(sMats, self.sMats)

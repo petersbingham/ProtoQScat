@@ -88,7 +88,7 @@ class ResultFileHandler:
         return os.path.isfile(self.getRootFilePath(ext))
 
     def getRootFilePath(self, ext=".dat"):
-        s = self.polesPath + ext
+        s = self.rootPath + ext
         self._printLogStr(s)
         return fixPath(s) 
 

@@ -84,6 +84,11 @@ class StaticPlot:
             plt.axvline(0, color='black')
         if len(self.legends) > 0:
             plt.legend(self.lines, self.legends, prop={'size':9})
+        axes = plt.gca()
+        if xlim is not None:
+            axes.set_xlim(xlim)
+        if ylim is not None:
+            axes.set_ylim(ylim)
         plt.draw()
         plt.show()
     
@@ -110,6 +115,14 @@ def setImgSize(width, height):
     FIGSZ_W = width
     FIGSZ_H = height
 
+xlim = None
+ylim = None
+def setExtents(xlim_, ylim_):
+    global xlim
+    global ylim
+    xlim = xlim_
+    ylim = ylim_
+    
 def turnOffColourCycle():
     matplotlib.rcParams['axes.color_cycle'] = ['black']
 
