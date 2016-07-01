@@ -1,5 +1,5 @@
 from AnaSmatFuns import *
-import sympy.mpmath as mpm
+import mpmath as mpm
 import cmath
 
 a=1.0

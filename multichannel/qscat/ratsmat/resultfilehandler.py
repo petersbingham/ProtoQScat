@@ -1,6 +1,7 @@
 import os
 import sys
 import datetime
+import time
 from sys import platform as _platform
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
@@ -12,14 +13,19 @@ COEFFDIR = sep() + "CoefficientFiles" + sep()
 ROOTSDIR = sep() + "Roots" + sep()
 POLESDIR = sep() + "Poles"
 
+LOGSDIR = BASEDIR + sep() + "Logs" + sep()
+
 #Note to exceed the old max file path in win we must use \\?\ prefix, unicode and double slashes.
 class ResultFileHandler:
     def __init__(self, sysName):
         self.sysPath = RESULTSDIR + sysName
-        self.logFile = open(BASEDIR+"/path.log", 'w')
+        if not os.path.isdir(LOGSDIR):
+            os.makedirs(LOGSDIR)
+        self.logFile = open(LOGSDIR+str(datetime.datetime.now()).split('.')[0].replace(':','-')+".log", 'w+')
         self.startIndex = None
         self.endIndex = None
         self.numFits = None
+        self.logTimes = {}
     
     def setFitInfo(self, numFits, fitSize):
         self.numFits = numFits
@@ -76,12 +82,12 @@ class ResultFileHandler:
     
     def getCoeffFilePath(self):
         s = self.coeffPath
-        self._printLogStr(s)
+        self.writeLogStr(s)
         return fixPath(s)
     
     def getCoeffFileName(self, fit, ci, typeString, ext=".dat"):
         s = self.coeffPath + typeString + "_" + str(fit) + "_" + str(ci) + ext
-        self._printLogStr(s)
+        self.writeLogStr(s)
         return fixPath(s)
 
     def doesRootFileExist(self, ext=".dat"):
@@ -89,12 +95,12 @@ class ResultFileHandler:
 
     def getRootFilePath(self, ext=".dat"):
         s = self.rootPath + ext
-        self._printLogStr(s)
+        self.writeLogStr(s)
         return fixPath(s) 
 
     def getPoleFilePath(self, ext=".dat"):
         s = self.polesPath + ext
-        self._printLogStr(s)
+        self.writeLogStr(s)
         return fixPath(s)
 
     def _getAfitNames(self): 
@@ -110,9 +116,17 @@ class ResultFileHandler:
                 fitNames.append(self.getCoeffFileName(fit, ci, typeString))
         return fitNames  
     
-    def _printLogStr(self, string):
+    def startLogAction(self, actionStr):
+        self.writeLogStr("STARTING " + actionStr)
+        self.logTimes[actionStr] = time.clock()
+    
+    def endLogAction(self, actionStr):
+        self.writeLogStr("FINISHED " + actionStr + " Time Taken: " + str(time.clock()-self.logTimes[actionStr]))
+    
+    def writeLogStr(self, string):
         s = str(datetime.datetime.now().time()) + "\t" + string + "\n"
         self.logFile.write(s)
+        self.logFile.flush()
     
     def _makeDir(self, path):
         if not os.path.isdir(fixPath(path)):

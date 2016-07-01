@@ -80,7 +80,7 @@ class PoleFinder:
         ratSmat = RatSMat(sMats, self.kCal, resultFileHandler=self.resultFileHandler, doCalc=False)
         self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distFactor, self.zeroValue)
         roots = None
-        if self.resultFileHandler.doesRootFileExist():
+        if self.resultFileHandler.doesRootFileExist() and not ALWAYS_CALCULATE:
             ratSmat.coeffSolve.printCalStr(True)
             try:
                 roots = self._readNroots(N)

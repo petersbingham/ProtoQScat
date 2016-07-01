@@ -1,5 +1,5 @@
 import cmath
-import sympy.mpmath as mpmath
+import mpmath
 import numpy as np
 import sympy as sy
 

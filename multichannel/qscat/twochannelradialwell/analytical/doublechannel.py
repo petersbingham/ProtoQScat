@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import scipy.linalg as la
-import sympy.mpmath as mpm
+import mpmath as mpm
 
 import sys
 import os

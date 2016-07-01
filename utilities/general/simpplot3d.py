@@ -4,7 +4,7 @@ from matplotlib import cm
 import matplotlib.pyplot as plt
 import pylab
 import numpy as np
-import sympy.mpmath as mpmath
+import mpmath
 mpmath.dps = 5
 
 

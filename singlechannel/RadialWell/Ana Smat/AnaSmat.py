@@ -6,7 +6,7 @@ sys.path.insert(0,base+'/../../../Utilities/General')
 POINTS = 800000
 
 import cmath
-import sympy.mpmath as mpm
+import mpmath as mpm
 import simpplot as sp
 sp.setSubPlotParameters(left=0.12, bottom=0.16, right=0.96, top=0.9, wspace=0.2, hspace=0.2)
 sp.setImgSize(6,3)

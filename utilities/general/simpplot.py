@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 import csv
+import sys
 
 LEFT = 0.12
 BOTTOM = 0.1
@@ -182,49 +183,56 @@ def plotScat(title,xs,ys,xlabel="",ylabel="",logx=False,logy=False,legend=None,m
         p.save(path)  
   
 if __name__ == '__main__':
-    numValues = 400
-    def _getWave(xs, ys, phase, amp):  
-        x = 0.0
-        dx = 4.0*np.pi / float(numValues)
-        for i in range(numValues):
-            xs[i] = x
-            ys[i] = amp*math.sin(x+phase)
-            x += dx
-        return (xs,ys)  
-    
-    def _getWaveNumpy(phase, amp):
-        xs = np.ndarray((numValues,), dtype=float)
-        ys = np.ndarray((numValues,), dtype=float)
-        return _getWave(xs, ys, phase, amp)
-    
-    def _getWaveList(phase, amp):
-        xs = [None]*numValues
-        ys = [None]*numValues
-        return _getWave(xs, ys, phase, amp)
-  
-    def _getLog():
-        xs = np.ndarray((numValues,), dtype=float)
-        ys = np.ndarray((numValues,), dtype=float)
-        x = 0.0
-        dx = 10.0 / float(numValues)
-        for i in range(numValues):
-            xs[i] = x
-            ys[i] = math.pow(2,x)
-            x += dx
-        return (xs,ys)  
-    
-    sp = StaticPlot("Test",1,2)
+    if len(sys.argv) == 1:
+        numValues = 400
+        def _getWave(xs, ys, phase, amp):  
+            x = 0.0
+            dx = 4.0*np.pi / float(numValues)
+            for i in range(numValues):
+                xs[i] = x
+                ys[i] = amp*math.sin(x+phase)
+                x += dx
+            return (xs,ys)  
+        
+        def _getWaveNumpy(phase, amp):
+            xs = np.ndarray((numValues,), dtype=float)
+            ys = np.ndarray((numValues,), dtype=float)
+            return _getWave(xs, ys, phase, amp)
+        
+        def _getWaveList(phase, amp):
+            xs = [None]*numValues
+            ys = [None]*numValues
+            return _getWave(xs, ys, phase, amp)
       
-    sp.addPlot("T1","T2")
-    xs,ys = _getWaveNumpy(0,1)
-    sp.addLine(1,xs,ys,"L1",True)
-    
-    xs,ys = _getWaveList(np.pi/2,2)
-    sp.addLine(1,xs,ys,"L2")
-    
-    sp.addPlot("T1","T2", logy=True)
-    xs,ys = _getLog()
-    sp.addLine(2,xs,ys,"L2")
-    
-    sp.reveal()
+        def _getLog():
+            xs = np.ndarray((numValues,), dtype=float)
+            ys = np.ndarray((numValues,), dtype=float)
+            x = 0.0
+            dx = 10.0 / float(numValues)
+            for i in range(numValues):
+                xs[i] = x
+                ys[i] = math.pow(2,x)
+                x += dx
+            return (xs,ys)  
+        
+        sp = StaticPlot("Test",1,2)
+          
+        sp.addPlot("T1","T2")
+        xs,ys = _getWaveNumpy(0,1)
+        sp.addLine(1,xs,ys,"L1",True)
+        
+        xs,ys = _getWaveList(np.pi/2,2)
+        sp.addLine(1,xs,ys,"L2")
+        
+        sp.addPlot("T1","T2", logy=True)
+        xs,ys = _getLog()
+        sp.addLine(2,xs,ys,"L2")
+        
+        sp.reveal()
+    else:
+        if len(sys.argv) > 5:
+            legends = sys.argv[5:]
+        else:
+            legends = None
+        plotSingleFromCSV(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4],legends)
 
