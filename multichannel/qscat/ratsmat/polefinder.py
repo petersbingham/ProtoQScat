@@ -84,7 +84,7 @@ class PoleFinder:
             ratSmat.coeffSolve.printCalStr(True)
             try:
                 roots = self._readNroots(N)
-                ratSmat.polyRootSolve.printCalStr(True)
+                ratSmat.rootSolver.printCalStr(True)
                 print "Loaded Roots for N=" + str(N) + ":"
             except Exception as e:
                 print "Error reading roots will attempt to recalculate: " + str(e)

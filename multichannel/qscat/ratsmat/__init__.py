@@ -26,7 +26,8 @@ COEFFDIR = os.path.dirname(os.path.realpath(__file__)) + "/CoefficientFiles/"
 ALWAYS_CALCULATE = False
 
 PYTYPE_COEFF_SOLVE_METHOD = "numpy_solve"      #"numpy_solve""numpy_lstsq""numpy_sparse_bicg""numpy_sparse_bicgstab""numpy_sparse_lgmres""numpy_sparse_minres""numpy_sparse_qmr""numpy_qr"
-ALLROOTS_FINDTYPE = "sympy_nroots"             #"numpy_roots""sympy_nroots"
+
+EXPANDEDDET_ROOTS_FINDTYPE = "sympy_nroots"    #"numpy_roots""sympy_nroots"
 SINGLEROOT_FINDTYPE = "muller"                 #"muller""secant"
 
 DISPLAY_PRECISION = 8
@@ -44,29 +45,49 @@ def _canCacheCoefficients():
         return True
     return False
 
-
-class PolyRootSolve():
-    def __init__(self, suppressCmdOut):
+class AuxHelper():
+    def __init__(self, desStr, suppressCmdOut):
+        self.desStr = desStr
+        self.printed = False
         self.suppressCmdOut = suppressCmdOut
-        self.sympy_detArgs = {'method':'berkowitz'} #'bareis''berkowitz'
+    
+    def setResultFileHandler(self, resultFileHandler):
+        self.resultFileHandler = resultFileHandler
+    
+    def printCalStr(self, wereLoaded=False):
+        if not self.suppressCmdOut and not self.printed:
+            addStr = ""
+            if wereLoaded:
+                addStr = "had been "
+            print self.desStr + " " + addStr + "calculated using " + self.typeStr 
+            self.printed = True
+
+    def _startLogAction(self, string):
+        if self.resultFileHandler:
+            self.resultFileHandler.startLogAction(string)
+
+    def _endLogAction(self, string):
+        if self.resultFileHandler:
+            self.resultFileHandler.endLogAction(string)
+
+class ExpandedDetSolve(AuxHelper):
+    def __init__(self, suppressCmdOut):
+        AuxHelper.__init__(self, "Roots", suppressCmdOut)
+        self.sympy_detArgs = {'method':'berkowitz'} #'bareis''berkowitz''det_LU'
         self.sympy_polyArgs = {} #'lex''grlex'
         self.numpy_rootsArgs = {}
         self.sympy_nrootsArgs = {'n':DPS, 'maxsteps':500, 'cleanup':True}
         typeStrStart = "sympy_det"+getArgDesc(sy_matrix.det, self.sympy_detArgs)+",sympy_Poly"+getArgDesc(sy_polys.Poly.__new__, self.sympy_polyArgs)
-        if ALLROOTS_FINDTYPE == "numpy_roots":
+        if EXPANDEDDET_ROOTS_FINDTYPE == "numpy_roots":
             self.typeStr = typeStrStart+",numpy_roots"+getArgDesc(np.roots, self.numpy_rootsArgs)
-        elif ALLROOTS_FINDTYPE == "sympy_nroots":
+        elif EXPANDEDDET_ROOTS_FINDTYPE == "sympy_nroots":
             self.typeStr = typeStrStart+",sympy_nroots"+getArgDesc(sy_polys.polytools.nroots, self.sympy_nrootsArgs)
-        self.printed = False
-    
-    def setResultFileHandler(self, resultFileHandler):
-        self.resultFileHandler = resultFileHandler
       
-    def getRoots(self, mat, k):
+    def getRoots(self, mat, k, **args):
         self._startLogAction("getRoots")
-        if ALLROOTS_FINDTYPE == "numpy_roots":
+        if EXPANDEDDET_ROOTS_FINDTYPE == "numpy_roots":
             ret = self._getRoots_numpy_roots(mat, k)
-        elif ALLROOTS_FINDTYPE == "sympy_nroots":
+        elif EXPANDEDDET_ROOTS_FINDTYPE == "sympy_nroots":
             ret = self._getRoots_sympy_Poly_nroots(mat, k)
         self._endLogAction("getRoots")
         return ret
@@ -114,15 +135,12 @@ class PolyRootSolve():
         if self.resultFileHandler:
             self.resultFileHandler.endLogAction(string)
 
-class CoeffSolve():
+class CoeffSolve(AuxHelper):
     def __init__(self, suppressCmdOut):
-        self.suppressCmdOut = suppressCmdOut
+        AuxHelper.__init__(self, "Coeffs", suppressCmdOut)
         self.printed = False
         self._action(0)
         self.coeffVec = None
-    
-    def setResultFileHandler(self, resultFileHandler):
-        self.resultFileHandler = resultFileHandler
     
     def setValues(self, numPolyTerms, fitSize, numChannels):  
         self.numPolyTerms = numPolyTerms
@@ -150,11 +168,9 @@ class CoeffSolve():
         self.resVec[row,col] = val 
     
     def solve(self):
-        if self.resultFileHandler:
-            self.resultFileHandler.startLogAction(self.typeStr)
+        self._startLogAction(self.typeStr)
         self._action()
-        if self.resultFileHandler:
-            self.resultFileHandler.endLogAction(self.typeStr)
+        self._endLogAction(self.typeStr)
     
     def _action(self, act=1):
         if QSMODE == MODE_MPMATH:
@@ -238,14 +254,6 @@ class CoeffSolve():
                     self.coeffVec = np.linalg.solve(R,y, **args_s) 
                     self.printCalStr()
     
-    def printCalStr(self, wereLoaded=False):
-        if not self.suppressCmdOut and not self.printed:
-            addStr = ""
-            if wereLoaded:
-                addStr = "had been "
-            print "Coeffs " + addStr + "calculated using " + self.typeStr 
-            self.printed = True
-    
     def _sparseRet(self, ret):
         if not self.suppressCmdOut and not self.printed:
             print "Coeffs calculated using " + self.typeStr + ". Ret: " + str(ret[1])
@@ -295,17 +303,17 @@ class RatSMat(sm.mat):
         self.ene = None
         
         self.coeffSolve = CoeffSolve(self.suppressCmdOut)
-        self.polyRootSolve = PolyRootSolve(self.suppressCmdOut)
+        self.rootSolver = ExpandedDetSolve(self.suppressCmdOut)
         
         self.resultFileHandler = resultFileHandler
         if self.resultFileHandler is not None:
             self.resultFileHandler.setFitInfo(self.numFits, self.fitSize)
             self.resultFileHandler.setCoeffRoutine(self.coeffSolve.typeStr)
-            self.resultFileHandler.setRootFindRoutine(self.polyRootSolve.typeStr)
+            self.resultFileHandler.setRootFindRoutine(self.rootSolver.typeStr)
         if ALWAYS_CALCULATE or not _canCacheCoefficients(): #We need to set the info for later use before setting reference to None.
             self.resultFileHandler = None
         self.coeffSolve.setResultFileHandler(self.resultFileHandler)
-        self.polyRootSolve.setResultFileHandler(self.resultFileHandler)
+        self.rootSolver.setResultFileHandler(self.resultFileHandler)
         self.fitName = None
         
         if doCalc:
@@ -674,6 +682,9 @@ class RatSMat(sm.mat):
         return (xs, ys, zs)
     
     def findPolyRoots(self, convertToEne=True):
+        return self._findRoots(convertToEne, self.rootSolver.getRoots)
+
+    def _findRoots(self, convertToEne, fun, **args):
         if self.hasCoeffs:
             allRoots = []
             for eKey in self.alphas:
@@ -693,7 +704,7 @@ class RatSMat(sm.mat):
                             val += (1.0/2.0)*(1.0/self.kCal.eneFactor)**(ci) * (QSToSympy(A)*k**(ln-lm+2*ci) - sy.I*QSToSympy(B)*k**(ln+lm+1+2*ci) )
                         matLst[len(matLst)-1].append(val)
                 mat = sy_matrix(matLst)
-                roots = self.polyRootSolve.getRoots(mat, k)
+                roots = fun(mat, k, **args)
                 if convertToEne:
                     mappedRoots = map(lambda val: complex((1.0/self.kCal.eneFactor)*val**2), roots)
                 else:

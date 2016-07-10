@@ -34,7 +34,7 @@ def getParameterDesc(args):
             s = "Uncoupled Elastic"
     return s + " (" + floatList([args.r0_, args.v1_, args.v2_, args.t1_, args.t2_, args.lam_]) + ") Radial Well "
 
-def doMatPlot(args, mat, imag, title, signString):
+def doMatPlot(args, mat, imag, title, kcalString):
     matSeq = sm.matSequence()
 
     x, dx = initPlotVars()
@@ -46,4 +46,4 @@ def doMatPlot(args, mat, imag, title, signString):
       
     matSeq.setDetails("", ['red', 'green', 'blue', 'purple'])
 
-    sm.plotAll(args.plotType_, [matSeq], imag, title+"\n"+signString)
+    sm.plotAll(args.plotType_, [matSeq], imag, title+"\n"+kcalString)

@@ -105,12 +105,12 @@ class kCalculator:
         return absolute * QSexp(1j*(argument+self.getPhase(ch, ene)))
     def kcomp(self, ch, ene):
         k = self.kpos(ch, ene)
-        if ene.real <= self.thresholds[ch]:
+        if ene.real <= self.thresholds[ch]: #We want to be on the physical here
             if ene.imag >= 0.0:
                 sign = 1.0
             else:
                 sign = -1.0
-        elif ene.real > self.thresholds[ch]:
+        elif ene.real > self.thresholds[ch]: #We want to be on the unphysical here
             if ene.imag >= 0.0:
                 sign = -1.0
             else:

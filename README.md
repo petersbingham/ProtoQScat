@@ -7,10 +7,11 @@ Protoype for quantum scattering library. Main two folders are Utilities and Mult
 Dependencies
 ____________
  * python 2.7
- * numpy
+ * numpy+mkl
  * scipy
  * sympy
  * matplotlib
+ * tabulate
 
 The main routines can be found in Multi Channel\RatSMat.py. The pole location routines are in Multi Channel\PoleFinder.py.
  
