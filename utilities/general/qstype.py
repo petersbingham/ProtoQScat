@@ -40,6 +40,8 @@ def QScomplex(val):
         return complex(val)
     else:
         if type(val) is str or type(val) is unicode:
+            if 'nan' in val:
+                return mpmath.mpc(real='nan',imag='nan')
             real = None
             imag = None
             delim = None

@@ -4,6 +4,7 @@ import scipy.sparse.linalg as sp_sparse_linalg
 import sympy as sy
 from sympy.matrices import Matrix as sy_matrix
 import sympy.polys as sy_polys
+from sympy import poly
 import mpmath
 import collections
 
@@ -70,14 +71,15 @@ class AuxHelper():
         if self.resultFileHandler:
             self.resultFileHandler.endLogAction(string)
 
+#v2: In _findRoots function matrix elements with poly(...): matLst[len(matLst)-1].append(poly(val))
 class ExpandedDetSolve(AuxHelper):
     def __init__(self, suppressCmdOut):
         AuxHelper.__init__(self, "Roots", suppressCmdOut)
         self.sympy_detArgs = {'method':'berkowitz'} #'bareis''berkowitz''det_LU'
         self.sympy_polyArgs = {} #'lex''grlex'
         self.numpy_rootsArgs = {}
-        self.sympy_nrootsArgs = {'n':DPS, 'maxsteps':500, 'cleanup':True}
-        typeStrStart = "sympy_det"+getArgDesc(sy_matrix.det, self.sympy_detArgs)+",sympy_Poly"+getArgDesc(sy_polys.Poly.__new__, self.sympy_polyArgs)
+        self.sympy_nrootsArgs = {'n':DPS, 'maxsteps':5000, 'cleanup':True}
+        typeStrStart = "v2_sympy_det"+getArgDesc(sy_matrix.det, self.sympy_detArgs)+",sympy_Poly"+getArgDesc(sy_polys.Poly.__new__, self.sympy_polyArgs)
         if EXPANDEDDET_ROOTS_FINDTYPE == "numpy_roots":
             self.typeStr = typeStrStart+",numpy_roots"+getArgDesc(np.roots, self.numpy_rootsArgs)
         elif EXPANDEDDET_ROOTS_FINDTYPE == "sympy_nroots":
@@ -96,13 +98,21 @@ class ExpandedDetSolve(AuxHelper):
         self._startLogAction("mat.det")
         deter = mat.det(**self.sympy_detArgs)
         self._endLogAction("mat.det")
+        
         self._startLogAction("sy_polys.Poly")
-        coeffs = sy_polys.Poly(deter, k, **self.sympy_polyArgs).all_coeffs()
+        a = sy_polys.Poly(deter, k, **self.sympy_polyArgs)
         self._endLogAction("sy_polys.Poly")
+        
+        self._startLogAction("all_coeffs")
+        coeffs = a.all_coeffs()
+        self._endLogAction("all_coeffs")
+        
         mappedCoeffs = map(lambda val: complex(val), coeffs)
+        
         self._startLogAction("np.roots")
         ret = np.roots(mappedCoeffs, **self.numpy_rootsArgs)
         self._endLogAction("np.roots")
+        
         self.printCalStr()
         return ret 
     
@@ -110,12 +120,15 @@ class ExpandedDetSolve(AuxHelper):
         self._startLogAction("mat.det")
         deter = mat.det(**self.sympy_detArgs)
         self._endLogAction("mat.det")
+        
         self._startLogAction("sy_polys.Poly")
         a = sy_polys.Poly(deter, k, **self.sympy_polyArgs) 
         self._endLogAction("sy_polys.Poly") 
+        
         self._startLogAction("nroots")
         ret = a.nroots(**self.sympy_nrootsArgs)   
         self._endLogAction("nroots") 
+        
         self.printCalStr()
         return ret 
     
@@ -685,6 +698,8 @@ class RatSMat(sm.mat):
         return self._findRoots(convertToEne, self.rootSolver.getRoots)
 
     def _findRoots(self, convertToEne, fun, **args):
+        if self.resultFileHandler:
+            self.resultFileHandler.startLogAction("_findRoots")
         if self.hasCoeffs:
             allRoots = []
             for eKey in self.alphas:
@@ -702,7 +717,7 @@ class RatSMat(sm.mat):
                             A = alphas[ci][m,n]
                             B = betas[ci][m,n]
                             val += (1.0/2.0)*(1.0/self.kCal.eneFactor)**(ci) * (QSToSympy(A)*k**(ln-lm+2*ci) - sy.I*QSToSympy(B)*k**(ln+lm+1+2*ci) )
-                        matLst[len(matLst)-1].append(val)
+                        matLst[len(matLst)-1].append(poly(val))
                 mat = sy_matrix(matLst)
                 roots = fun(mat, k, **args)
                 if convertToEne:
@@ -710,4 +725,6 @@ class RatSMat(sm.mat):
                 else:
                     mappedRoots = map(lambda val: complex(val), roots)
                 allRoots.extend(mappedRoots)
+        if self.resultFileHandler:
+            self.resultFileHandler.startLogAction("_findRoots")
         return allRoots
