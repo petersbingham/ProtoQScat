@@ -1,7 +1,7 @@
 ProtoQScat
 ==========
 
-Protoype for quantum scattering library. Main two folders are Utilities and Multi Channel. Single Channel folder contains some data analysis code used with results from another project. The Analysis folder contains an examination of the Riemann energy surfaces.
+Prototype for quantum scattering library. Main two folders are Utilities and Multi Channel. Single Channel folder contains some data analysis code used with results from another project. The Analysis folder contains an examination of the Riemann energy surfaces.
 
 <br />
 Dependencies
