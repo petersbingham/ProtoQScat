@@ -1,3 +1,5 @@
+DESC_STR = "Urazil Elastic 6ch A''"
+
 THRESHOLDS = [0.0,0.0,0.0,0.0,0.0,0.0]
 LS = [1,2,2,3,3,3]
 

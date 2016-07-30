@@ -1,3 +1,5 @@
+DESC_STR = "Pyrazine Elastic 3ch"
+
 THRESHOLDS = [0.0,0.0,0.0]
 LS = [3,5,5]
 

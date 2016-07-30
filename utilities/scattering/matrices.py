@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import conversions as conv
-import numpy as np
 from general.qstype import *
 
 def decimate(mats, startIndex, endIndex, N):
@@ -157,6 +156,15 @@ class matSequence:
     def __getitem__(self, key):
         return self.items[key]
     
+    def __iter__(self):
+        return self.items.__iter__()
+
+    def __len__(self): 
+        return len(self.items)
+    
+    def keys(self):
+        return self.items.keys()
+    
     def setConversionEnergy(self, units):
         self.convUnits = units
     
@@ -164,9 +172,6 @@ class matSequence:
         if self.originalUnits==RYDs and self.convUnits==eVs:
             return ene * conv.RYD_to_EV
         return ene
-    
-    def keys(self):
-        return self.items.keys()
     
     def writeAllToFile(self):
         f = open("res.txt","w")

@@ -9,6 +9,7 @@ sys.path.insert(0,os.getcwd()) #We assume that the specific kreader and descript
 
 from ratsmat import *
 from ratsmat.decimator import *
+from ratsmat.ephasefitter import *
 from matreader import *
 from sysdesc import *
 import scattering.conversions as conv
@@ -100,6 +101,23 @@ class RatSMatWrap:
             print i
             i+=1
         return ratEPhaseMats
+    
+    def getEigenSumFit(self, resDatas, polyOrder, eneStart, eneEnd, eneSteps, title=None, colourCycle=None):
+        ratEPhaseMats = self.getDiscreteEigenSum(title, colourCycle)
+        ePhaseFitter = EPhaseFitter(ratEPhaseMats, resDatas, polyOrder)
+        fitCoeffs = ePhaseFitter.getCoeffs()
+        
+        ePhaseFitPointsLst = [sm.matSequence(title, colourCycle) for i in range(len(resDatas))]
+        
+        d = (float(eneEnd) - float(eneStart)) / float(eneSteps)
+        eneRange = [eneStart+d*i for i in range(eneSteps+1)]
+        for ene in eneRange:
+            for i in range(len(resDatas)):
+                if inFitRange(resDatas[i], ene):
+                    ePhaseFitPointsLst[i][ene] = QSmatrix([[bretWig(fitCoeffs[i], resDatas[i], ene)]])
+                    #ePhaseFitPointsLst[i][ene] = QSmatrix([[resonant(resDatas[i], ene)]]) #resonant part only
+        
+        return (ratEPhaseMats, ePhaseFitPointsLst)
     
     def _getSfromKmatrices(self):
         return sm.getSfromKmatrices(self.kmats, NUMCHANNELS)

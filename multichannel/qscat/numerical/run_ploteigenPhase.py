@@ -10,7 +10,7 @@ try:
     fites.useMarker()
     ratTotes = kmat.getRatEigenSum(eneStart=args.plotStart_, eneEnd=args.plotEnd_, eneComplexOffset=args.plotComplex_, eneSteps=args.steps_)
     
-    anaes.setDetails("Analytical", ['green'])
+    anaes.setDetails("R-matrix", ['green'])
     fites.setDetails("Fit Points", ['red'])
     ratTotes.setDetails("Fit Curve", ['blue'])
     #, fites, ratTotes
