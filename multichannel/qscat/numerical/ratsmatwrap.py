@@ -114,7 +114,7 @@ class RatSMatWrap:
         for ene in eneRange:
             for i in range(len(resDatas)):
                 if inFitRange(resDatas[i], ene):
-                    ePhaseFitPointsLst[i][ene] = QSmatrix([[bretWig(fitCoeffs[i], resDatas[i], ene)]])
+                    ePhaseFitPointsLst[i][ene] = QSmatrix([[bretWig(fitCoeffs[i][0], fitCoeffs[i][1], ene)]])
                     #ePhaseFitPointsLst[i][ene] = QSmatrix([[resonant(resDatas[i], ene)]]) #resonant part only
         
         return (ratEPhaseMats, ePhaseFitPointsLst)
