@@ -24,13 +24,16 @@ parentArgs.add_argument("mode_", help="Mode", type=int)
 parentArgs.add_argument("cfSteps_", help="Compare Steps", type=int)
 parentArgs.add_argument("distFactor_", help="Distinguish Factor", type=float)
 parentArgs.add_argument("zeroValExp_", help="Zero Value Precision", type=int)
-parentArgs.add_argument("cmpValue_", help="Compare Value", type=complex, nargs='?', default=None)
+parentArgs.add_argument("cmpIndex_", help="Compare Index", type=int, nargs='?', default=None)
 args = parentArgs.parse_args()
+
+from scriptparameters import *
 
 def _doPoleFind(kCal, mode, dirName):
     kmats = readkMats(FILENAME)
     resultFileHandler = getFileHandler(kCal, args.startIndex_, args.endIndex_)
-    PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, resultFileHandler, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, args.cfSteps_, args.cmpValue_, mode)
+    cmpPole = RMATRIX_POLES[args.cmpIndex_] if args.cmpIndex_<len(RMATRIX_POLES) else None
+    PoleFinder(sm.getSfromKmatrices(kmats,NUMCHANNELS), kCal, resultFileHandler, args.startIndex_, args.endIndex_, args.offset_, args.distFactor_, args.cfSteps_, cmpPole, mode)
 
 def _polesForAllSigns(mode, dirName):
     kperms = num.getPermutations([1.0,-1.0], len(THRESHOLDS))
