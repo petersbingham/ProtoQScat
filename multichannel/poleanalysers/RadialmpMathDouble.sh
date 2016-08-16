@@ -1,2 +1,0 @@
-python ../qscat/ratsmat/ResultsAnalyser.py "E:\\Peter's Documents\\PhD\\Code\\Git\\ProtoQScat\\multichannel\\qscat\\ratsmat\\Results\\Two Channel Radial Well_[1.0, 1.0]_[1.0, 1.0]_1.0_2.0_2.0_0.0_0.0_1.0_1.0_8.0_0.0_1000\\COEFFS-mpmath_qr_solve_dps(norm None) DPS200\\SingleFit" "ROOTS-sympy_det(method berkowitz),sympy_nroots(cleanup True, maxsteps 500, n 200)" "Poles_doubleN_cfStep1_dk0.1_zk1e-07"
-read -n1 -r -p "Press any key to continue..." key

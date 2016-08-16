@@ -58,21 +58,24 @@ class ResultsAnalyser:
             QSType.QSMODE = QSType.MODE_NORM
         if rootsDir is not None:
             fileBase = basePath+sep()+rootsDir+sep()+"Roots"+sep()
-            self.allRoots = self._parseFiles(fileBase, Roots, Root)
+            self.allRoots = self._parseFiles(fileBase, Roots, Root, False)
+        self.polePath = None
+        self.Nmin = None
+        self.Nmax = None
         if polesDir is not None:
-            fileBase = basePath+sep()+rootsDir+sep()+polesDir+sep()
-            self.allPoles = self._parseFiles(fileBase, Poles, Pole)
+            self.polePath = basePath+sep()+rootsDir+sep()+polesDir+sep()
+            self.allPoles = self._parseFiles(self.polePath, Poles, Pole, True)
         self.distFactor = float(polesDir[polesDir.find("_dk")+3:polesDir.find("_zk")])
         self.zeroVal = float(polesDir[polesDir.find("_zk")+3:])
         self.ratCmp = num.RationalCompare(self.zeroVal, self.distFactor)
 
-    def _parseFiles(self, fileBase, subContainerClass, typeClass):
+    def _parseFiles(self, fileBase, subContainerClass, typeClass, setNExtents):
         containerClass = []
         keyedFileNames = {}
         fileNames = os.listdir(self._fixPath(fileBase))
         for fileName in fileNames:
             if fileName.endswith(".dat"):
-                keyedFileNames[self._extractN(fileName)] = fileName
+                keyedFileNames[self._extractN(fileName, setNExtents)] = fileName
         
         for N in sorted(keyedFileNames.keys()):
             fileName = keyedFileNames[N]
@@ -82,8 +85,14 @@ class ResultsAnalyser:
             self._extractValues(fileBase+fileName, subContainer, typeClass)
         return containerClass
 
-    def _extractN(self, fileName):
-        return int(fileName.split("=")[1].split("_")[0])
+    def _extractN(self, fileName, setNExtents):
+        N = int(fileName.split("=")[1].split("_")[0])
+        if setNExtents:
+            if self.Nmin is None or N<self.Nmin:
+                self.Nmin = N
+            if self.Nmax is None or N>self.Nmax:
+                self.Nmax = N
+        return N
 
     def _getFileParameters(self, fileName):
         params = fileName.split("_")
@@ -178,9 +187,16 @@ class ResultsAnalyser:
                 first = False
                 table.append([N, pole.getStatus(), self._v(pole.E.real), self._v(pole.E.imag)])
         outStr = getFormattedHTMLTable(table,'.'+str(self.zeroVal)+'f', headers=["N","Status", "pole.E.real", "pole.E.imag"])
-        with open("out.txt", 'w') as f:
-            f.write(outStr)
+        self._writePoleSetsToFile(outStr)
         print outStr
+    
+    def _writePoleSetsToFile(self, outStr):
+        if self.polePath is not None: 
+            path = self._fixPath(self.polePath+"Nmin="+str(self.Nmin)+"_Nmax="+str(self.Nmax)+".tab")
+            with open(path, 'w+') as f:
+                f.write(outStr)
+            with open("out.tab", 'w+') as f: #Also write here for convenience.
+                f.write(outStr)
             
     def _writePriorRoots(self, table, initPole):
         for priorRoot in reversed(initPole.convRoots[1:]):

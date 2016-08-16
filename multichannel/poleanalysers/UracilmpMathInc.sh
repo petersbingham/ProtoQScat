@@ -1,2 +1,0 @@
-python ../qscat/ratsmat/ResultsAnalyser.py "E:\\Peter's Documents\\PhD\\Code\\Git\\ProtoQScat\\multichannel\\qscat\\ratsmat\\Results\\Urazil_6chanEleastic_[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]_0_1000\\COEFFS-mpmath_qr_solve_dps(norm None) DPS100\\SingleFit" "ROOTS-sympy_det(method berkowitz),sympy_nroots(cleanup True, maxsteps 500, n 100)" "Poles_incN_cfStep2_dk1e-09_zk1e-07"
-read -n1 -r -p "Press any key to continue..." key
