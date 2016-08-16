@@ -57,4 +57,4 @@ for rootStart in rootStarts:
     print "-"    
     table.append([rootStartMod,rootStart,root])
     
-print getFormattedHTMLTable(table,9,["Search Starting Value","Numerical Pole","Search Return"])
+print getFormattedHTMLTable(table, ["Search Starting Value","Numerical Pole","Search Return"], 9, numalign="decimal")

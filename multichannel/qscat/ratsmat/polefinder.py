@@ -13,7 +13,7 @@ INC_N = 'incN'
 COMPLETE_STR = "Complete"
    
 class PoleFinder:
-    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP):
+    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=4, Nmax=64):
         self.sMats = sMats
         self.kCal = kCal
         self.resultFileHandler = resultFileHandler
@@ -32,23 +32,24 @@ class PoleFinder:
         self.distFactor = distFactor
         self.mode = mode
         self.first = True
-        
+        self.Nmax = Nmax
+        self.Nmin = Nmin
+        self.NmaxTotPoles = None
+        self.NmaxLostPoles = None
         if mode == DOUBLE_N:
             self._doubleN()
         else:
             self._incN()
 
     def _doubleN(self):
-        Nmax = 64
-        N = 4
-        while N <= Nmax:
+        N = self.Nmin
+        while N <= self.Nmax:
             self._doForN(N)
             N = 2*N
 
     def _incN(self):
-        Nmax = 64
-        N = 4
-        while N <= Nmax:
+        N = self.Nmin
+        while N <= self.Nmax:
             self._doForN(N)
             N = N+2
 
@@ -227,6 +228,9 @@ class PoleFinder:
         print "Poles calculated in mode " + self.mode + ", using dk=" + str(self.distFactor)
         print "Calculated Poles for N=" + str(N) + ":"
         print "  " + str(poles) + " poles, of which " + str(newPoles) + " are new. " + str(lostPoles) + (" has" if lostPoles==1 else " have") + " been lost."
+        if N == self.Nmax:
+            self.NmaxTotPoles = poles+lostPoles
+            self.NmaxLostPoles = lostPoles
     
     def _calEnergy(self, k, primType=False):
         return self.kCal.e(k, primType)

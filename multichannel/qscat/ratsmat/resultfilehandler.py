@@ -26,6 +26,12 @@ class ResultFileHandler:
         self.endIndex = None
         self.numFits = None
         self.logTimes = {}
+        
+        #Following for the pole table. To keep track of max and min values
+        self.numCmpStepsStart = None
+        self.numCmpStepsEnd = None
+        self.distFactorStart = None 
+        self.distFactorEnd = None
     
     def setFitInfo(self, numFits, fitSize):
         self.numFits = numFits
@@ -46,16 +52,29 @@ class ResultFileHandler:
     def setRootFindRoutine(self, rootFindRoutine):
         self.rootFindRoutine = rootFindRoutine
         base = self._getRootsBaseString()
-        self.rootPath = base + ROOTSDIR
+        self.rootDir = base + ROOTSDIR
+        self.rootPath = self.rootDir
         self._makeDir(self.rootPath)
         self.rootPath += self.getPostStr()
     
     def setPoleFindParameters(self, mode, numCmpSteps, distFactor, zeroVal):
         base = self._getRootsBaseString()
-        self.polesPath = base + POLESDIR + "_" + str(mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_zk" + str(zeroVal) + sep() 
+        self.polesDirName = POLESDIR + "_" + str(mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_zk" + str(zeroVal)
+        self.polesDir = base + self.polesDirName + sep() 
+        self.polesPath = self.polesDir
         self._makeDir(self.polesPath)
         self.polesPath += self.getPostStr()
-    
+        
+        if self.numCmpStepsStart is None or numCmpSteps<self.numCmpStepsStart:
+            self.numCmpStepsStart = numCmpSteps
+        if self.numCmpStepsEnd is None or numCmpSteps>self.numCmpStepsEnd:
+            self.numCmpStepsEnd = numCmpSteps
+        if self.distFactorStart is None or distFactor<self.distFactorStart:
+            self.distFactorStart = distFactor
+        if self.distFactorEnd is None or distFactor>self.distFactorEnd:
+            self.distFactorEnd = distFactor
+        self.polesTableFile = base + sep() + str(mode) + "_cfStep" + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd) + "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd) + "_zk" + str(zeroVal)
+
     def getPostStr(self):
         if self.startIndex == None:
             self.startIndex = 0
@@ -93,13 +112,33 @@ class ResultFileHandler:
     def doesRootFileExist(self, ext=".dat"):
         return os.path.isfile(self.getRootFilePath(ext))
 
+    def getRootDir(self):
+        s = self.rootDir
+        self.writeLogStr(s)
+        return fixPath(s) 
+
     def getRootFilePath(self, ext=".dat"):
         s = self.rootPath + ext
         self.writeLogStr(s)
         return fixPath(s) 
+    
+    def getPoleDirName(self):
+        s = self.polesDirName
+        self.writeLogStr(s)
+        return fixPath(s)
+
+    def getPoleDir(self):
+        s = self.polesDir
+        self.writeLogStr(s)
+        return fixPath(s)
 
     def getPoleFilePath(self, ext=".dat"):
         s = self.polesPath + ext
+        self.writeLogStr(s)
+        return fixPath(s)
+
+    def getPoleTableParameters(self, ext=".tab"):
+        s = self.polesTableFile + ext
         self.writeLogStr(s)
         return fixPath(s)
 

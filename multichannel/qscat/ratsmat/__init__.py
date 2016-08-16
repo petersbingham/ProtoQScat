@@ -33,6 +33,11 @@ SINGLEROOT_FINDTYPE = "muller"                 #"muller""secant"
 
 DISPLAY_PRECISION = 8
 
+######################## Minor ###########################
+
+SYMPY_NROOTS_MAXSTEPS = 5000
+SYMPY_NROOTS_N = DPS
+
 ##########################################################
 ##########################################################
 
@@ -78,7 +83,7 @@ class ExpandedDetSolve(AuxHelper):
         self.sympy_detArgs = {'method':'berkowitz'} #'bareis''berkowitz''det_LU'
         self.sympy_polyArgs = {} #'lex''grlex'
         self.numpy_rootsArgs = {}
-        self.sympy_nrootsArgs = {'n':DPS, 'maxsteps':5000, 'cleanup':True}
+        self.sympy_nrootsArgs = {'n':SYMPY_NROOTS_N, 'maxsteps':SYMPY_NROOTS_MAXSTEPS, 'cleanup':True}
         typeStrStart = "v2_sympy_det"+getArgDesc(sy_matrix.det, self.sympy_detArgs)+",sympy_Poly"+getArgDesc(sy_polys.Poly.__new__, self.sympy_polyArgs)
         if EXPANDEDDET_ROOTS_FINDTYPE == "numpy_roots":
             self.typeStr = typeStrStart+",numpy_roots"+getArgDesc(np.roots, self.numpy_rootsArgs)
@@ -718,6 +723,7 @@ class RatSMat(sm.mat):
                             B = betas[ci][m,n]
                             val += (1.0/2.0)*(1.0/self.kCal.eneFactor)**(ci) * (QSToSympy(A)*k**(ln-lm+2*ci) - sy.I*QSToSympy(B)*k**(ln+lm+1+2*ci) )
                         matLst[len(matLst)-1].append(poly(val))
+                        #matLst[len(matLst)-1].append(val) #v1
                 mat = sy_matrix(matLst)
                 roots = fun(mat, k, **args)
                 if convertToEne:

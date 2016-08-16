@@ -1,6 +1,5 @@
 import os
 import sys
-from tabulate import tabulate
 base =  os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/..')
 sys.path.insert(0,base+'/../../../Utilities')
@@ -51,28 +50,26 @@ class Pole(Val):
 DISPLAY_DIFFPRECISION = 16
 
 class ResultsAnalyser:
-    def __init__(self, basePath, rootsDir=None, polesDir=None):
-        if "COEFFS-mpmath" in basePath:
+    def __init__(self, resultFileHandler):
+        if "COEFFS-mpmath" in resultFileHandler.getCoeffFilePath():
             QSType.QSMODE = QSType.MODE_MPMATH
         else:
             QSType.QSMODE = QSType.MODE_NORM
-        if rootsDir is not None:
-            fileBase = basePath+sep()+rootsDir+sep()+"Roots"+sep()
-            self.allRoots = self._parseFiles(fileBase, Roots, Root, False)
-        self.polePath = None
+        fileBase = resultFileHandler.getRootDir()
+        self.allRoots = self._parseFiles(fileBase, Roots, Root, False)
         self.Nmin = None
         self.Nmax = None
-        if polesDir is not None:
-            self.polePath = basePath+sep()+rootsDir+sep()+polesDir+sep()
-            self.allPoles = self._parseFiles(self.polePath, Poles, Pole, True)
-        self.distFactor = float(polesDir[polesDir.find("_dk")+3:polesDir.find("_zk")])
-        self.zeroVal = float(polesDir[polesDir.find("_zk")+3:])
+        self.polePath = resultFileHandler.getPoleDir()
+        poleDirName = resultFileHandler.getPoleDirName()
+        self.allPoles = self._parseFiles(self.polePath, Poles, Pole, True)
+        self.distFactor = float(poleDirName[poleDirName.find("_dk")+3:poleDirName.find("_zk")])
+        self.zeroVal = float(poleDirName[poleDirName.find("_zk")+3:])
         self.ratCmp = num.RationalCompare(self.zeroVal, self.distFactor)
 
     def _parseFiles(self, fileBase, subContainerClass, typeClass, setNExtents):
         containerClass = []
         keyedFileNames = {}
-        fileNames = os.listdir(self._fixPath(fileBase))
+        fileNames = os.listdir(fileBase)
         for fileName in fileNames:
             if fileName.endswith(".dat"):
                 keyedFileNames[self._extractN(fileName, setNExtents)] = fileName
@@ -102,7 +99,6 @@ class ResultsAnalyser:
         return S, E
     
     def _extractValues(self, path, container, typeClass):
-        path = self._fixPath(path)
         with open(path, 'r') as f:
             first = True
             for line in f:
@@ -121,18 +117,15 @@ class ResultsAnalyser:
                         type = Pole(QSType.QScomplex(kstr), QSType.QScomplex(Estr), POLE_STATUS_NEW in line, POLE_STATUS_LOST in line, convRoots)
                     container.append(type) 
                 first = False      
-    
-    def _fixPath(self, path):
-        if FIXPATH:
-            return fixPath(path)
-        else:
-            return path
                 
     def createPoleTable(self):
         poleSets = self._createPoleSets()
-        poleSets = sorted(poleSets, key=self._getFinalImag)
-        poleSets = sorted(poleSets, key=self._getFinalImag, cmp=self._poleCmp)  #Do two sorts since we want to both group by pole/antiploe and then ensure that the pole comes first.
-        self._writePoleSets(poleSets)
+        try:
+            poleSets = sorted(poleSets, key=self._getFinalImag)
+            poleSets = sorted(poleSets, key=self._getFinalImag, cmp=self._poleCmp)  #Do two sorts since we want to both group by pole/antipole and then ensure that the pole comes first.
+            self._writePoleSets(poleSets)
+        except Exception as e:
+            self._writeErrorToFile(str(e))
     
     def _createPoleSets(self):
         poleSets = []
@@ -157,7 +150,7 @@ class ResultsAnalyser:
             pole = poleSet[N]
             if pole.getStatus() != POLE_STATUS_LOST:
                 return pole.E.imag
-        assert False,"LOST pole when none were ever found!"
+        raise Exception("LOST pole when none were ever found!")
     
     def _poleCmp(self, v1, v2):
         if abs(v1) < self.zeroVal and abs(v2) < self.zeroVal:
@@ -186,17 +179,21 @@ class ResultsAnalyser:
                     self._setClosestRoot(N, pole)
                 first = False
                 table.append([N, pole.getStatus(), self._v(pole.E.real), self._v(pole.E.imag)])
-        outStr = getFormattedHTMLTable(table,'.'+str(self.zeroVal)+'f', headers=["N","Status", "pole.E.real", "pole.E.imag"])
+        outStr = getFormattedHTMLTable(table, ["N","Status", "pole.E.real", "pole.E.imag"], '.'+str(self.zeroVal)+'f', numalign="decimal")
         self._writePoleSetsToFile(outStr)
         print outStr
     
     def _writePoleSetsToFile(self, outStr):
+        self._writeToFile(outStr)
+    
+    def _writeErrorToFile(self, msg):
+        self._writeToFile(msg)
+    
+    def _writeToFile(self, string):
         if self.polePath is not None: 
-            path = self._fixPath(self.polePath+"Nmin="+str(self.Nmin)+"_Nmax="+str(self.Nmax)+".tab")
+            path = self.polePath+"Nmin="+str(self.Nmin)+"_Nmax="+str(self.Nmax)+".tab"
             with open(path, 'w+') as f:
-                f.write(outStr)
-            with open("out.tab", 'w+') as f: #Also write here for convenience.
-                f.write(outStr)
+                f.write(string)
             
     def _writePriorRoots(self, table, initPole):
         for priorRoot in reversed(initPole.convRoots[1:]):
@@ -236,6 +233,3 @@ class ResultsAnalyser:
                 return QSType.mpmath.nstr(num, n=precision+QSType.mpIntDigits(num))
             else:
                 return ('{:.'+str(precision)+'f}').format(num)
-            
-r = ResultsAnalyser(sys.argv[1],sys.argv[2],sys.argv[3])
-r.createPoleTable()

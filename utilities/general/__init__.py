@@ -10,6 +10,17 @@ def getArgDesc(func, args):
     d.update(args)
     return str(d).replace(':', '').replace('\'', '').replace('{', '(').replace('}', ')')
 
-def getFormattedHTMLTable(contents, floatSigFigs, headers):
-    outStr = tabulate(contents, headers=headers, numalign="decimal", floatfmt='.'+str(floatSigFigs)+'f', tablefmt="html")
-    return outStr.replace("<table>", "<table cellspacing=\"10\" style=\"float: left\">")
+def getFormattedHTMLTable(contents, headers, floatFmtFigs=None, numalign=None, stralign=None, border=False):
+    if floatFmtFigs is None:
+        floatfmt = "g"
+    else:
+        floatfmt='.'+str(floatFmtFigs)+'f'
+    outStr = tabulate(contents, headers=headers, numalign=numalign, stralign=stralign, floatfmt=floatfmt, tablefmt="html")
+    if border:
+        replaceStr = "<table style=\"border-collapse:collapse;\" border=\"1\" cellpadding=\"5\" cellspacing=\"0\">"
+        outStr = outStr.replace("<table>", replaceStr)
+        replaceStr = "<th style=\"background: lightgrey;\" "
+        return outStr.replace("<th", replaceStr)
+    else:
+        replaceStr = "<table cellspacing=\"10\" style=\"float: left\">"
+        return outStr.replace("<table>", replaceStr)
