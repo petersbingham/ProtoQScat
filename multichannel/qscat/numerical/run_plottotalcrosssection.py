@@ -10,11 +10,11 @@ try:
     fitxs.useMarker()
     ratTotxs = kmat.getTotalRatXS(eneStart=args.plotStart_, eneEnd=args.plotEnd_, eneComplexOffset=args.plotComplex_, eneSteps=args.steps_)
     
-    anaxs.setDetails("Analytical", ['green'])
+    anaxs.setDetails("R matrix", ['green'])
     fitxs.setDetails("Fit Points", ['red'])
     ratTotxs.setDetails("Fit Curve", ['blue'])
     
-    sm.plotAll("Lin", [anaxs, fitxs, ratTotxs], title="Fitted Numercal Data Cross Sections", xlabel="Electron Energy (rydbergs)", ylabel="Cross Section (bohr^2)") 
+    sm.plotAll("Log", [anaxs, fitxs, ratTotxs], title="Fitted Numerical Data Cross Sections", xlabel="Electron Energy (rydbergs)", ylabel="Cross Section (bohr^2)") 
 except (sm.MatException) as inst:
     print str(inst)
     sys.exit()
