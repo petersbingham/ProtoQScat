@@ -129,20 +129,26 @@ class ResultsAnalyser:
     
     def _createPoleSets(self):
         poleSets = []
-        poleLastValues = []
+        lastN = None
         for poles in self.allPoles:
             for pole in poles:
-                found = False
-                for i in range(len(poleLastValues)):
-                    poleLastValue = poleLastValues[i]
-                    if self.ratCmp.isClose(poleLastValue, pole.k):
-                        poleSets[i][poles.N] = pole
-                        poleLastValues[i] = pole.k
-                        found = True
-                        break
-                if not found:
+                if pole.isNew:
                     poleSets.append({poles.N:pole})
-                    poleLastValues.append(pole.k)
+                elif not pole.isLost:
+                    found = False
+                    for i in range(len(poleSets)):
+                        if poles.N not in poleSets[i] and poleSets[i][lastN].convRoots[0][1]==pole.convRoots[1][1]:
+                            poleSets[i][poles.N] = pole
+                            found = True
+                            break
+                    if not found:
+                        raise Exception("Could not find pole set for repeated pole!") #Should never be here
+                else:
+                    for i in range(len(poleSets)):
+                        if poleSets[i][lastN].k == pole.k:
+                            poleSets[i][poles.N] = pole #Just carry the value forward for now.
+                    
+            lastN = poles.N
         return poleSets
     
     def _getFinalImag(self, poleSet): #Sort on pole at highest N
@@ -150,7 +156,7 @@ class ResultsAnalyser:
             pole = poleSet[N]
             if pole.getStatus() != POLE_STATUS_LOST:
                 return pole.E.imag
-        raise Exception("LOST pole when none were ever found!")
+        raise Exception("LOST pole when none were ever found!") #Should never be here
     
     def _poleCmp(self, v1, v2):
         if abs(v1) < self.zeroVal and abs(v2) < self.zeroVal:
