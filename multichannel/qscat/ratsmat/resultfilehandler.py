@@ -11,7 +11,7 @@ from general.file import *
 RESULTSDIR = BASEDIR + sep() + "Results" + sep()
 COEFFDIR = sep() + "CoefficientFiles" + sep()
 ROOTSDIR = sep() + "Roots" + sep()
-POLESDIR = sep() + "Poles"
+POLESDIR = sep() + "Poles" + sep()
 
 LOGSDIR = BASEDIR + sep() + "Logs" + sep()
 
@@ -59,8 +59,8 @@ class ResultFileHandler:
     
     def setPoleFindParameters(self, mode, numCmpSteps, distFactor, zeroVal):
         base = self._getRootsBaseString()
-        self.polesDirName = POLESDIR + "_" + str(mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_zk" + str(zeroVal)
-        self.polesDir = base + self.polesDirName + sep() 
+        self.polesDirName = str(mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_zk" + str(zeroVal)
+        self.polesDir = base + POLESDIR + self.polesDirName + sep() 
         self.polesPath = self.polesDir
         self._makeDir(self.polesPath)
         self.polesPath += self.getPostStr()
@@ -73,7 +73,9 @@ class ResultFileHandler:
             self.distFactorStart = distFactor
         if self.distFactorEnd is None or distFactor>self.distFactorEnd:
             self.distFactorEnd = distFactor
-        self.polesTableFile = base + sep() + str(mode) + "_cfStep" + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd) + "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd) + "_zk" + str(zeroVal)
+        auxFilesStr = str(mode) + "_cfStep" + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd) + "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd) + "_zk" + str(zeroVal)
+        self.polesCountFile =  base + POLESDIR + "COUNTS-" + auxFilesStr
+        self.polesPrevalenceFile =  base + POLESDIR + "PREVALENCE-" + auxFilesStr
 
     def getPostStr(self):
         if self.startIndex == None:
@@ -137,8 +139,13 @@ class ResultFileHandler:
         self.writeLogStr(s)
         return fixPath(s)
 
-    def getPoleTableParameters(self, ext=".tab"):
-        s = self.polesTableFile + ext
+    def getPoleCountTablePath(self, ext=".tab"):
+        s = self.polesCountFile + ext
+        self.writeLogStr(s)
+        return fixPath(s)
+
+    def getPolePrevalenceTablePath(self, ext=".tab"):
+        s = self.polesPrevalenceFile + ext
         self.writeLogStr(s)
         return fixPath(s)
 

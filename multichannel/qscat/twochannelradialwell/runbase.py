@@ -6,7 +6,7 @@ from ratsmat import *
 from analytical.doublechannel import *
 from ratsmat.polefinder import *
 from ratsmat.resultfilehandler import *
-from ratsmat.resultsanalyser import *
+from ratsmat.poleconverger import *
 
 def _getFileHandler(args, anakCal, fitkCal):
     sysName = "Two Channel Radial Well_" + str(anakCal) + "_" + str(fitkCal) + "_" + str(args.r0_) + "_" + str(args.v1_) + "_" + str(args.v2_) + "_" + str(args.t1_) + "_" + str(args.t2_) + "_" + str(args.lam_) + "_" + str(args.eneStart_) + "_" + str(args.eneEnd_) + "_" + str(args.eneComplex_) + "_" + str(args.eneSteps_)
@@ -57,7 +57,7 @@ def getPolyRoots(args, anakCal, fitkCal, resultsPath, mode, cmpValue=None):
     smats = getDiscreteAnaSmats(args)
     resultFileHandler = _getFileHandler(args, anakCal, fitkCal)
     PoleFinder(smats, fitkCal, resultFileHandler, 0, len(smats)-1, 0, args.distFactor_, args.cfSteps_, cmpValue=cmpValue, mode=mode, populateSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2), zeroValExp=args.zeroValExp_)
-    r = ResultsAnalyser(resultFileHandler)
+    r = PoleConverger(resultFileHandler)
     r.createPoleTable()    
 
 def popSmat(anaSmat, smats1, smats2=None):

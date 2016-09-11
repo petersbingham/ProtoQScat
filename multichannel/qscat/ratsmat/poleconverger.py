@@ -49,7 +49,7 @@ class Pole(Val):
   
 DISPLAY_DIFFPRECISION = 16
 
-class ResultsAnalyser:
+class PoleConverger:
     def __init__(self, resultFileHandler):
         if "COEFFS-mpmath" in resultFileHandler.getCoeffFilePath():
             QSType.QSMODE = QSType.MODE_MPMATH

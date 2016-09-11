@@ -8,7 +8,7 @@ sys.path.insert(0,os.getcwd()) #We assume that the specific kreader and descript
 from matreader import *
 from sysdesc import *
 from polefinder import *
-from resultsanalyser import *
+from poleconverger import *
 from general import *
 
 MODE_ALLSIGNS_DOUBLE = 0
@@ -44,7 +44,7 @@ def _doPoleFind(kCal, mode, dirName):
             cmpPole = RMATRIX_POLES[args.cmpIndex_] if args.cmpIndex_<len(RMATRIX_POLES) else None
             p = PoleFinder(copy.deepcopy(smats), kCal, resultFileHandler, args.startIndex_, args.endIndex_, args.offset_, distFactor, cfstep, cmpPole, mode, Nmin=args.Nmin_, Nmax=args.Nmax_)
             tabList.append((p.NmaxTotPoles, p.NmaxLostPoles))
-            r = ResultsAnalyser(resultFileHandler)
+            r = PoleConverger(resultFileHandler)
             r.createPoleTable()
     _writePoleTables(tabList, resultFileHandler)
         
@@ -72,7 +72,7 @@ def _writePoleTables(tabList, resultFileHandler):
         tabValues.append(tabRow)
             
     outStr = getFormattedHTMLTable(tabValues, tabHeader, stralign="center", numalign="center", border=True)
-    with open(resultFileHandler.getPoleTableParameters(), 'w+') as f:
+    with open(resultFileHandler.getPoleCountTablePath(), 'w+') as f:
         f.write(outStr)
     print outStr
 
