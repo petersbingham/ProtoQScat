@@ -30,6 +30,8 @@ class Val:
     def __init__(self, k, E):
         self.k = k
         self.E = E
+    def __eq__(self, other):
+        return self.k == other.k
 class Root(Val):
     def __init__(self, k, E):
         Val.__init__(self, k, E)
@@ -48,6 +50,17 @@ class Pole(Val):
             return POLE_STATUS_REP
   
 DISPLAY_DIFFPRECISION = 16
+def formatRoot(num):
+    if abs(num) < pow(10,-DISPLAY_DIFFPRECISION):
+        return "&lt;E-"+str(DISPLAY_DIFFPRECISION)
+    else:
+        if type(num) is str or type(num) is unicode:
+            return num
+        elif type(num) is QSType.mpmath.mpf:
+            n = DISPLAY_DIFFPRECISION+QSType.mpIntDigits(num)
+            return QSType.mpmath.nstr(num, n=n)
+        else:
+            return ('{:.'+str(DISPLAY_DIFFPRECISION)+'f}').format(num)
 
 class PoleConverger:
     def __init__(self, resultFileHandler):
@@ -55,6 +68,7 @@ class PoleConverger:
             QSType.QSMODE = QSType.MODE_MPMATH
         else:
             QSType.QSMODE = QSType.MODE_NORM
+        self.poleSets = None
         fileBase = resultFileHandler.getRootDir()
         self.allRoots = self._parseFiles(fileBase, Roots, Root, False)
         self.Nmin = None
@@ -122,7 +136,7 @@ class PoleConverger:
         poleSets = self._createPoleSets()
         try:
             poleSets = sorted(poleSets, key=self._getFinalImag)
-            poleSets = sorted(poleSets, key=self._getFinalImag, cmp=self._poleCmp)  #Do two sorts since we want to both group by pole/antipole and then ensure that the pole comes first.
+            self.poleSets = sorted(poleSets, key=self._getFinalImag, cmp=self._poleCmp)  #Do two sorts since we want to both group by pole/antipole and then ensure that the pole comes first.
             self._writePoleSets(poleSets)
         except Exception as e:
             self._writeErrorToFile(str(e))
@@ -184,8 +198,8 @@ class PoleConverger:
                 if pole.getStatus() == POLE_STATUS_LOST:
                     self._setClosestRoot(N, pole)
                 first = False
-                table.append([N, pole.getStatus(), self._v(pole.E.real), self._v(pole.E.imag)])
-        outStr = getFormattedHTMLTable(table, ["N","Status", "pole.E.real", "pole.E.imag"], '.'+str(self.zeroVal)+'f', numalign="decimal")
+                table.append([N, pole.getStatus(), formatRoot(pole.E.real), formatRoot(pole.E.imag)])
+        outStr = getFormattedHTMLTable(table, ["N","Status", "pole.E.real", "pole.E.imag"], self.zeroVal, numalign="decimal")
         self._writePoleSetsToFile(outStr)
         print outStr
     
@@ -206,7 +220,7 @@ class PoleConverger:
             N = priorRoot[0] #N of root
             I = priorRoot[1] #Index of root
             Nroots = self._getRootsForN(N)
-            table.append([N, "ROOT", self._v(Nroots[I].E.real), self._v(Nroots[I].E.imag)])
+            table.append([N, "ROOT", formatRoot(Nroots[I].E.real), formatRoot(Nroots[I].E.imag)])
             
     def _setClosestRoot(self, N, pole):
         Nroots = self._getRootsForN(N)
@@ -225,17 +239,3 @@ class PoleConverger:
         for roots in self.allRoots:
             if roots.N == N:
                 return roots
-    
-    def _v(self, num):
-        return self._f(num, DISPLAY_DIFFPRECISION)
-    
-    def _f(self, num, precision):
-        if abs(num) < pow(10,-precision):
-            return "&lt;E-"+str(precision)
-        else:
-            if type(num) is str or type(num) is unicode:
-                return num
-            elif type(num) is QSType.mpmath.mpf:
-                return QSType.mpmath.nstr(num, n=precision+QSType.mpIntDigits(num))
-            else:
-                return ('{:.'+str(precision)+'f}').format(num)

@@ -8,6 +8,8 @@ BASEDIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,BASEDIR+'/../../../Utilities')
 from general.file import *
 
+REPLACESTR = "REPLACETHIS"
+
 RESULTSDIR = BASEDIR + sep() + "Results" + sep()
 COEFFDIR = sep() + "CoefficientFiles" + sep()
 ROOTSDIR = sep() + "Roots" + sep()
@@ -73,9 +75,12 @@ class ResultFileHandler:
             self.distFactorStart = distFactor
         if self.distFactorEnd is None or distFactor>self.distFactorEnd:
             self.distFactorEnd = distFactor
-        auxFilesStr = str(mode) + "_cfStep" + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd) + "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd) + "_zk" + str(zeroVal)
-        self.polesCountFile =  base + POLESDIR + "COUNTS-" + auxFilesStr
-        self.polesPrevalenceFile =  base + POLESDIR + "PREVALENCE-" + auxFilesStr
+        auxFilesStrStart = str(mode) + "_cfStep"
+        auxFilesStrEnd = "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd) + "_zk" + str(zeroVal)
+        auxFilesStr1 = auxFilesStrStart + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd) + auxFilesStrEnd
+        auxFilesStr2 = auxFilesStrStart + REPLACESTR + auxFilesStrEnd
+        self.polesCountFile =  base + POLESDIR + "COUNTS-" + auxFilesStr1
+        self.polesPrevalenceFile =  base + POLESDIR + "PREVALENCE-" + auxFilesStr2
 
     def getPostStr(self):
         if self.startIndex == None:
@@ -144,8 +149,8 @@ class ResultFileHandler:
         self.writeLogStr(s)
         return fixPath(s)
 
-    def getPolePrevalenceTablePath(self, ext=".tab"):
-        s = self.polesPrevalenceFile + ext
+    def getPolePrevalenceTablePath(self, distFactor, ext=".tab"):
+        s = self.polesPrevalenceFile.replace(REPLACESTR, str(distFactor)) + ext
         self.writeLogStr(s)
         return fixPath(s)
 
