@@ -17,18 +17,26 @@ class PoleMetaCalculator:
         self.Nmax = Nmax
 
     def doPoleCalculations(self, smats, resultFileHandler, kCal, mode, cmpPole=None):
+        if len(smats) <= self.endIndex:
+            raise Exception("Specified End Index outside range.")
+        if self.startIndex < 0:
+            raise Exception("Specified Start Index less than zero.")
         tabList = []
         poleSetsDict = {}
+        self.errState = False
         for cfStep in self.cfsteps:
             poleSetsDict[cfStep] = []
             for distFactor in sorted(self.distFactors, reverse=True):  #Want sorted for the prevalence, since each pole across the N in each pole set should be a subset of the same pole for a higer distFactor 
                 pf = PoleFinder(copy.deepcopy(smats), kCal, resultFileHandler, self.startIndex, self.endIndex, self.offset, distFactor, cfStep, cmpPole, mode, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax)
-                tabList.append((pf.NmaxTotPoles, pf.NmaxLostPoles))
-                pc = PoleConverger(resultFileHandler, self.Nmin, self.Nmax)
-                pc.createPoleTable()
-                poleSetsDict[cfStep].append(pc.poleSets)
-        self._writePoleCountTables(tabList, resultFileHandler)
-        self._writePolePrevalenceTable(poleSetsDict, resultFileHandler)
+                self.errState = self.errState | pf.errState
+                if not self.errState:
+                    tabList.append((pf.NmaxTotPoles, pf.NmaxLostPoles))
+                    pc = PoleConverger(resultFileHandler, self.Nmin, self.Nmax)
+                    pc.createPoleTable()
+                    poleSetsDict[cfStep].append(pc.poleSets)
+        if not self.errState:
+            self._writePoleCountTables(tabList, resultFileHandler)
+            self._writePolePrevalenceTable(poleSetsDict, resultFileHandler)
             
     def _writePoleCountTables(self, tabList, resultFileHandler):
         tabHeader = ["dk"]

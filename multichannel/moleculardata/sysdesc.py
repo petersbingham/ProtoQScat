@@ -9,6 +9,8 @@ DESC_STR = "Pyrazine Elastic 3ch"
 
 "Urazil Ap Elastic Equil SEP 10ch"
 
+"para-benzoquinone B2u"
+
 if DESC_STR == "Pyrazine Elastic 3ch":
     ARCHIVE_BASE_STR = "Pyrazine"
     FILENAME = "rmatrixdata/pyrazine_3ch.19"
@@ -64,3 +66,11 @@ elif DESC_STR == "Urazil Ap Elastic Equil SEP 10ch":
     NUMCHANNELS = 10
     THRESHOLDS = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
     LS = [0,1,1,2,2,2,3,3,3,3]
+    
+elif DESC_STR == "para-benzoquinone B2u":
+    ARCHIVE_BASE_STR = "Para-benzoquinone_B2u"
+    FILENAME = "rmatrixdata/para-benzoquinone_B2u.19"
+    
+    NUMCHANNELS = 3
+    THRESHOLDS = [0.0,0.0,0.0]
+    LS = [1,3,3]

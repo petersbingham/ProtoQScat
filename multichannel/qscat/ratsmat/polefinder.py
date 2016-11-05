@@ -39,6 +39,7 @@ class PoleFinder:
         self.Nmax = Nmax
         self.NmaxTotPoles = None
         self.NmaxLostPoles = None
+        self.errState = False
         if mode == DOUBLE_N:
             self._doubleN()
         else:
@@ -74,6 +75,7 @@ class PoleFinder:
                 self.file_roots.write(string)
             if self.file_poles is not None:
                 self.file_poles.write(string)
+            self.errState = True
             ret = False
         if self.file_roots is not None:
             self.file_roots.close()
