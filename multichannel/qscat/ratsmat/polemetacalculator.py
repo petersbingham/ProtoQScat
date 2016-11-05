@@ -24,7 +24,7 @@ class PoleMetaCalculator:
             for distFactor in sorted(self.distFactors, reverse=True):  #Want sorted for the prevalence, since each pole across the N in each pole set should be a subset of the same pole for a higer distFactor 
                 pf = PoleFinder(copy.deepcopy(smats), kCal, resultFileHandler, self.startIndex, self.endIndex, self.offset, distFactor, cfStep, cmpPole, mode, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax)
                 tabList.append((pf.NmaxTotPoles, pf.NmaxLostPoles))
-                pc = PoleConverger(resultFileHandler)
+                pc = PoleConverger(resultFileHandler, self.Nmin, self.Nmax)
                 pc.createPoleTable()
                 poleSetsDict[cfStep].append(pc.poleSets)
         self._writePoleCountTables(tabList, resultFileHandler)

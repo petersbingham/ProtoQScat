@@ -6,6 +6,7 @@ import general.numerical as num
 from ratsmat import *
 from decimator import *
 from general.qstype import *
+from globalSettings import *
 
 ZEROVALEXP = 7
 DOUBLE_N = 'doubleN'
@@ -13,7 +14,7 @@ INC_N = 'incN'
 COMPLETE_STR = "Complete"
    
 class PoleFinder:
-    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=4, Nmax=64):
+    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX):
         self.sMats = sMats
         self.kCal = kCal
         self.resultFileHandler = resultFileHandler
@@ -34,8 +35,8 @@ class PoleFinder:
         self.distFactor = distFactor
         self.mode = mode
         self.first = True
-        self.Nmax = Nmax
         self.Nmin = Nmin
+        self.Nmax = Nmax
         self.NmaxTotPoles = None
         self.NmaxLostPoles = None
         if mode == DOUBLE_N:
@@ -85,7 +86,7 @@ class PoleFinder:
     def _getNroots(self, N):
         sMats, decStr = self.decimator.decimate(self.sMats, N)
         ratSmat = RatSMat(sMats, self.kCal, resultFileHandler=self.resultFileHandler, doCalc=False)
-        self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distFactor, self.zeroValue)
+        self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distFactor, self.zeroValue, self.Nmin, self.Nmax)
         roots = None
         if self.resultFileHandler.doesRootFileExist() and not ALWAYS_CALCULATE:
             ratSmat.coeffSolve.printCalStr(True)

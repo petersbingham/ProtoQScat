@@ -59,7 +59,7 @@ class ResultFileHandler:
         self._makeDir(self.rootPath)
         self.rootPath += self.getPostStr()
     
-    def setPoleFindParameters(self, mode, numCmpSteps, distFactor, zeroVal):
+    def setPoleFindParameters(self, mode, numCmpSteps, distFactor, zeroVal, Nmin, Nmax):
         base = self._getRootsBaseString()
         self.polesDirName = str(mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_zk" + str(zeroVal)
         self.polesDir = base + POLESDIR + self.polesDirName + sep() 
@@ -75,7 +75,9 @@ class ResultFileHandler:
             self.distFactorStart = distFactor
         if self.distFactorEnd is None or distFactor>self.distFactorEnd:
             self.distFactorEnd = distFactor
-        auxFilesStrStart = str(mode) + "_cfStep"
+            
+        auxFilesRange = "_Nmin="+str(Nmin)+"_Nmax="+str(Nmax)
+        auxFilesStrStart = str(mode) + auxFilesRange + "_cfStep"
         auxFilesStrEnd = "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd) + "_zk" + str(zeroVal)
         auxFilesStr1 = auxFilesStrStart + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd) + auxFilesStrEnd
         auxFilesStr2 = auxFilesStrStart + REPLACESTR + auxFilesStrEnd

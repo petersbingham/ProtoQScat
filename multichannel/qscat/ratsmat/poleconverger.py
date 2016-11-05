@@ -5,6 +5,7 @@ sys.path.insert(0,base+'/..')
 sys.path.insert(0,base+'/../../../Utilities')
 from general import *
 from general.file import *
+from globalSettings import *
 import general.numerical as num
 import polefinder
 import general.qstype as QSType
@@ -63,7 +64,9 @@ def formatRoot(num):
             return ('{:.'+str(DISPLAY_DIFFPRECISION)+'f}').format(num)
 
 class PoleConverger:
-    def __init__(self, resultFileHandler):
+    def __init__(self, resultFileHandler, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX):
+        self.setNmin = Nmin
+        self.setNmax = Nmax
         if "COEFFS-mpmath" in resultFileHandler.getCoeffFilePath():
             QSType.QSMODE = QSType.MODE_MPMATH
         else:
@@ -76,6 +79,11 @@ class PoleConverger:
         self.polePath = resultFileHandler.getPoleDir()
         poleDirName = resultFileHandler.getPoleDirName()
         self.allPoles = self._parseFiles(self.polePath, Poles, Pole, True)
+                
+        if self.setNmin!=self.Nmin or self.setNmax!=self.Nmax:
+            s = str(self.setNmin) + " " + str(self.Nmin) + " " + str(self.setNmax) + " " + str(self.Nmax)
+            raise Exception("Required pole files do not exist: " + s)
+        
         self.distFactor = float(poleDirName[poleDirName.find("_dk")+3:poleDirName.find("_zk")])
         self.zeroVal = float(poleDirName[poleDirName.find("_zk")+3:])
         self.ratCmp = num.RationalCompare(self.zeroVal, self.distFactor)
@@ -86,8 +94,10 @@ class PoleConverger:
         fileNames = os.listdir(fileBase)
         for fileName in fileNames:
             if fileName.endswith(".dat"):
-                keyedFileNames[self._extractN(fileName, setNExtents)] = fileName
-        
+                N = self._extractN(fileName, setNExtents)
+                if N is not None:
+                    keyedFileNames[N] = fileName
+            
         for N in sorted(keyedFileNames.keys()):
             fileName = keyedFileNames[N]
             S, E = self._getFileParameters(fileName)
@@ -98,12 +108,15 @@ class PoleConverger:
 
     def _extractN(self, fileName, setNExtents):
         N = int(fileName.split("=")[1].split("_")[0])
-        if setNExtents:
-            if self.Nmin is None or N<self.Nmin:
-                self.Nmin = N
-            if self.Nmax is None or N>self.Nmax:
-                self.Nmax = N
-        return N
+        if N>=self.setNmin and N<=self.setNmax:
+            if setNExtents:
+                if self.Nmin is None or N<self.Nmin:
+                    self.Nmin = N
+                if self.Nmax is None or N>self.Nmax:
+                    self.Nmax = N
+            return N
+        else:
+            return None
 
     def _getFileParameters(self, fileName):
         params = fileName.split("_")
