@@ -8,6 +8,8 @@ from matreader import *
 from sysdesc import *
 from polemetacalculator import *
 
+CLUSTERSIZE = 10**-3
+
 MODE_ALLSIGNS_DOUBLE = 0
 MODE_ALLSIGNS_INC = 1
 MODE_ROT_DOUBLE = 2
@@ -34,11 +36,13 @@ from scriptparameters import *
 def _doPoleFind(kCal, mode):
     kmats = readkMats(FILENAME)
     smats = sm.getSfromKmatrices(kmats,NUMCHANNELS)
+    if args.endIndex_ == -1:
+        args.endIndex_ = len(smats)-1
     resultFileHandler = getFileHandler(kCal, args.startIndex_, args.endIndex_)
     
     cfsteps = map(int, args.cfSteps_.split(','))
     distFactors = map(float, args.distFactors_.split(','))
-    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfsteps, distFactors, args.zeroValExp_, args.Nmin_, args.Nmax_)
+    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfsteps, distFactors, args.zeroValExp_, args.Nmin_, args.Nmax_, CLUSTERSIZE)
     cmpPole = RMATRIX_POLES[args.cmpIndex_] if args.cmpIndex_<len(RMATRIX_POLES) else None
     p.doPoleCalculations(smats, resultFileHandler, kCal, mode, cmpPole)
 

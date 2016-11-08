@@ -134,6 +134,18 @@ class ExpandedDetSolve(AuxHelper):
         ret = a.nroots(**self.sympy_nrootsArgs)   
         self._endLogAction("nroots") 
         
+        #f = open("rootsTest.dat", 'a')
+        #for r in ret:
+        #    f.write(str(r) + "\t" + str(a.eval({k:r})) + "\n")
+        #f.write("\n\n\n")
+        #f.close()
+        
+        #f = open("rootsTest2.dat", 'a')
+        #for r in ret:
+        #    f.write(str(r) + "\t" + str(mat.subs(k,r).evalf()) + "\n")
+        #f.write("\n\n\n")
+        #f.close()        
+        
         self.printCalStr()
         return ret 
     
