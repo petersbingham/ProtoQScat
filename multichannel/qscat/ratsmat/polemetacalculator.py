@@ -3,9 +3,10 @@ import copy
 from polefinder import *
 from poleconverger import *
 from general import *
+import general.numerical as num
 
 class PoleMetaCalculator:
-    def __init__(self, startIndex, endIndex, offset, mode, cfsteps, distFactors, zeroValExp, Nmin, Nmax):
+    def __init__(self, startIndex, endIndex, offset, mode, cfsteps, distFactors, zeroValExp, Nmin, Nmax, clusterSize):
         self.startIndex = startIndex
         self.endIndex = endIndex
         self.offset = offset
@@ -15,6 +16,7 @@ class PoleMetaCalculator:
         self.zeroValExp = zeroValExp
         self.Nmin = Nmin
         self.Nmax = Nmax
+        self.clusterSize = clusterSize
 
     def doPoleCalculations(self, smats, resultFileHandler, kCal, mode, cmpPole=None):
         if len(smats) <= self.endIndex:
@@ -24,6 +26,7 @@ class PoleMetaCalculator:
         tabList = []
         poleSetsDict = {}
         self.errState = False
+        pc = None
         for cfStep in self.cfsteps:
             poleSetsDict[cfStep] = []
             for distFactor in sorted(self.distFactors, reverse=True):  #Want sorted for the prevalence, since each pole across the N in each pole set should be a subset of the same pole for a higer distFactor 
@@ -34,9 +37,9 @@ class PoleMetaCalculator:
                     pc = PoleConverger(resultFileHandler, self.Nmin, self.Nmax)
                     pc.createPoleTable()
                     poleSetsDict[cfStep].append(pc.poleSets)
-        if not self.errState:
+        if not self.errState and pc is not None:
             self._writePoleCountTables(tabList, resultFileHandler)
-            self._writePolePrevalenceTable(poleSetsDict, resultFileHandler)
+            self._writePolePrevalenceTable(pc.allRoots, poleSetsDict, resultFileHandler)
             
     def _writePoleCountTables(self, tabList, resultFileHandler):
         tabHeader = ["dk"]
@@ -63,34 +66,78 @@ class PoleMetaCalculator:
             f.write(outStr)
         print outStr
 
-    def _writePolePrevalenceTable(self, poleSetsDict, resultFileHandler):
+    def _writePolePrevalenceTable(self, allRoots, poleSetsDict, resultFileHandler):
         for cfstep in poleSetsDict:
-            tabHeader = ["pole.E.real", "pole.E.imag", "Prevalence"]
+            tabHeader = ["pole.E.real", "pole.E.imag", "Prevalence", "Autonomy"]
             tabHeader.append(str(cfstep))
             poleSetsList = poleSetsDict[cfstep]
             uniquePoleSets = []
             for poleSets in poleSetsList:
                 if len(poleSets) > 0:
                     totalPoleCnt = reduce(lambda x,y: x+y, map(lambda poleSet: self._getNumPolesInPoleSet(poleSet), poleSets))
+                    poleSetFactors = []
+                    totalModFactor = 0.0
                     for poleSet in poleSets:
+                        factor = float(self._getNumPolesInPoleSet(poleSet))/totalPoleCnt
+                        cumClusterFac = self._getCumulativeClusterFactor(allRoots, poleSet)
+                        modFactor = factor * cumClusterFac
+                        totalModFactor += modFactor
+                        poleSetFactors.append((poleSet, factor, modFactor))
+                    
+                    normFactor = 1.0 / totalModFactor
+                    for poleSetFactor in poleSetFactors:
+                        poleSet = poleSetFactor[0] 
+                        factor = poleSetFactor[1]
+                        finalModFactor = poleSetFactor[2] * normFactor
                         i = self._getUniquePoleSetIndex(uniquePoleSets, poleSet)
-                        newFactor = float(self._getNumPolesInPoleSet(poleSet))/totalPoleCnt
                         if i == -1:
-                            uniquePoleSets.append( (poleSet, newFactor) )
+                            uniquePoleSets.append( (poleSet, factor, finalModFactor) )
                         else:
-                            oldFactor = uniquePoleSets[i][1]
-                            uniquePoleSets[i] = (poleSet, oldFactor + newFactor)
+                            cumulatingFactor = uniquePoleSets[i][1]
+                            cumulatingModFactor = uniquePoleSets[i][2]
+                            uniquePoleSets[i] = (poleSet, cumulatingFactor+factor, cumulatingModFactor+finalModFactor)
             
             tabValues = []
-            uniquePoleSets.sort(key=lambda x: x[1], reverse=True)       
+            uniquePoleSets.sort(key=lambda x: x[2], reverse=True)       
             for uniquePoleSet in uniquePoleSets:
                 Nmax = self._getMaxNInPoleSet(uniquePoleSet[0])
                 prevalence = str(uniquePoleSet[1]/len(poleSetsList)) + NOTABULATEFORMAT
-                tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), prevalence])
+                modPrevalence = str(uniquePoleSet[2]/len(poleSetsList)) + NOTABULATEFORMAT
+                tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), prevalence, modPrevalence])
                 
             outStr = getFormattedHTMLTable(tabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)
-            with open(resultFileHandler.getPolePrevalenceTablePath(cfstep), 'w+') as f:
+            with open(resultFileHandler.getPolePrevalenceTablePath(cfstep, self.clusterSize), 'w+') as f:
                 f.write(outStr)
+                
+    def _getCumulativeClusterFactor(self, allRoots, poleSet):
+        zeroValue = 10**-self.zeroValExp
+        ratCmp = num.RationalCompare(zeroValue, self.clusterSize)
+        clusterFact = 1.0
+        for N in poleSet:
+            clusterCnt = 0.0
+            if not poleSet[N].isLost:
+                roots = self._getRoots(allRoots, N)
+                for root in roots:
+                    if ratCmp.isClose(root.k, poleSet[N].k):
+                        clusterCnt += 1.0
+                if clusterCnt == 0.0:
+                    raise Exception("Zero cluster count!") #Should never be here since we know the pole will always be here at the least.
+                clusterFact = clusterFact / clusterCnt
+        return clusterFact
+    
+    def _getHighestNInPolesSet(self, poleSet):
+        highN = 0
+        for N in poleSet:
+            if not poleSet[N].isLost:
+                if N > highN:
+                    highN = N
+        return highN
+    
+    def _getRoots(self, allRoots, N):
+        for roots in allRoots:
+            if roots.N == N:
+                return roots
+        raise Exception("Could not find roots for pole set!") #Should never be here
     
     def _getUniquePoleSetIndex(self, uniquePoleSets, poleSet):
         for i in range(len(uniquePoleSets)):
