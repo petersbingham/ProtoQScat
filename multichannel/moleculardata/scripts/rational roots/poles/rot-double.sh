@@ -1,7 +1,7 @@
 # Locates poles by comparing roots for N=N*2. Signs switch when passing threshold.
 
 SET_START=0
-SET_END=1000
+SET_END=-1 # To end of data
 SET_OFFSET=0
 
 #delimit CF_STEPS and DIST_FACTOR with commas for several values to loop over
