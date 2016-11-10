@@ -68,7 +68,7 @@ class PoleMetaCalculator:
 
     def _writePolePrevalenceTable(self, allRoots, poleSetsDict, resultFileHandler):
         for cfstep in poleSetsDict:
-            tabHeader = ["pole.E.real", "pole.E.imag", "Prevalence", "Autonomy"]
+            tabHeader = ["pole.E.real", "pole.E.imag", "Prevalence", "Cluster Factor", "Goodness"]
             tabHeader.append(str(cfstep))
             poleSetsList = poleSetsDict[cfstep]
             uniquePoleSets = []
@@ -79,31 +79,35 @@ class PoleMetaCalculator:
                     totalModFactor = 0.0
                     for poleSet in poleSets:
                         factor = float(self._getNumPolesInPoleSet(poleSet))/totalPoleCnt
-                        cumClusterFac = self._getCumulativeClusterFactor(allRoots, poleSet)
-                        modFactor = factor * cumClusterFac
+                        clusterFac = self._getCumulativeClusterFactor(allRoots, poleSet)
+                        modFactor = factor * clusterFac
                         totalModFactor += modFactor
-                        poleSetFactors.append((poleSet, factor, modFactor))
+                        poleSetFactors.append((poleSet, factor, clusterFac, modFactor))
                     
                     normFactor = 1.0 / totalModFactor
                     for poleSetFactor in poleSetFactors:
                         poleSet = poleSetFactor[0] 
                         factor = poleSetFactor[1]
-                        finalModFactor = poleSetFactor[2] * normFactor
+                        clusterFac = poleSetFactor[2]
+                        finalModFactor = poleSetFactor[3] * normFactor
                         i = self._getUniquePoleSetIndex(uniquePoleSets, poleSet)
                         if i == -1:
-                            uniquePoleSets.append( (poleSet, factor, finalModFactor) )
+                            uniquePoleSets.append( (poleSet, factor, clusterFac, finalModFactor, 1) )
                         else:
                             cumulatingFactor = uniquePoleSets[i][1]
-                            cumulatingModFactor = uniquePoleSets[i][2]
-                            uniquePoleSets[i] = (poleSet, cumulatingFactor+factor, cumulatingModFactor+finalModFactor)
+                            cumulatingClusterFac = uniquePoleSets[i][2]
+                            cumulatingModFactor = uniquePoleSets[i][3]
+                            cnt = uniquePoleSets[i][4]
+                            uniquePoleSets[i] = (poleSet, cumulatingFactor+factor, (cumulatingClusterFac*cnt+clusterFac)/(cnt+1), cumulatingModFactor+finalModFactor, cnt+1)
             
             tabValues = []
-            uniquePoleSets.sort(key=lambda x: x[2], reverse=True)       
+            uniquePoleSets.sort(key=lambda x: x[3], reverse=True)       
             for uniquePoleSet in uniquePoleSets:
                 Nmax = self._getMaxNInPoleSet(uniquePoleSet[0])
                 prevalence = str(uniquePoleSet[1]/len(poleSetsList)) + NOTABULATEFORMAT
-                modPrevalence = str(uniquePoleSet[2]/len(poleSetsList)) + NOTABULATEFORMAT
-                tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), prevalence, modPrevalence])
+                clusterFactor = str(uniquePoleSet[2]) + NOTABULATEFORMAT
+                modPrevalence = str(uniquePoleSet[3]/len(poleSetsList)) + NOTABULATEFORMAT
+                tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), prevalence, clusterFactor, modPrevalence])
                 
             outStr = getFormattedHTMLTable(tabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)
             with open(resultFileHandler.getPolePrevalenceTablePath(cfstep, self.clusterSize), 'w+') as f:

@@ -36,6 +36,8 @@ from scriptparameters import *
 def _doPoleFind(kCal, mode):
     kmats = readkMats(FILENAME)
     smats = sm.getSfromKmatrices(kmats,NUMCHANNELS)
+    if args.endIndex_ == -1:
+        args.endIndex_ = len(smats)-1
     resultFileHandler = getFileHandler(kCal, args.startIndex_, args.endIndex_)
     
     cfsteps = map(int, args.cfSteps_.split(','))
