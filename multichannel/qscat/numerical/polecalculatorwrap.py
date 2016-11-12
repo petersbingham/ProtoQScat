@@ -9,6 +9,7 @@ from sysdesc import *
 from polemetacalculator import *
 
 CLUSTERSIZE = 10**-3
+CLUSTERLMT = 2
 
 MODE_ALLSIGNS_DOUBLE = 0
 MODE_ALLSIGNS_INC = 1
@@ -42,7 +43,7 @@ def _doPoleFind(kCal, mode):
     
     cfsteps = map(int, args.cfSteps_.split(','))
     distFactors = map(float, args.distFactors_.split(','))
-    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfsteps, distFactors, args.zeroValExp_, args.Nmin_, args.Nmax_, CLUSTERSIZE)
+    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfsteps, distFactors, args.zeroValExp_, args.Nmin_, args.Nmax_, CLUSTERSIZE, CLUSTERLMT)
     cmpPole = RMATRIX_POLES[args.cmpIndex_] if args.cmpIndex_<len(RMATRIX_POLES) else None
     p.doPoleCalculations(smats, resultFileHandler, kCal, mode, cmpPole)
 

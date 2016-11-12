@@ -6,7 +6,7 @@ from general import *
 import general.numerical as num
 
 class PoleMetaCalculator:
-    def __init__(self, startIndex, endIndex, offset, mode, cfsteps, distFactors, zeroValExp, Nmin, Nmax, clusterSize):
+    def __init__(self, startIndex, endIndex, offset, mode, cfsteps, distFactors, zeroValExp, Nmin, Nmax, clusterSize, clusterLimit):
         self.startIndex = startIndex
         self.endIndex = endIndex
         self.offset = offset
@@ -17,6 +17,7 @@ class PoleMetaCalculator:
         self.Nmin = Nmin
         self.Nmax = Nmax
         self.clusterSize = clusterSize
+        self.clusterLimit = clusterLimit
 
     def doPoleCalculations(self, smats, resultFileHandler, kCal, mode, cmpPole=None):
         if len(smats) <= self.endIndex:
@@ -39,7 +40,7 @@ class PoleMetaCalculator:
                     poleSetsDict[cfStep].append(pc.poleSets)
         if not self.errState and pc is not None:
             self._writePoleCountTables(tabList, resultFileHandler)
-            self._writePolePrevalenceTable(pc.allRoots, poleSetsDict, resultFileHandler)
+            self._writePolePrevalenceTable(poleSetsDict, resultFileHandler)
             
     def _writePoleCountTables(self, tabList, resultFileHandler):
         tabHeader = ["dk"]
@@ -66,92 +67,96 @@ class PoleMetaCalculator:
             f.write(outStr)
         print outStr
 
-    def _writePolePrevalenceTable(self, allRoots, poleSetsDict, resultFileHandler):
+    def _writePolePrevalenceTable(self, poleSetsDict, resultFileHandler):
         for cfstep in poleSetsDict:
-            tabHeader = ["pole.E.real", "pole.E.imag", "Prevalence", "Cluster Factor", "Goodness"]
+            tabHeader = ["pole.E.real", "pole.E.imag", "Prevalence"]
             tabHeader.append(str(cfstep))
             poleSetsList = poleSetsDict[cfstep]
-            uniquePoleSets = []
+            uniquePoleLists = []
             for poleSets in poleSetsList:
                 if len(poleSets) > 0:
                     totalPoleCnt = reduce(lambda x,y: x+y, map(lambda poleSet: self._getNumPolesInPoleSet(poleSet), poleSets))
-                    poleSetFactors = []
-                    totalModFactor = 0.0
                     for poleSet in poleSets:
-                        factor = float(self._getNumPolesInPoleSet(poleSet))/totalPoleCnt
-                        clusterFac = self._getCumulativeClusterFactor(allRoots, poleSet)
-                        modFactor = factor * clusterFac
-                        totalModFactor += modFactor
-                        poleSetFactors.append((poleSet, factor, clusterFac, modFactor))
-                    
-                    normFactor = 1.0 / totalModFactor
-                    for poleSetFactor in poleSetFactors:
-                        poleSet = poleSetFactor[0] 
-                        factor = poleSetFactor[1]
-                        clusterFac = poleSetFactor[2]
-                        finalModFactor = poleSetFactor[3] * normFactor
-                        i = self._getUniquePoleSetIndex(uniquePoleSets, poleSet)
+                        i = self._getuniquePoleListIndex(uniquePoleLists, poleSet)
+                        newFactor = float(self._getNumPolesInPoleSet(poleSet))/totalPoleCnt
                         if i == -1:
-                            uniquePoleSets.append( (poleSet, factor, clusterFac, finalModFactor, 1) )
+                            uniquePoleLists.append( (poleSet, newFactor) )
                         else:
-                            cumulatingFactor = uniquePoleSets[i][1]
-                            cumulatingClusterFac = uniquePoleSets[i][2]
-                            cumulatingModFactor = uniquePoleSets[i][3]
-                            cnt = uniquePoleSets[i][4]
-                            uniquePoleSets[i] = (poleSet, cumulatingFactor+factor, (cumulatingClusterFac*cnt+clusterFac)/(cnt+1), cumulatingModFactor+finalModFactor, cnt+1)
+                            oldFactor = uniquePoleLists[i][1]
+                            uniquePoleLists[i] = (poleSet, oldFactor + newFactor)
             
+            
+            '''
             tabValues = []
-            uniquePoleSets.sort(key=lambda x: x[3], reverse=True)       
-            for uniquePoleSet in uniquePoleSets:
-                Nmax = self._getMaxNInPoleSet(uniquePoleSet[0])
-                prevalence = str(uniquePoleSet[1]/len(poleSetsList)) + NOTABULATEFORMAT
-                clusterFactor = str(uniquePoleSet[2]) + NOTABULATEFORMAT
-                modPrevalence = str(uniquePoleSet[3]/len(poleSetsList)) + NOTABULATEFORMAT
-                tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), prevalence, clusterFactor, modPrevalence])
-                
+            uniquePoleLists.sort(key=lambda x: x[1], reverse=True)       
+            for uniquePoleList in uniquePoleLists:
+                Nmax = self._getMaxNInPoleSet(uniquePoleList[0])
+                prevalence = str(uniquePoleList[1]/len(poleSetsList)) + NOTABULATEFORMAT
+                tabValues.append([formatRoot(uniquePoleList[0][Nmax].E.real), formatRoot(uniquePoleList[0][Nmax].E.imag), prevalence])
             outStr = getFormattedHTMLTable(tabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)
-            with open(resultFileHandler.getPolePrevalenceTablePath(cfstep, self.clusterSize), 'w+') as f:
+            with open(resultFileHandler.getPolePrevalenceTablePath(cfstep, self.clusterSize, self.clusterLimit), 'w+') as f:
                 f.write(outStr)
-                
-    def _getCumulativeClusterFactor(self, allRoots, poleSet):
-        zeroValue = 10**-self.zeroValExp
-        ratCmp = num.RationalCompare(zeroValue, self.clusterSize)
-        clusterFact = 1.0
-        for N in poleSet:
-            clusterCnt = 0.0
-            if not poleSet[N].isLost:
-                roots = self._getRoots(allRoots, N)
-                for root in roots:
-                    if ratCmp.isClose(root.k, poleSet[N].k):
-                        clusterCnt += 1.0
-                if clusterCnt == 0.0:
-                    raise Exception("Zero cluster count!") #Should never be here since we know the pole will always be here at the least.
-                clusterFact = clusterFact / clusterCnt
-        return clusterFact
+            continue
+            '''
+            
+            
+            poleValues = []     
+            for uniquePoleList in uniquePoleLists:
+                Nmax = self._getMaxNInPoleSet(uniquePoleList[0])
+                prevalence = uniquePoleList[1]/len(poleSetsList)
+                poleValues.append([uniquePoleList[0][Nmax], prevalence])
+
+            ratCmp = num.RationalCompare(zeroValue=10**-self.zeroValExp, distFactor=self.clusterSize)                
+            groupedPoleValuesList = []
+            for poleValue in poleValues:
+                found = False
+                for groupedPoleValues in groupedPoleValuesList:
+                    for groupedPoleValue in groupedPoleValues:
+                        if ratCmp.isClose(poleValue[0].k, groupedPoleValue[0].k):
+                            groupedPoleValues.append(poleValue)
+                            found = True
+                            break
+                    if found:
+                        break
+                if not found:
+                    groupedPoleValuesList.append([poleValue])
+            
+            totalPrevalence = 0.0
+            poleValues = []    
+            rejectedPoleValues = []    
+            for groupedPoleValues in groupedPoleValuesList:
+                for groupedPoleValue in groupedPoleValues:
+                    if len(groupedPoleValues) <= self.clusterLimit:
+                        poleValues.append(groupedPoleValue)
+                        totalPrevalence += groupedPoleValue[1]
+                    else:
+                        rejectedPoleValues.append(groupedPoleValue)
+       
+            tabValues = []
+            poleValues.sort(key=lambda x: x[1], reverse=True)
+            for poleValues in poleValues:
+                prevalence = str(poleValues[1]/totalPrevalence) + NOTABULATEFORMAT
+                tabValues.append([formatRoot(poleValues[0].E.real), formatRoot(poleValues[0].E.imag), prevalence])
+            outStr = getFormattedHTMLTable(tabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)
+            with open(resultFileHandler.getPolePrevalenceTablePath(cfstep, self.clusterSize, self.clusterLimit), 'w+') as f:
+                f.write(outStr)
+
+            rejectedTabValues = []
+            for poleValues in rejectedPoleValues:
+                rejectedTabValues.append([formatRoot(poleValues[0].E.real), formatRoot(poleValues[0].E.imag)])
+            outStr = getFormattedHTMLTable(rejectedTabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)
+            with open(resultFileHandler.getRejectedPolePrevalenceTablePath(cfstep, self.clusterSize, self.clusterLimit), 'w+') as f:
+                f.write(outStr)
     
-    def _getHighestNInPolesSet(self, poleSet):
-        highN = 0
-        for N in poleSet:
-            if not poleSet[N].isLost:
-                if N > highN:
-                    highN = N
-        return highN
-    
-    def _getRoots(self, allRoots, N):
-        for roots in allRoots:
-            if roots.N == N:
-                return roots
-        raise Exception("Could not find roots for pole set!") #Should never be here
-    
-    def _getUniquePoleSetIndex(self, uniquePoleSets, poleSet):
-        for i in range(len(uniquePoleSets)):
-            uniquePoleSet = self._getPolesInPoleSet(uniquePoleSets[i][0])
+    def _getuniquePoleListIndex(self, uniquePoleLists, poleSet):
+        for i in range(len(uniquePoleLists)):
+            uniquePoleList = self._getPolesInPoleSet(uniquePoleLists[i][0])
             found = True
             for N in sorted(poleSet.keys()):
                 pole = poleSet[N]
                 if pole.isLost:
                     break
-                elif N not in uniquePoleSet.keys() or pole not in uniquePoleSet.values():
+                elif N not in uniquePoleList.keys() or pole not in uniquePoleList.values():
                     found = False
                     break
             if found:

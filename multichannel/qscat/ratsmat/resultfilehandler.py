@@ -10,6 +10,7 @@ from general.file import *
 
 REPLACESTR1 = "REPLACETHIS1"
 REPLACESTR2 = "REPLACETHIS2"
+REPLACESTR3 = "REPLACETHIS3"
 
 RESULTSDIR = BASEDIR + sep() + "Results" + sep()
 COEFFDIR = sep() + "CoefficientFiles" + sep()
@@ -82,9 +83,10 @@ class ResultFileHandler:
         auxFilesStrEnd = "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd) + "_zk" + str(zeroVal)
         
         auxFilesStr1 = auxFilesStrStart + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd) + auxFilesStrEnd
-        auxFilesStr2 = auxFilesStrStart + REPLACESTR1 + auxFilesStrEnd + "_clustSz" + REPLACESTR2
-        self.polesCountFile =  base + POLESDIR + "COUNTS-" + auxFilesStr1
-        self.polesPrevalenceFile =  base + POLESDIR + "PREVALENCE-" + auxFilesStr2
+        auxFilesStr2 = auxFilesStrStart + REPLACESTR1 + auxFilesStrEnd + "_clustSz" + REPLACESTR2 + "_clustLmt" + REPLACESTR3
+        self.polesCountFile = base + POLESDIR + "COUNTS-" + auxFilesStr1
+        self.polesPrevalenceFile = base + POLESDIR + "PREVALENCE-" + auxFilesStr2
+        self.rejectedPolesPrevalenceFile = base + POLESDIR + "PREVALENCE_REJECTS-" + auxFilesStr2
 
     def getPostStr(self):
         if self.startIndex == None:
@@ -153,8 +155,13 @@ class ResultFileHandler:
         self.writeLogStr(s)
         return fixPath(s)
 
-    def getPolePrevalenceTablePath(self, cfstep, clusterSize, ext=".tab"):
-        s = self.polesPrevalenceFile.replace(REPLACESTR1, str(cfstep)).replace(REPLACESTR2, str(clusterSize)) + ext
+    def getPolePrevalenceTablePath(self, cfstep, clusterSize, clusterLimit, ext=".tab"):
+        s = self.polesPrevalenceFile.replace(REPLACESTR1, str(cfstep)).replace(REPLACESTR2, str(clusterSize)).replace(REPLACESTR3, str(clusterLimit)) + ext
+        self.writeLogStr(s)
+        return fixPath(s)
+
+    def getRejectedPolePrevalenceTablePath(self, cfstep, clusterSize, clusterLimit, ext=".tab"):
+        s = self.rejectedPolesPrevalenceFile.replace(REPLACESTR1, str(cfstep)).replace(REPLACESTR2, str(clusterSize)).replace(REPLACESTR3, str(clusterLimit)) + ext
         self.writeLogStr(s)
         return fixPath(s)
 
