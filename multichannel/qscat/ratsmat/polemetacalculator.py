@@ -69,12 +69,16 @@ class PoleMetaCalculator:
             tabHeader.append(str(cfstep))
             poleSetsList = poleSetsDict[cfstep]
             uniquePoleSets = []
+            totalContributingPoleTables = 0
             for poleSets in poleSetsList:
                 if len(poleSets) > 0:
+                    totalContributingPoleTables += 1
                     totalPoleCnt = reduce(lambda x,y: x+y, map(lambda poleSet: self._getNumPolesInPoleSet(poleSet), poleSets))
+                    totalFactor = 0.0
                     for poleSet in poleSets:
                         i = self._getUniquePoleSetIndex(uniquePoleSets, poleSet)
                         newFactor = float(self._getNumPolesInPoleSet(poleSet))/totalPoleCnt
+                        totalFactor += newFactor
                         if i == -1:
                             uniquePoleSets.append( (poleSet, newFactor) )
                         else:
@@ -85,7 +89,7 @@ class PoleMetaCalculator:
             uniquePoleSets.sort(key=lambda x: x[1], reverse=True)       
             for uniquePoleSet in uniquePoleSets:
                 Nmax = self._getMaxNInPoleSet(uniquePoleSet[0])
-                prevalence = str(uniquePoleSet[1]/len(poleSetsList)) + NOTABULATEFORMAT
+                prevalence = str(uniquePoleSet[1]/totalContributingPoleTables) + NOTABULATEFORMAT
                 tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), prevalence])
                 
             outStr = getFormattedHTMLTable(tabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)

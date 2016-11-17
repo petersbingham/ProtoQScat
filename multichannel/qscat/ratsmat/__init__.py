@@ -16,6 +16,7 @@ sys.path.insert(0,base+'.')
 import scattering.matrices as sm
 from general import *
 from general.qstype import *
+import general.numerical as num
 
 TYPE_S = 0
 TYPE_FIN = 1
@@ -29,6 +30,9 @@ ALWAYS_CALCULATE = False
 PYTYPE_COEFF_SOLVE_METHOD = "numpy_solve"      #"numpy_solve""numpy_lstsq""numpy_sparse_bicg""numpy_sparse_bicgstab""numpy_sparse_lgmres""numpy_sparse_minres""numpy_sparse_qmr""numpy_qr"
 
 EXPANDEDDET_ROOTS_FINDTYPE = "sympy_nroots"    #"numpy_roots""sympy_nroots"
+EXPANDEDDET_ROOTS_CLEANWIDTH = 10.0**-3        #Set to None to turn off
+#EXPANDEDDET_ROOTS_CLEANWIDTH = None
+
 SINGLEROOT_FINDTYPE = "muller"                 #"muller""secant"
 
 DISPLAY_PRECISION = 8
@@ -52,20 +56,19 @@ def _canCacheCoefficients():
     return False
 
 class AuxHelper():
-    def __init__(self, desStr, suppressCmdOut):
-        self.desStr = desStr
+    def __init__(self, suppressCmdOut):
         self.printed = False
         self.suppressCmdOut = suppressCmdOut
     
     def setResultFileHandler(self, resultFileHandler):
         self.resultFileHandler = resultFileHandler
     
-    def printCalStr(self, wereLoaded=False):
+    def _printCalStr(self, nounStr, verbStr, wereLoaded):
         if not self.suppressCmdOut and not self.printed:
             addStr = ""
             if wereLoaded:
                 addStr = "had been "
-            print self.desStr + " " + addStr + "calculated using " + self.typeStr 
+            print nounStr + " " + addStr + verbStr + " using " + self.typeStr 
             self.printed = True
 
     def _startLogAction(self, string):
@@ -79,7 +82,7 @@ class AuxHelper():
 #v2: In _findRoots function matrix elements with poly(...): matLst[len(matLst)-1].append(poly(val))
 class ExpandedDetSolve(AuxHelper):
     def __init__(self, suppressCmdOut):
-        AuxHelper.__init__(self, "Roots", suppressCmdOut)
+        AuxHelper.__init__(self, suppressCmdOut)
         self.sympy_detArgs = {'method':'berkowitz'} #'bareis''berkowitz''det_LU'
         self.sympy_polyArgs = {} #'lex''grlex'
         self.numpy_rootsArgs = {}
@@ -89,7 +92,7 @@ class ExpandedDetSolve(AuxHelper):
             self.typeStr = typeStrStart+",numpy_roots"+getArgDesc(np.roots, self.numpy_rootsArgs)
         elif EXPANDEDDET_ROOTS_FINDTYPE == "sympy_nroots":
             self.typeStr = typeStrStart+",sympy_nroots"+getArgDesc(sy_polys.polytools.nroots, self.sympy_nrootsArgs)
-      
+
     def getRoots(self, mat, k, **args):
         self._startLogAction("getRoots")
         if EXPANDEDDET_ROOTS_FINDTYPE == "numpy_roots":
@@ -138,28 +141,43 @@ class ExpandedDetSolve(AuxHelper):
         return ret 
     
     def printCalStr(self, wereLoaded=False):
-        if not self.suppressCmdOut and not self.printed:
-            addStr = ""
-            if wereLoaded:
-                addStr = "had been "
-            print "Roots " + addStr + "calculated using " + self.typeStr 
-            self.printed = True
+        self._printCalStr("Roots", "calculated", wereLoaded)
 
-    def _startLogAction(self, string):
-        if self.resultFileHandler:
-            self.resultFileHandler.startLogAction(string)
+class RootClean(AuxHelper):
+    def __init__(self, suppressCmdOut):
+        AuxHelper.__init__(self, suppressCmdOut)
+        if EXPANDEDDET_ROOTS_CLEANWIDTH is not None:
+            self.typeStr = "dk" + str(EXPANDEDDET_ROOTS_CLEANWIDTH) + "," + str(EXPANDEDDET_ROOTS_CLEANWIDTH) + "i"
+        else:
+            self.typeStr = None
 
-    def _endLogAction(self, string):
-        if self.resultFileHandler:
-            self.resultFileHandler.endLogAction(string)
+    def cleanRoots(self, roots, badRoot):
+        self._startLogAction("Cleaning roots")
+        cleanRoots = []
+        rejectRoots = []
+        if self.typeStr is not None:
+            cmp = num.Compare(EXPANDEDDET_ROOTS_CLEANWIDTH) 
+            for root in roots:
+                if not cmp.complexCompare(abs(root), badRoot):
+                    cleanRoots.append(root)
+                else:
+                    rejectRoots.append(root)
+        else:
+            cleanRoots = roots
+        self.printCalStr()
+        self._endLogAction("Cleaning roots") 
+        return cleanRoots, rejectRoots
+        
+    def printCalStr(self, wereLoaded=False):
+        self._printCalStr("Roots", "cleaned", wereLoaded)
 
 class CoeffSolve(AuxHelper):
     def __init__(self, suppressCmdOut):
-        AuxHelper.__init__(self, "Coeffs", suppressCmdOut)
+        AuxHelper.__init__(self, suppressCmdOut)
         self.printed = False
         self._action(0)
         self.coeffVec = None
-    
+        
     def setValues(self, numPolyTerms, fitSize, numChannels):  
         self.numPolyTerms = numPolyTerms
         self.fitSize = fitSize
@@ -308,6 +326,9 @@ class CoeffSolve(AuxHelper):
                     f.write(str(self.resVec))
                 with open(initStr+"coeffVec.txt", 'w') as f:
                     f.write(str(self.coeffVec))
+    
+    def printCalStr(self, wereLoaded=False):
+        self._printCalStr("Coeffs", "calculated", wereLoaded)
 
 
 class RatSMat(sm.mat):
@@ -322,16 +343,19 @@ class RatSMat(sm.mat):
         
         self.coeffSolve = CoeffSolve(self.suppressCmdOut)
         self.rootSolver = ExpandedDetSolve(self.suppressCmdOut)
+        self.rootCleaner = RootClean(self.suppressCmdOut)
         
         self.resultFileHandler = resultFileHandler
         if self.resultFileHandler is not None:
             self.resultFileHandler.setFitInfo(self.numFits, self.fitSize)
             self.resultFileHandler.setCoeffRoutine(self.coeffSolve.typeStr)
             self.resultFileHandler.setRootFindRoutine(self.rootSolver.typeStr)
+            self.resultFileHandler.setCleanRootParameter(self.rootCleaner.typeStr)
         if ALWAYS_CALCULATE or not _canCacheCoefficients(): #We need to set the info for later use before setting reference to None.
             self.resultFileHandler = None
         self.coeffSolve.setResultFileHandler(self.resultFileHandler)
         self.rootSolver.setResultFileHandler(self.resultFileHandler)
+        self.rootCleaner.setResultFileHandler(self.resultFileHandler)
         self.fitName = None
         
         if doCalc:
@@ -727,10 +751,14 @@ class RatSMat(sm.mat):
                 mat = sy_matrix(matLst)
                 roots = fun(mat, k, **args)
                 if convertToEne:
-                    mappedRoots = map(lambda val: complex((1.0/self.kCal.eneFactor)*val**2), roots)
+                    mappedRoots = map(lambda val: self.kCal.e(val,True), roots)
                 else:
                     mappedRoots = map(lambda val: complex(val), roots)
                 allRoots.extend(mappedRoots)
         if self.resultFileHandler:
             self.resultFileHandler.startLogAction("_findRoots")
         return allRoots
+
+    def cleanPolyRoots(self, roots):
+        badRoot = self.kCal.fk(sorted(self.sMatData, key=lambda val: val.real)[0])
+        return self.rootCleaner.cleanRoots(roots, badRoot)

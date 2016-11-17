@@ -75,9 +75,9 @@ class Compare:
 
 
 class RationalCompare:
-    def __init__(self, zeroValue, distFactor):
-        self.zeroValue = zeroValue
+    def __init__(self, distFactor, zeroValue=0.0):
         self.distFactor = distFactor
+        self.zeroValue = zeroValue
 
     def isClose(self, cval1, cval2):
         diff = self.getComplexDiff(cval1, cval2)
@@ -94,11 +94,11 @@ class RationalCompare:
     def _getDiff(self, val1, val2):
         absVal1 = abs(val1)
         absVal2 = abs(val2)
-        if absVal1<self.zeroValue and absVal2<self.zeroValue:
+        if absVal1<=self.zeroValue and absVal2<=self.zeroValue:
             return 0.0
-        elif absVal1>=self.zeroValue and absVal2>=self.zeroValue:
+        elif absVal1>self.zeroValue and absVal2>self.zeroValue:
             return self._calDiff(val1, val2)
-        elif absVal1 >= self.zeroValue:
+        elif absVal1 > self.zeroValue:
             return self._calDiff(val1, self.zeroValue)
         else:
             return self._calDiff(self.zeroValue, val2)

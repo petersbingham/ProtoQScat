@@ -70,11 +70,17 @@ class kCalculator:
         else:
             return floatList(self.ksigns)
     def e(self, k, primType=False):
-        val = (1.0/self.eneFactor)*k**2
+        ene = (1.0/(self.eneFactor*REDUCED_MASS))*k**2
         if primType:
-            return val
+            return complex(ene)
         else:
-            return QScomplex(val)
+            return QScomplex(ene)
+    def fk(self, ene, primType=False): #free k
+        k = QSsqrt(self.eneFactor*REDUCED_MASS*ene)
+        if primType:
+            return complex(k)
+        else:
+            return QScomplex(k)
     def kl(self, ch, ene, add=0.0):
         k = self.k(ch, ene)
         return QSpow(k, self.ls[ch]+add)

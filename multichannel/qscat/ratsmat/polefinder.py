@@ -21,7 +21,7 @@ class PoleFinder:
         self.decimator = Decimator(startIndex, endIndex, offset, resultFileHandler)
         self.numCmpSteps = numCmpSteps
         self.zeroValue = 10**(-zeroValExp)
-        self.ratCmp = num.RationalCompare(self.zeroValue, distFactor)
+        self.ratCmp = num.RationalCompare(distFactor, self.zeroValue)
         self.allPoles = []
         self.allPolesInfoStrs = []
         self.allRoots = []
@@ -30,7 +30,6 @@ class PoleFinder:
         self.lostIndices = []
         self.cmpValue = cmpValue
         self.populateSmatCB = populateSmatCB
-        self.file_roots = None
         self.file_poles = None
         self.distFactor = distFactor
         self.mode = mode
@@ -71,50 +70,86 @@ class PoleFinder:
         except Exception as inst:
             string = "Unhandled Exception: " + str(inst) + "\n"
             traceback.print_exc(file=sys.stdout)
-            if self.file_roots is not None:
-                self.file_roots.write(string)
             if self.file_poles is not None:
                 self.file_poles.write(string)
             self.errState = True
             ret = False
-        if self.file_roots is not None:
-            self.file_roots.close()
-            self.file_roots = None
         if self.file_poles is not None:
             self.file_poles.close()
             self.file_poles = None
         return ret
 
     def _getNroots(self, N):
-        sMats, decStr = self.decimator.decimate(self.sMats, N)
+        sMats, descStr = self.decimator.decimate(self.sMats, N)
         ratSmat = RatSMat(sMats, self.kCal, resultFileHandler=self.resultFileHandler, doCalc=False)
         self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distFactor, self.zeroValue, self.Nmin, self.Nmax)
+        
         roots = None
-        if self.resultFileHandler.doesRootFileExist() and not ALWAYS_CALCULATE:
-            ratSmat.coeffSolve.printCalStr(True)
-            try:
-                roots = self._readNroots(N)
-                ratSmat.rootSolver.printCalStr(True)
-                print "Loaded Roots for N=" + str(N) + ":"
-            except Exception as e:
-                print "Error reading roots will attempt to recalculate: " + str(e)
-        if roots is None:
-            if self.populateSmatCB is not None:
-                self.populateSmatCB(sMats, self.sMats)
-            ratSmat.doCalc()
-            self.file_roots = open(self.resultFileHandler.getRootFilePath(), 'w')
-            self.file_roots.write(decStr+"\n")
-            roots = ratSmat.findPolyRoots(False)
-            print "Calculated Roots for N=" + str(N) + ":"
-        print "  " + str(len(roots)) + " roots."
+        cleanRoots = None
+        
+        if not ALWAYS_CALCULATE:
+            if self._isReadCleanRootsRequired():
+                cleanRoots = self._readCleanroots(ratSmat, N)
+            if self._isReadBaseRootsRequired(cleanRoots):
+                roots = self._readBaseroots(ratSmat, N)
+            
+        if self._isCalculationRequired(cleanRoots, roots):
+            if self._isBaseCalculationRequired(roots):
+                roots = self._calculateRoots(sMats, ratSmat, descStr, N)
+            if self._isCleanCalculationRequired(cleanRoots):
+                cleanRoots = self._cleanRoots(ratSmat, roots, descStr, N)
+            
+        if cleanRoots is not None:
+            finalRoots = cleanRoots
+        else:
+            finalRoots = roots
+        
         self.file_poles = open(self.resultFileHandler.getPoleFilePath(), 'w')
-        self.file_poles.write(decStr+"\n")
+        self.file_poles.write(descStr+"\n")
+        
+        return finalRoots
+
+    def _printInfoStr(self, preFix, N, roots):
+        print preFix + " Roots for N=" + str(N) + ":"
+        print "  " + str(len(roots)) + " roots."
+        
+
+#################File Read Related#####################
+#######################################################
+
+    def _isReadCleanRootsRequired(self):
+        return self.resultFileHandler.useCleanRoots() and self.resultFileHandler.doesCleanRootFileExist()
+
+    def _readCleanroots(self, ratSmat, N):
+        roots = None
+        ratSmat.coeffSolve.printCalStr(True)
+        try:
+            roots = self._readNroots(N, self.resultFileHandler.getCleanRootFilePath())
+            ratSmat.rootSolver.printCalStr(True)
+            ratSmat.rootCleaner.printCalStr(True)
+            self._printInfoStr("Loaded Clean", N, roots)
+        except Exception as e:
+            print "Error reading clean roots will attempt to recalculate: " + str(e)        
         return roots
 
-    def _readNroots(self, N):
+    def _isReadBaseRootsRequired(self, cleanRoots):
+        return cleanRoots is None and self.resultFileHandler.doesRootFileExist()
+
+    def _readBaseroots(self, ratSmat, N):
+        roots = None
+        ratSmat.coeffSolve.printCalStr(True)
+        try:
+            roots = self._readNroots(N, self.resultFileHandler.getRootFilePath())
+            ratSmat.rootSolver.printCalStr(True)
+            self._printInfoStr("Loaded", N, roots)
+        except Exception as e:
+            print "Error reading roots will attempt to recalculate: " + str(e)        
+        return roots
+        
+    def _readNroots(self, N, rootPath):
         roots = []
         fileComplete = False
-        with open(self.resultFileHandler.getRootFilePath(), 'r') as f:
+        with open(rootPath, 'r') as f:
             firstLine = True
             for line in f:        
                 if COMPLETE_STR in line:
@@ -123,20 +158,72 @@ class PoleFinder:
                     str = line[line.find('=')+1:line.find('i')]+'j'
                     roots.append(complex(str))
                 firstLine = False
-        raise Exception("Incomplete Root File")
+        raise Exception("Incomplete Root File")        
 
-    def _locatePoles(self, roots, N):
-        #This is when we know the position of a pole and want to mark the closest root to this value in the output file.
-        closestIndex = None
-        closestDiff = None
-        if self.cmpValue is not None:
-            for j in range(len(roots)):
-                eneRoot = self._calEnergy(roots[j])
-                diff = abs(self.cmpValue-eneRoot)
-                if j==0 or diff<closestDiff:
-                    closestDiff = diff
-                    closestIndex = j
+###############Calculation Related#####################
+#######################################################
         
+    def _isCalculationRequired(self, cleanRoots, roots):
+        if self.resultFileHandler.useCleanRoots():
+            return cleanRoots is None
+        else:
+            return roots is None
+    
+    def _isBaseCalculationRequired(self, roots):
+        return roots is None
+    
+    def _isCleanCalculationRequired(self, cleanRoots):
+        return self.resultFileHandler.useCleanRoots() and cleanRoots is None
+    
+    def _calculateRoots(self, sMats, ratSmat, descStr, N):
+        if self.populateSmatCB is not None:
+            self.populateSmatCB(sMats, self.sMats)
+        file = open(self.resultFileHandler.getRootFilePath(), 'w')
+        try:
+            ratSmat.doCalc()
+            roots = ratSmat.findPolyRoots(False)
+            self._printInfoStr("Calculated", N, roots)
+            self._recordRoots(file, descStr, roots)     
+            file.close()
+        except Exception as inst:
+            string = "Unhandled Exception: " + str(inst) + "\n"
+            file.write(string)  
+            file.close()
+            raise inst
+        return roots
+    
+    def _cleanRoots(self, ratSmat, roots, descStr, N):
+        cleanRoots, rejectRoots = ratSmat.cleanPolyRoots(roots)
+        
+        file = open(self.resultFileHandler.getCleanRootFilePath(), 'w')
+        self._recordRoots(file, descStr, cleanRoots)
+        file.close()
+        file = open(self.resultFileHandler.getRejectRootFilePath(), 'w')
+        self._recordRoots(file, descStr, rejectRoots)
+        file.close()
+        
+        self._printInfoStr("Cleaned", N, cleanRoots)
+        return cleanRoots
+    
+    def _recordRoots(self, file, descStr, roots):
+        file.write(descStr+"\n")
+        closestIndex = self._getClosestIndex(roots)
+        for i in range(len(roots)):
+            self._recordRoot(file, i, roots[i], closestIndex)
+        file.write(COMPLETE_STR)     
+                 
+    def _recordRoot(self, file, i, root, closestIndex):
+        endStr = ""
+        if self.cmpValue is not None and closestIndex==i:
+            endStr = " @<****>@"
+        eneRoot = self._calEnergy(root)
+        writeStr = ("Root_k[%d]="+self._getComplexFormat()+"\tRoot_E[%d]="+self._getComplexFormat()+"\t%s\n") % (i,root.real,root.imag,i,eneRoot.real,eneRoot.imag,endStr)
+        file.write(writeStr)     
+
+#######################################################
+#######################################################
+
+    def _locatePoles(self, roots, N):  
         newPoles = []
         newPolesInfoStrs = []
         newPolesLastRoots = []
@@ -176,12 +263,6 @@ class PoleFinder:
                     newPoles.append((i,root))
                     newPolesLastRoots.append((poleLastRootIndex,poleLastSmallestCmpRoot))
                     newPolesInfoStrs.append(infoStr)
-                self._printRoot(i, root, closestIndex)
-        else:
-            for i in range(len(roots)):
-                self._printRoot(i, roots[i], closestIndex)
-        if self.file_roots is not None:
-            self.file_roots.write(COMPLETE_STR)   
 
         self.allRoots.append(roots)
 
@@ -264,14 +345,17 @@ class PoleFinder:
     def _calEnergy(self, k, primType=False):
         return self.kCal.e(k, primType)
 
-    def _printRoot(self, i, root, closestIndex):
-        endStr = ""
-        if self.cmpValue is not None and closestIndex==i:
-            endStr = " @<****>@"
-        eneRoot = self._calEnergy(root)
-        writeStr = ("Root_k[%d]="+self._getComplexFormat()+"\tRoot_E[%d]="+self._getComplexFormat()+"\t%s\n") % (i,root.real,root.imag,i,eneRoot.real,eneRoot.imag,endStr)
-        if self.file_roots is not None:
-            self.file_roots.write(writeStr)
+    def _getClosestIndex(self, roots):
+        #This is when we know the position of a pole and want to mark the closest root to this value in the output file.
+        closestIndex = None
+        closestDiff = None
+        if self.cmpValue is not None:
+            for j in range(len(roots)):
+                eneRoot = self._calEnergy(roots[j])
+                diff = abs(self.cmpValue-eneRoot)
+                if j==0 or diff<closestDiff:
+                    closestDiff = diff
+                    closestIndex = j
                 
     def _printSep1(self, file):
         file.write("@<---------------------------------------------------------------------------------------------->@\n")

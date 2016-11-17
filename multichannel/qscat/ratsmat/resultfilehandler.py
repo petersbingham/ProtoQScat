@@ -13,6 +13,7 @@ REPLACESTR = "REPLACETHIS"
 RESULTSDIR = BASEDIR + sep() + "Results" + sep()
 COEFFDIR = sep() + "CoefficientFiles" + sep()
 ROOTSDIR = sep() + "Roots" + sep()
+ROOTSREJECTEDDIR = sep() + "Roots-Rejected" + sep()
 POLESDIR = sep() + "Poles" + sep()
 
 LOGSDIR = BASEDIR + sep() + "Logs" + sep()
@@ -35,6 +36,8 @@ class ResultFileHandler:
         self.distFactorStart = None 
         self.distFactorEnd = None
     
+        self.cleanRootRoutine = None
+
     def setFitInfo(self, numFits, fitSize):
         self.numFits = numFits
         self.fitSize = fitSize
@@ -53,14 +56,30 @@ class ResultFileHandler:
     
     def setRootFindRoutine(self, rootFindRoutine):
         self.rootFindRoutine = rootFindRoutine
-        base = self._getRootsBaseString()
+        base = self._getBaseRootsPath()
         self.rootDir = base + ROOTSDIR
         self.rootPath = self.rootDir
         self._makeDir(self.rootPath)
         self.rootPath += self.getPostStr()
     
+    def setCleanRootParameter(self, cleanRootRoutine):
+        self.cleanRootRoutine = cleanRootRoutine
+        if self.cleanRootRoutine is not None:
+            self.cleanRootRoutine = str(cleanRootRoutine)
+            base = self._getCleanRootsPath()
+            
+            self.cleanRootDir = base + ROOTSDIR
+            self.cleanRootPath = self.cleanRootDir
+            self._makeDir(self.cleanRootPath)
+            self.cleanRootPath += self.getPostStr()
+            
+            self.rejectRootDir = base + ROOTSREJECTEDDIR
+            self.rejectRootPath = self.rejectRootDir
+            self._makeDir(self.rejectRootPath)
+            self.rejectRootPath += self.getPostStr()
+        
     def setPoleFindParameters(self, mode, numCmpSteps, distFactor, zeroVal, Nmin, Nmax):
-        base = self._getRootsBaseString()
+        base = self._getRootsPath()
         self.polesDirName = str(mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_zk" + str(zeroVal)
         self.polesDir = base + POLESDIR + self.polesDirName + sep() 
         self.polesPath = self.polesDir
@@ -91,9 +110,21 @@ class ResultFileHandler:
             self.endIndex = self.fitSize-1
         return "N=" + str(self.fitSize) + "_" + "S=" + str(self.startIndex) + "_" + "E=" + str((self.endIndex+1*self.numFits)-1)
     
-    def _getRootsBaseString(self):
-        return self._getBaseString() + sep() + "ROOTS-" + self.rootFindRoutine
+    def _getRootsInitPath(self):
+        return self._getBaseString() + sep() + "ROOTS-" + self.rootFindRoutine + sep()
     
+    def _getRootsPath(self):
+        if self.cleanRootRoutine is None:
+            return self._getBaseRootsPath()
+        else:
+            return self._getCleanRootsPath()
+    
+    def _getBaseRootsPath(self):
+        return self._getRootsInitPath() + "COMPLETE"
+    
+    def _getCleanRootsPath(self):
+        return self._getRootsInitPath() + "CLEAN-" + self.cleanRootRoutine
+        
     def _getBaseString(self):
         if self.numFits == 1:
             return self.coeffRoutinePath + sep() + "SingleFit"
@@ -118,8 +149,14 @@ class ResultFileHandler:
         self.writeLogStr(s)
         return fixPath(s)
 
+    def useCleanRoots(self):
+        return self.cleanRootRoutine is not None
+
     def doesRootFileExist(self, ext=".dat"):
         return os.path.isfile(self.getRootFilePath(ext))
+
+    def doesCleanRootFileExist(self, ext=".dat"):
+        return self.useCleanRoots() and os.path.isfile(self.getCleanRootFilePath(ext))
 
     def getRootDir(self):
         s = self.rootDir
@@ -128,6 +165,21 @@ class ResultFileHandler:
 
     def getRootFilePath(self, ext=".dat"):
         s = self.rootPath + ext
+        self.writeLogStr(s)
+        return fixPath(s) 
+
+    def getCleanRootDir(self):
+        s = self.cleanRootDir
+        self.writeLogStr(s)
+        return fixPath(s) 
+
+    def getCleanRootFilePath(self, ext=".dat"):
+        s = self.cleanRootPath + ext
+        self.writeLogStr(s)
+        return fixPath(s) 
+
+    def getRejectRootFilePath(self, ext=".dat"):
+        s = self.rejectRootPath + ext
         self.writeLogStr(s)
         return fixPath(s) 
     

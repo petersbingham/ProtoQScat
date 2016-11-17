@@ -81,12 +81,12 @@ class PoleConverger:
         self.allPoles = self._parseFiles(self.polePath, Poles, Pole, True)
                 
         if self.setNmin!=self.Nmin or self.setNmax!=self.Nmax:
-            s = str(self.setNmin) + " " + str(self.Nmin) + " " + str(self.setNmax) + " " + str(self.Nmax)
-            raise Exception("Required pole files do not exist: " + s)
+            s = str(self.setNmin) + " " + str(self.Nmin) + " " + str(self.setNmax) + " " + str(self.Nmax) + " "
+            raise Exception("Required pole files do not exist: " + s + "Likely a prior exception.")
         
         self.distFactor = float(poleDirName[poleDirName.find("_dk")+3:poleDirName.find("_zk")])
         self.zeroVal = float(poleDirName[poleDirName.find("_zk")+3:])
-        self.ratCmp = num.RationalCompare(self.zeroVal, self.distFactor)
+        self.ratCmp = num.RationalCompare(self.distFactor, self.zeroVal)
 
     def _parseFiles(self, fileBase, subContainerClass, typeClass, setNExtents):
         containerClass = []
