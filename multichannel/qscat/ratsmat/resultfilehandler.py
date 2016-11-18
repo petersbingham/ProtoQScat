@@ -4,11 +4,13 @@ import datetime
 import time
 from sys import platform as _platform
 
-BASEDIR = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0,BASEDIR+'/../../../Utilities')
+basedir = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0,basedir+'/../../../Utilities')
 from general.file import *
 
 REPLACESTR = "REPLACETHIS"
+
+BASEDIR = basedir
 
 RESULTSDIR = BASEDIR + sep() + "Results" + sep()
 COEFFDIR = sep() + "CoefficientFiles" + sep()
