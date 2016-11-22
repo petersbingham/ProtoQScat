@@ -39,6 +39,7 @@ class PoleFinder:
         self.NmaxTotPoles = None
         self.NmaxLostPoles = None
         self.errState = False
+        self.newIndex = -1
         if mode == DOUBLE_N:
             self._doubleN()
         else:
@@ -69,7 +70,7 @@ class PoleFinder:
             self.allNs.append(N)
         except Exception as inst:
             string = "Unhandled Exception: " + str(inst) + "\n"
-            traceback.print_exc(file=sys.stdout)
+            print string
             if self.file_poles is not None:
                 self.file_poles.write(string)
             self.errState = True
@@ -274,43 +275,48 @@ class PoleFinder:
                         if i not in self.lostIndices:
                             self.lostIndices.append(i)
 
-        #Determine if new pole. If so then add to self.allPoles and note.
-        newIndex = -1
-        allocatedLastPoleRootIndices = [] #Two new poles may have the same last root
+
+        #Now determine if the new pole is a continuation of a prior pole. If so then just update. If not then append.
+        #The indices of the last root of the newPole are compared to root indices of the last pole to establish this.
+        self.newIndex = -1
+        allocationDetails = {} #However, two new poles may have the same last root, so we need to keep the details.
         for i in range(len(newPoles)):
-            newPoleLastRoot = newPolesLastRoots[i]
+            newPoleLastRootIndex = newPolesLastRoots[i][0]
             newPole = newPoles[i]
             newPolesInfoStr = newPolesInfoStrs[i]
             found = False
-            lastPoleRootIndices = map(lambda x : x[0], self.lastPoles)
-            for j in range(len(lastPoleRootIndices)):
-                if newPoleLastRoot[0]==lastPoleRootIndices[j] and j not in allocatedLastPoleRootIndices:
-                    allocatedLastPoleRootIndices.append(j)
+            for j in range(len(self.lastPoles)):
+                lastPoleRootIndex = self.lastPoles[j][0]
+                lastPole = self.lastPoles[j][1]
+                if newPoleLastRootIndex == lastPoleRootIndex:
+                    if j not in allocationDetails.keys():
+                        allocationDetails[j] = None #Uninitialised. Will contain: [index in the self.allPoles that this maps to, last pole value that was replaced]. We need to keep these because if a new pole has the same maps then need to compared both to the original last pole value.
                     found = True
                     break
 
             if not found:
-                self.allPoles.append(newPole[1])
-                self.allPolesInfoStrs.append(newPolesInfoStr)
-                #Record when we start adding new poles
-                if newIndex == -1:
-                    newIndex = len(self.allPoles)-1
+                self._addNewPole(newPole[1], newPolesInfoStr)
             else:
-                #If it's not new then just update the value
-                found = False
-                for lastPole in self.lastPoles:
-                    if newPoleLastRoot[0] == lastPole[0]:
-                        for k in range(len(self.allPoles)):
-                            if lastPole[1]==self.allPoles[k] and k not in self.lostIndices:
-                                self.allPoles[k] = newPole[1]
-                                self.allPolesInfoStrs[k] = newPolesInfoStr
-                                found = True
-                                break
-                    if found:
-                        break
-                if not found:
-                    raise Exception("Could not find pole to update") #Should never be here
-
+                if allocationDetails[j] is None: #We dont know where it is so have to search.
+                    found = False
+                    for k in range(len(self.allPoles)):
+                        if lastPole==self.allPoles[k] and k not in self.lostIndices:
+                            allocationDetails[j] = [k, self.allPoles[k]]
+                            found = True
+                            break
+                    if not found:
+                        raise Exception("Could not find pole to update") #Should never be here
+                    self._updatePole(newPole[1], newPolesInfoStr, k)
+                else:
+                    k = allocationDetails[j][0]
+                    origPole = allocationDetails[j][1]
+                    if self._isLatestPoleCloser(newPole[1], self.allPoles[k], origPole): 
+                        #Swap them
+                        self._addNewPole(self.allPoles[k], self.allPolesInfoStrs[k])
+                        self._updatePole(newPole[1], newPolesInfoStr, k)
+                    else:
+                        self._addNewPole(newPole[1], newPolesInfoStr)                    
+                    
         self.lastPoles = newPoles
 
         poles = 0
@@ -320,7 +326,7 @@ class PoleFinder:
             poles += 1
             endStr = ""
             enePole = self._calEnergy(self.allPoles[i])
-            if newIndex!=-1 and i>=newIndex:
+            if self.newIndex!=-1 and i>=self.newIndex:
                 endStr = "NEW "
                 newPoles += 1
               
@@ -341,6 +347,22 @@ class PoleFinder:
         if N == self.Nmax:
             self.NmaxTotPoles = poles+lostPoles
             self.NmaxLostPoles = lostPoles
+    
+    def _addNewPole(self, newPole, newPolesInfoStr):
+        self.allPoles.append(newPole)
+        self.allPolesInfoStrs.append(newPolesInfoStr)
+        #Record when we start adding new poles
+        if self.newIndex == -1:
+            self.newIndex = len(self.allPoles)-1
+            
+    def _updatePole(self, newPole, newPolesInfoStr, k):
+        self.allPoles[k] = newPole
+        self.allPolesInfoStrs[k] = newPolesInfoStr
+        
+    def _isLatestPoleCloser(self, newPole, oldPole, origPole):
+        newDiff = self.ratCmp.getComplexDiff(newPole, origPole)
+        oldDiff = self.ratCmp.getComplexDiff(oldPole, origPole)
+        return abs(newDiff) < abs(oldDiff)
     
     def _calEnergy(self, k, primType=False):
         return self.kCal.e(k, primType)

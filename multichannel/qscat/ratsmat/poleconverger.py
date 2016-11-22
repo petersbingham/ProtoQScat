@@ -86,7 +86,6 @@ class PoleConverger:
         
         self.distFactor = float(poleDirName[poleDirName.find("_dk")+3:poleDirName.find("_zk")])
         self.zeroVal = float(poleDirName[poleDirName.find("_zk")+3:])
-        self.ratCmp = num.RationalCompare(self.distFactor, self.zeroVal)
 
     def _parseFiles(self, fileBase, subContainerClass, typeClass, setNExtents):
         containerClass = []
