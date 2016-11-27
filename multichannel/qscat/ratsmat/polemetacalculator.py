@@ -5,13 +5,14 @@ from poleconverger import *
 from general import *
 
 class PoleMetaCalculator:
-    def __init__(self, startIndex, endIndex, offset, mode, cfsteps, distFactors, zeroValExp, Nmin, Nmax):
+    def __init__(self, startIndex, endIndex, offset, mode, cfsteps, distFactors, relaxFactor, zeroValExp, Nmin, Nmax):
         self.startIndex = startIndex
         self.endIndex = endIndex
         self.offset = offset
         self.mode = mode
         self.cfsteps = cfsteps
         self.distFactors = distFactors
+        self.relaxFactor = relaxFactor
         self.zeroValExp = zeroValExp
         self.Nmin = Nmin
         self.Nmax = Nmax
@@ -27,7 +28,7 @@ class PoleMetaCalculator:
         for cfStep in self.cfsteps:
             poleSetsDict[cfStep] = []
             for distFactor in sorted(self.distFactors, reverse=True):  #Want sorted for the prevalence, since each pole across the N in each pole set should be a subset of the same pole for a higer distFactor 
-                pf = PoleFinder(copy.deepcopy(smats), kCal, resultFileHandler, self.startIndex, self.endIndex, self.offset, distFactor, cfStep, cmpPole, mode, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax)
+                pf = PoleFinder(copy.deepcopy(smats), kCal, resultFileHandler, self.startIndex, self.endIndex, self.offset, distFactor, self.relaxFactor, cfStep, cmpPole, mode, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax)
                 self.errState = self.errState | pf.errState
                 if not self.errState:
                     tabList.append((pf.NmaxTotPoles, pf.NmaxLostPoles))
@@ -80,10 +81,11 @@ class PoleMetaCalculator:
                         newFactor = float(self._getNumPolesInPoleSet(poleSet))/totalPoleCnt
                         totalFactor += newFactor
                         if i == -1:
-                            uniquePoleSets.append( (poleSet, newFactor) )
+                            uniquePoleSets.append( [poleSet, newFactor] )
                         else:
                             oldFactor = uniquePoleSets[i][1]
-                            uniquePoleSets[i] = (poleSet, oldFactor + newFactor)
+                            uniquePoleSets[i] = [poleSet, oldFactor + newFactor] #Update pole set
+                            #uniquePoleSets[i][1] = oldFactor + newFactor #Use origional pole set
             
             tabValues = []
             uniquePoleSets.sort(key=lambda x: x[1], reverse=True)       

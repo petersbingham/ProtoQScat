@@ -14,14 +14,16 @@ INC_N = 'incN'
 COMPLETE_STR = "Complete"
    
 class PoleFinder:
-    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX):
+    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distFactor, relaxFactor=1.0, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX):
         self.sMats = sMats
         self.kCal = kCal
         self.resultFileHandler = resultFileHandler
         self.decimator = Decimator(startIndex, endIndex, offset, resultFileHandler)
         self.numCmpSteps = numCmpSteps
+        self.distFactor = distFactor
+        self.relaxFactor = relaxFactor
         self.zeroValue = 10**(-zeroValExp)
-        self.ratCmp = num.RationalCompare(distFactor, self.zeroValue)
+        self.ratCmp = num.RationalCompare(self.zeroValue)
         self.allPoles = []
         self.allPolesInfoStrs = []
         self.allRoots = []
@@ -31,7 +33,6 @@ class PoleFinder:
         self.cmpValue = cmpValue
         self.populateSmatCB = populateSmatCB
         self.file_poles = None
-        self.distFactor = distFactor
         self.mode = mode
         self.first = True
         self.Nmin = Nmin
@@ -83,7 +84,7 @@ class PoleFinder:
     def _getNroots(self, N):
         sMats, descStr = self.decimator.decimate(self.sMats, N)
         ratSmat = RatSMat(sMats, self.kCal, resultFileHandler=self.resultFileHandler, doCalc=False)
-        self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distFactor, self.zeroValue, self.Nmin, self.Nmax)
+        self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distFactor, self.relaxFactor, self.zeroValue, self.Nmin, self.Nmax)
         
         roots = None
         cleanRoots = None
@@ -228,13 +229,17 @@ class PoleFinder:
         newPoles = []
         newPolesInfoStrs = []
         newPolesLastRoots = []
+        lastPoleRootIndices = ()
+        if len(self.lastPoles) > 0:
+            lastPoleRootIndices = zip(*self.lastPoles)[0]
         if len(self.allRoots) >= self.numCmpSteps:  
             for i in range(len(roots)):
                 root = roots[i]
                 cmpRoot = root
                 isPole = True
                 infoStr = "with N=%d[%d]" % (N, i)
-                first = True
+                firstStep = True
+                repeatPole = False
                 for k in reversed(range(len(self.allRoots)-self.numCmpSteps, len(self.allRoots))): #Look at the last sets
                     cmpRootSet = self.allRoots[k]
                     smallestAbsCdiff = None
@@ -243,22 +248,29 @@ class PoleFinder:
                         cmpRoot2 = cmpRootSet[j]
                         cdiff = self.ratCmp.getComplexDiff(cmpRoot, cmpRoot2)
                         absCdiff = num.absDiff(cmpRoot, cmpRoot2)
-                        if self.ratCmp.checkComplexDiff(cdiff):
+                        if repeatPole or (firstStep and j in lastPoleRootIndices): #Check if root index corresponds to a last pole. If so then relax the comparison threshold.
+                            distFactor = self.distFactor * self.relaxFactor
+                        else:
+                            distFactor = self.distFactor    
+                        if self.ratCmp.checkComplexDiff(cdiff, distFactor):
                             if smallestAbsCdiff is None or absCdiff < smallestAbsCdiff:
                                 infoStr2 = " N=%d[%d]" % (self.allNs[k], j)
                                 smallestAbsCdiff = absCdiff
                                 smallestCmpRoot2 = cmpRoot2
-                                if first:
+                                if firstStep:
                                     poleLastRootIndex = j
                                     poleLastSmallestCmpRoot = smallestCmpRoot2
-                        if j==len(cmpRootSet)-1 and smallestAbsCdiff is None:
-                            isPole = False
+                        if j==len(cmpRootSet)-1:
+                            if smallestAbsCdiff is None:
+                                isPole = False
+                            elif repeatPole or (firstStep and poleLastRootIndex in lastPoleRootIndices):
+                                repeatPole = True
+                    firstStep = False
                     if not isPole:
                         break
                     else:
                         cmpRoot = smallestCmpRoot2
                         infoStr += infoStr2
-                    first = False
                         
                 if isPole:    
                     newPoles.append((i,root))
@@ -277,7 +289,7 @@ class PoleFinder:
 
 
         #Now determine if the new pole is a continuation of a prior pole. If so then just update. If not then append.
-        #The indices of the last root of the newPole are compared to root indices of the last pole to establish this.
+        #The indices of the prior root of the newPole are compared to root indices of the prior pole to establish this.
         self.newIndex = -1
         allocationDetails = {} #However, two new poles may have the same last root, so we need to keep the details.
         for i in range(len(newPoles)):
@@ -286,7 +298,7 @@ class PoleFinder:
             newPolesInfoStr = newPolesInfoStrs[i]
             found = False
             for j in range(len(self.lastPoles)):
-                lastPoleRootIndex = self.lastPoles[j][0]
+                lastPoleRootIndex = lastPoleRootIndices[j]
                 lastPole = self.lastPoles[j][1]
                 if newPoleLastRootIndex == lastPoleRootIndex:
                     if j not in allocationDetails.keys():

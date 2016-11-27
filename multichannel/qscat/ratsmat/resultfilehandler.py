@@ -80,9 +80,9 @@ class ResultFileHandler:
             self._makeDir(self.rejectRootPath)
             self.rejectRootPath += self.getPostStr()
         
-    def setPoleFindParameters(self, mode, numCmpSteps, distFactor, zeroVal, Nmin, Nmax):
+    def setPoleFindParameters(self, mode, numCmpSteps, distFactor, relaxFactor, zeroVal, Nmin, Nmax):
         base = self._getRootsPath()
-        self.polesDirName = str(mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_zk" + str(zeroVal)
+        self.polesDirName = str(mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_rk" + str(relaxFactor) + "_zk" + str(zeroVal)
         self.polesDir = base + POLESDIR + self.polesDirName + sep() 
         self.polesPath = self.polesDir
         self._makeDir(self.polesPath)
@@ -99,7 +99,7 @@ class ResultFileHandler:
             
         auxFilesRange = "_Nmin="+str(Nmin)+"_Nmax="+str(Nmax)
         auxFilesStrStart = str(mode) + auxFilesRange + "_cfStep"
-        auxFilesStrEnd = "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd) + "_zk" + str(zeroVal)
+        auxFilesStrEnd = "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd) + "_rk" + str(relaxFactor) + "_zk" + str(zeroVal)
         auxFilesStr1 = auxFilesStrStart + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd) + auxFilesStrEnd
         auxFilesStr2 = auxFilesStrStart + REPLACESTR + auxFilesStrEnd
         self.polesCountFile =  base + POLESDIR + "COUNTS-" + auxFilesStr1

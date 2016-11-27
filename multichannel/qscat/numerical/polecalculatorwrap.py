@@ -23,6 +23,7 @@ parentArgs.add_argument("offset_", help="Offset", type=int)
 parentArgs.add_argument("mode_", help="Mode", type=int)
 parentArgs.add_argument("cfSteps_", help="Compare Steps", type=str)
 parentArgs.add_argument("distFactors_", help="Distinguish Factor", type=str)
+parentArgs.add_argument("relaxFactor_", help="Relaxation Factor", type=float)
 parentArgs.add_argument("zeroValExp_", help="Zero Value Precision", type=int)
 parentArgs.add_argument("Nmin_", help="Starting N value", type=int)
 parentArgs.add_argument("Nmax_", help="Ending N value", type=int)
@@ -40,7 +41,7 @@ def _doPoleFind(kCal, mode):
     
     cfsteps = map(int, args.cfSteps_.split(','))
     distFactors = map(float, args.distFactors_.split(','))
-    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfsteps, distFactors, args.zeroValExp_, args.Nmin_, args.Nmax_)
+    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfsteps, distFactors, args.relaxFactor_, args.zeroValExp_, args.Nmin_, args.Nmax_)
     cmpPole = RMATRIX_POLES[args.cmpIndex_] if args.cmpIndex_<len(RMATRIX_POLES) else None
     p.doPoleCalculations(smats, resultFileHandler, kCal, mode, cmpPole)
 
