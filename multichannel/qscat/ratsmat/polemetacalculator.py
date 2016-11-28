@@ -48,15 +48,14 @@ class PoleMetaCalculator:
                 tabHeader.append(str(cfstep)+" Steps")
         
         tabValues = []
-        i=0
-        for distFactor in self.distFactors:
-            tabRow = ["{:.2E}".format(distFactor)]
-            for cfstep in self.cfsteps:
-                if tabList[i][1] > 0:
-                    tabRow.append(str(tabList[i][0])+"("+str(tabList[i][1])+")")
+        for id in range(len(self.distFactors)):
+            tabRow = ["{:.2E}".format(self.distFactors[id])]
+            for ic in range(len(self.cfsteps)):
+                index = ic * len(self.distFactors) + id
+                if tabList[index][1] > 0:
+                    tabRow.append(str(tabList[index][0])+"("+str(tabList[index][1])+")")
                 else:
-                    tabRow.append(str(tabList[i][0]))
-                i += 1
+                    tabRow.append(str(tabList[index][0]))
             tabValues.append(tabRow)
                 
         outStr = getFormattedHTMLTable(tabValues, tabHeader, stralign="center", numalign="center", border=True)

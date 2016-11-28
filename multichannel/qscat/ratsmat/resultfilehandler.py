@@ -99,8 +99,19 @@ class ResultFileHandler:
             
         auxFilesRange = "_Nmin="+str(Nmin)+"_Nmax="+str(Nmax)
         auxFilesStrStart = str(mode) + auxFilesRange + "_cfStep"
-        auxFilesStrEnd = "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd) + "_rk" + str(relaxFactor) + "_zk" + str(zeroVal)
-        auxFilesStr1 = auxFilesStrStart + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd) + auxFilesStrEnd
+        
+        if self.distFactorStart == self.distFactorEnd:
+            dkStr = "_dk" + str(self.distFactorStart)
+        else:
+            dkStr = "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd)
+        auxFilesStrEnd = dkStr + "_rk" + str(relaxFactor) + "_zk" + str(zeroVal)
+        
+        if self.numCmpStepsStart == self.numCmpStepsEnd:
+            cfStepStr = auxFilesStrStart + str(self.numCmpStepsStart)
+        else:
+            cfStepStr = auxFilesStrStart + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd)
+        auxFilesStr1 = cfStepStr + auxFilesStrEnd
+        
         auxFilesStr2 = auxFilesStrStart + REPLACESTR + auxFilesStrEnd
         self.polesCountFile =  base + POLESDIR + "COUNTS-" + auxFilesStr1
         self.polesPrevalenceFile =  base + POLESDIR + "PREVALENCE-" + auxFilesStr2
