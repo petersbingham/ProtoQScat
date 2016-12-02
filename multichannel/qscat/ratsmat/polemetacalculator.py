@@ -65,7 +65,7 @@ class PoleMetaCalculator:
 
     def _writePolePrevalenceTable(self, poleSetsDict, resultFileHandler):
         for cfstep in poleSetsDict:
-            tabHeader = ["pole.E.real", "pole.E.imag", "Prevalence"]
+            tabHeader = ["pole.E.real", "pole.E.imag", "Prevalence", "Ncnt"]
             tabHeader.append(str(cfstep))
             poleSetsList = poleSetsDict[cfstep]
             uniquePoleSets = []
@@ -77,13 +77,15 @@ class PoleMetaCalculator:
                     totalFactor = 0.0
                     for poleSet in poleSets:
                         i = self._getUniquePoleSetIndex(uniquePoleSets, poleSet)
-                        newFactor = float(self._getNumPolesInPoleSet(poleSet))/totalPoleCnt
+                        numPoles = self._getNumPolesInPoleSet(poleSet)
+                        newFactor = float(numPoles)/totalPoleCnt
                         totalFactor += newFactor
                         if i == -1:
-                            uniquePoleSets.append( [poleSet, newFactor] )
+                            uniquePoleSets.append( [poleSet, newFactor, numPoles] )
                         else:
                             oldFactor = uniquePoleSets[i][1]
-                            uniquePoleSets[i] = [poleSet, oldFactor + newFactor] #Update pole set
+                            oldNumPoles = uniquePoleSets[i][2]
+                            uniquePoleSets[i] = [poleSet, oldFactor+newFactor, oldNumPoles+numPoles] #Update pole set
                             #uniquePoleSets[i][1] = oldFactor + newFactor #Use origional pole set
             
             tabValues = []
@@ -91,7 +93,9 @@ class PoleMetaCalculator:
             for uniquePoleSet in uniquePoleSets:
                 Nmax = self._getMaxNInPoleSet(uniquePoleSet[0])
                 prevalence = str(uniquePoleSet[1]/totalContributingPoleTables) + NOTABULATEFORMAT
-                tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), prevalence])
+                tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), 
+                                  prevalence + NOTABULATEFORMAT, 
+                                  str(uniquePoleSet[2]) + NOTABULATEFORMAT])
                 
             outStr = getFormattedHTMLTable(tabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)
             with open(resultFileHandler.getPolePrevalenceTablePath(cfstep), 'w+') as f:
