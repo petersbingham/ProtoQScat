@@ -1,8 +1,12 @@
 import copy
+import math
 
 from polefinder import *
 from poleconverger import *
 from general import *
+
+CALCULATIONS = ["Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]
+
 
 class PoleMetaCalculator:
     def __init__(self, startIndex, endIndex, offset, mode, cfsteps, distFactors, relaxFactor, zeroValExp, Nmin, Nmax):
@@ -37,7 +41,7 @@ class PoleMetaCalculator:
                     poleSetsDict[cfStep].append(pc.poleSets)
         if not self.errState:
             self._writePoleCountTables(tabList, resultFileHandler)
-            self._writePolePrevalenceTable(poleSetsDict, resultFileHandler)
+            self._writePoleCalculationTable(poleSetsDict, resultFileHandler)
             
     def _writePoleCountTables(self, tabList, resultFileHandler):
         tabHeader = ["dk"]
@@ -63,43 +67,61 @@ class PoleMetaCalculator:
             f.write(outStr)
         print outStr
 
-    def _writePolePrevalenceTable(self, poleSetsDict, resultFileHandler):
+    def _writePoleCalculationTable(self, poleSetsDict, resultFileHandler):   
         for cfstep in poleSetsDict:
-            tabHeader = ["pole.E.real", "pole.E.imag", "Prevalence", "Ncnt"]
-            tabHeader.append(str(cfstep))
             poleSetsList = poleSetsDict[cfstep]
             uniquePoleSets = []
-            totalContributingPoleTables = 0
+            kTOT = 0.0
+            lenPiSumkSumi = 0.0
+            totPoleCnts = 0.0
             for poleSets in poleSetsList:
                 if len(poleSets) > 0:
-                    totalContributingPoleTables += 1
-                    totalPoleCnt = reduce(lambda x,y: x+y, map(lambda poleSet: self._getNumPolesInPoleSet(poleSet), poleSets))
-                    totalFactor = 0.0
+                    kTOT += 1
+                    lenPiSumk = reduce(lambda x,y: x+y, map(lambda poleSet: self._getLenpi(poleSet), poleSets))
+                    lenPiSumkSumi += lenPiSumk
                     for poleSet in poleSets:
                         i = self._getUniquePoleSetIndex(uniquePoleSets, poleSet)
-                        numPoles = self._getNumPolesInPoleSet(poleSet)
-                        newFactor = float(numPoles)/totalPoleCnt
-                        totalFactor += newFactor
+                        
+                        lenPi = self._getLenpi(poleSet)
+                        q1_inter = float(lenPi)/lenPiSumk
+                        q2_inter = lenPi
+                        q5_inter = 1.0
+                        totPoleCnts += 1.0
+                        
                         if i == -1:
-                            uniquePoleSets.append( [poleSet, newFactor, numPoles] )
+                            uniquePoleSets.append( [poleSet, q1_inter, q2_inter, q5_inter] )
                         else:
-                            oldFactor = uniquePoleSets[i][1]
-                            oldNumPoles = uniquePoleSets[i][2]
-                            uniquePoleSets[i] = [poleSet, oldFactor+newFactor, oldNumPoles+numPoles] #Update pole set
-                            #uniquePoleSets[i][1] = oldFactor + newFactor #Use origional pole set
+                            q1_inter_old = uniquePoleSets[i][1]
+                            q2_inter_old = uniquePoleSets[i][2]
+                            q5_inter_old = uniquePoleSets[i][3]
+                            uniquePoleSets[i] = [poleSet, q1_inter_old+q1_inter, q2_inter_old+q2_inter, q5_inter_old+q5_inter] #Update pole set
+            self._writeTable(resultFileHandler, cfstep, uniquePoleSets, kTOT, lenPiSumkSumi, totPoleCnts)
             
-            tabValues = []
-            uniquePoleSets.sort(key=lambda x: x[1], reverse=True)       
-            for uniquePoleSet in uniquePoleSets:
-                Nmax = self._getMaxNInPoleSet(uniquePoleSet[0])
-                prevalence = str(uniquePoleSet[1]/totalContributingPoleTables) + NOTABULATEFORMAT
-                tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), 
-                                  prevalence + NOTABULATEFORMAT, 
-                                  str(uniquePoleSet[2]) + NOTABULATEFORMAT])
-                
-            outStr = getFormattedHTMLTable(tabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)
-            with open(resultFileHandler.getPolePrevalenceTablePath(cfstep), 'w+') as f:
-                f.write(outStr)
+    def _writeTable(self, resultFileHandler, cfstep, uniquePoleSets, kTOT, lenPiSumkSumi, totPoleCnts):
+        if self.mode == DOUBLE_N:
+            nTOT = math.log(self.Nmax,2.0) - math.log(self.Nmin,2.0) + 1.0
+        else:
+            nTOT = self.Nmax/2.0 - self.Nmin/2.0 + 1.0        
+        tabValues = []
+        uniquePoleSets.sort(key=lambda x: x[1], reverse=True)
+        
+        tabHeader = ["pole.E.real", "pole.E.imag", "Total n Range", "Number ks Located"]
+        #tabHeader = ["pole.E.real", "pole.E.imag", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]
+        for uniquePoleSet in uniquePoleSets:
+            Nmax = self._getMaxNInPoleSet(uniquePoleSet[0])
+            q1 = str(uniquePoleSet[1]/kTOT) + NOTABULATEFORMAT
+            q2 = str(uniquePoleSet[2]) + NOTABULATEFORMAT
+            q3 = str(uniquePoleSet[2]/nTOT) + NOTABULATEFORMAT
+            q4 = str(uniquePoleSet[2]/lenPiSumkSumi) + NOTABULATEFORMAT
+            q5 = str(uniquePoleSet[3]) + NOTABULATEFORMAT
+            q6 = str(uniquePoleSet[3]/nTOT) + NOTABULATEFORMAT
+            q7 = str(uniquePoleSet[3]/totPoleCnts) + NOTABULATEFORMAT
+            tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), q2, q5])
+            #tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), q1, q2, q3, q4, q5, q6, q7])
+            
+        outStr = getFormattedHTMLTable(tabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)
+        with open(resultFileHandler.getPolePrevalenceTablePath(cfstep), 'w+') as f:
+            f.write(outStr)
     
     def _getUniquePoleSetIndex(self, uniquePoleSets, poleSet):
         for i in range(len(uniquePoleSets)):
@@ -124,7 +146,7 @@ class PoleMetaCalculator:
                 nonLostPoles[N] = pole
         return nonLostPoles
     
-    def _getNumPolesInPoleSet(self, poleSet):
+    def _getLenpi(self, poleSet):
         return sum(not pole.isLost for pole in poleSet.values())
     
     def _getMaxNInPoleSet(self, poleSet):

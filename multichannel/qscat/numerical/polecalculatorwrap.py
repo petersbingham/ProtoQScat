@@ -14,6 +14,8 @@ MODE_ROT_DOUBLE = 2
 MODE_ROT_INC = 3
 MODE_POS_DOUBLE = 4
 MODE_POS_INC = 5
+MODE_COMP_DOUBLE = 6
+MODE_COMP_INC = 7
 
 import argparse
 parentArgs = argparse.ArgumentParser(description="Numercal Data Fit - Pole find")
@@ -59,6 +61,10 @@ def _polesForPos(mode):
     kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=[1.0]*len(THRESHOLDS), eneFactor=ENEFACTOR)
     _doPoleFind(kCal, mode)
 
+def _polesForComp(mode):
+    kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_COMP, eneFactor=ENEFACTOR)
+    _doPoleFind(kCal, mode)
+
 if args.mode_ == MODE_ALLSIGNS_DOUBLE:
     _polesForAllSigns(DOUBLE_N)
 elif args.mode_ == MODE_ALLSIGNS_INC:
@@ -71,3 +77,7 @@ elif args.mode_ == MODE_POS_DOUBLE:
     _polesForPos(DOUBLE_N)
 elif args.mode_ == MODE_POS_INC:
     _polesForPos(INC_N)
+elif args.mode_ == MODE_COMP_DOUBLE:
+    _polesForComp(DOUBLE_N)
+elif args.mode_ == MODE_COMP_INC:
+    _polesForComp(INC_N)
