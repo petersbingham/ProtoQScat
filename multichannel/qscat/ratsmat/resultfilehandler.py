@@ -17,6 +17,7 @@ COEFFDIR = sep() + "CoefficientFiles" + sep()
 ROOTSDIR = sep() + "Roots" + sep()
 ROOTSREJECTEDDIR = sep() + "Roots-Rejected" + sep()
 POLESDIR = sep() + "Poles" + sep()
+METACALSDIR = sep() + "MetaCals" + sep()
 
 LOGSDIR = BASEDIR + sep() + "Logs" + sep()
 
@@ -80,9 +81,12 @@ class ResultFileHandler:
             self._makeDir(self.rejectRootPath)
             self.rejectRootPath += self.getPostStr()
         
-    def setPoleFindParameters(self, mode, numCmpSteps, distFactor, relaxFactor, zeroVal, Nmin, Nmax):
+    def setPoleFindParameters(self, mode, numCmpSteps, distFactor, zeroVal):
+        self.mode = mode
+        self.zeroVal = zeroVal
+        
         base = self._getRootsPath()
-        self.polesDirName = str(mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_rk" + str(relaxFactor) + "_zk" + str(zeroVal)
+        self.polesDirName = str(self.mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_zk" + str(self.zeroVal)
         self.polesDir = base + POLESDIR + self.polesDirName + sep() 
         self.polesPath = self.polesDir
         self._makeDir(self.polesPath)
@@ -96,15 +100,16 @@ class ResultFileHandler:
             self.distFactorStart = distFactor
         if self.distFactorEnd is None or distFactor>self.distFactorEnd:
             self.distFactorEnd = distFactor
-            
+    
+    def setPoleMetaCalcParameters(self, relaxFactor, Nmin, Nmax):        
         auxFilesRange = "_Nmin="+str(Nmin)+"_Nmax="+str(Nmax)
-        auxFilesStrStart = str(mode) + auxFilesRange + "_cfStep"
+        auxFilesStrStart = str(self.mode) + auxFilesRange + "_cfStep"
         
         if self.distFactorStart == self.distFactorEnd:
             dkStr = "_dk" + str(self.distFactorStart)
         else:
             dkStr = "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd)
-        auxFilesStrEnd = dkStr + "_rk" + str(relaxFactor) + "_zk" + str(zeroVal)
+        auxFilesStrEnd = dkStr + "_rk" + str(relaxFactor) + "_zk" + str(self.zeroVal)
         
         if self.numCmpStepsStart == self.numCmpStepsEnd:
             cfStepStr = auxFilesStrStart + str(self.numCmpStepsStart)
@@ -112,9 +117,12 @@ class ResultFileHandler:
             cfStepStr = auxFilesStrStart + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd)
         auxFilesStr1 = cfStepStr + auxFilesStrEnd
         
+        base = self._getRootsPath()
+        self._makeDir(base + METACALSDIR)
         auxFilesStr2 = auxFilesStrStart + REPLACESTR + auxFilesStrEnd
-        self.polesCountFile =  base + POLESDIR + "COUNTS-" + auxFilesStr1
-        self.polesPrevalenceFile =  base + POLESDIR + "PREVALENCE-" + auxFilesStr2
+        self.polesCountFile =  base + METACALSDIR + "COUNTS-" + auxFilesStr1
+        self.polesPrevalenceFile =  base + METACALSDIR + auxFilesStr2 + "-PREVALENCE"
+        self.combinedPolesPrevalenceFile =  base + METACALSDIR + auxFilesStr2 + "-PREVALENCECOMB"
 
     def getPostStr(self):
         if self.startIndex == None:
@@ -218,6 +226,11 @@ class ResultFileHandler:
 
     def getPolePrevalenceTablePath(self, distFactor, ext=".tab"):
         s = self.polesPrevalenceFile.replace(REPLACESTR, str(distFactor)) + ext
+        self.writeLogStr(s)
+        return fixPath(s)
+
+    def getCombinedPolePrevalenceTablePath(self, distFactor, ext=".tab"):
+        s = self.combinedPolesPrevalenceFile.replace(REPLACESTR, str(distFactor)) + ext
         self.writeLogStr(s)
         return fixPath(s)
 
