@@ -56,7 +56,7 @@ def getPolyRoots(args, anakCal, fitkCal, resultsPath, mode, cmpValue=None):
     anaSmat = getAnaSmat(args, anakCal)
     smats = getDiscreteAnaSmats(args)
     resultFileHandler = _getFileHandler(args, anakCal, fitkCal)
-    PoleFinder(smats, fitkCal, resultFileHandler, 0, len(smats)-1, 0, args.distFactor_, args.cfSteps_, cmpValue=cmpValue, mode=mode, populateSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2), zeroValExp=args.zeroValExp_)
+    PoleFinder(smats, fitkCal, resultFileHandler, 0, len(smats)-1, 0, args.distThreshold_, args.cfSteps_, cmpValue=cmpValue, mode=mode, populateSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2), zeroValExp=args.zeroValExp_)
     r = PoleConverger(resultFileHandler)
     r.createPoleTable()    
 
@@ -76,7 +76,7 @@ def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppr
             if not first:
                 print "\n"
             first = False
-            anakCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=anaSigns, eneFactor=ENEFACTOR)
+            anakCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=anaSigns, massMult=MASSMULT)
             anaSmat = getAnaSmat(args, anakCal)
             if signsAsList:
                 signs = [str(anakCal)]
@@ -86,10 +86,10 @@ def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppr
                 anaFun(anakCal, anaSmat, signs)
             if ratFun is not None:
                 for fitSigns in fitSignList:
-                    fitkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=fitSigns, eneFactor=ENEFACTOR)
+                    fitkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=fitSigns, massMult=MASSMULT)
                     ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut)
                     for ratSigns in ratSignList:
-                        ratkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=ratSigns, eneFactor=ENEFACTOR)
+                        ratkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=ratSigns, massMult=MASSMULT)
                         ratSmat.kCal = ratkCal
                         if signsAsList:
                             signs = [str(anakCal), str(fitkCal), str(ratkCal)]

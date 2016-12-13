@@ -3,7 +3,7 @@ tcp_range_type = argparse.ArgumentParser(description="Two Channel Radial Well - 
 tcp_range_type.add_argument("type_", help="Type to Plot")
 args = tcp_range_type.parse_args()
 
-kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
+kCal = sm.kCalculator([args.t1_,args.t2_], massMult=MASSMULT)
 mats = Mats(args.v1_, args.v2_, args.lam_, kCal)
 smat = Smat(args.r0_, mats)
 

@@ -36,8 +36,8 @@ class ResultFileHandler:
         #Following for the pole table. To keep track of max and min values
         self.numCmpStepsStart = None
         self.numCmpStepsEnd = None
-        self.distFactorStart = None 
-        self.distFactorEnd = None
+        self.distThresholdStart = None 
+        self.distThresholdEnd = None
     
         self.cleanRootRoutine = None
 
@@ -81,12 +81,12 @@ class ResultFileHandler:
             self._makeDir(self.rejectRootPath)
             self.rejectRootPath += self.getPostStr()
         
-    def setPoleFindParameters(self, mode, numCmpSteps, distFactor, zeroVal):
+    def setPoleFindParameters(self, mode, numCmpSteps, distThreshold, zeroVal):
         self.mode = mode
         self.zeroVal = zeroVal
         
         base = self._getRootsPath()
-        self.polesDirName = str(self.mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distFactor) + "_zk" + str(self.zeroVal)
+        self.polesDirName = str(self.mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distThreshold) + "_zk" + str(self.zeroVal)
         self.polesDir = base + POLESDIR + self.polesDirName + sep() 
         self.polesPath = self.polesDir
         self._makeDir(self.polesPath)
@@ -96,30 +96,29 @@ class ResultFileHandler:
             self.numCmpStepsStart = numCmpSteps
         if self.numCmpStepsEnd is None or numCmpSteps>self.numCmpStepsEnd:
             self.numCmpStepsEnd = numCmpSteps
-        if self.distFactorStart is None or distFactor<self.distFactorStart:
-            self.distFactorStart = distFactor
-        if self.distFactorEnd is None or distFactor>self.distFactorEnd:
-            self.distFactorEnd = distFactor
+        if self.distThresholdStart is None or distThreshold<self.distThresholdStart:
+            self.distThresholdStart = distThreshold
+        if self.distThresholdEnd is None or distThreshold>self.distThresholdEnd:
+            self.distThresholdEnd = distThreshold
     
-    def setPoleMetaCalcParameters(self, relaxFactor, Nmin, Nmax):        
+    def setPoleMetaCalcParameters(self, amalgThreshold, Nmin, Nmax):        
         auxFilesRange = "_Nmin="+str(Nmin)+"_Nmax="+str(Nmax)
         auxFilesStrStart = str(self.mode) + auxFilesRange + "_cfStep"
         
-        if self.distFactorStart == self.distFactorEnd:
-            dkStr = "_dk" + str(self.distFactorStart)
+        if self.distThresholdStart == self.distThresholdEnd:
+            dkStr = "_dk" + str(self.distThresholdStart)
         else:
-            dkStr = "_dk" + str(self.distFactorStart) + "-" + str(self.distFactorEnd)
-        auxFilesStrEnd = dkStr + "_rk" + str(relaxFactor) + "_zk" + str(self.zeroVal)
+            dkStr = "_dk" + str(self.distThresholdStart) + "-" + str(self.distThresholdEnd)
         
         if self.numCmpStepsStart == self.numCmpStepsEnd:
             cfStepStr = auxFilesStrStart + str(self.numCmpStepsStart)
         else:
             cfStepStr = auxFilesStrStart + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd)
-        auxFilesStr1 = cfStepStr + auxFilesStrEnd
-        
+        auxFilesStr1 = cfStepStr + dkStr + "_zk" + str(self.zeroVal)
         base = self._getRootsPath()
         self._makeDir(base + METACALSDIR)
-        auxFilesStr2 = auxFilesStrStart + REPLACESTR + auxFilesStrEnd
+        auxFilesStr2 = auxFilesStrStart + REPLACESTR + dkStr + "_ak" + str(amalgThreshold) + "_zk" + str(self.zeroVal)
+        
         self.polesCountFile =  base + METACALSDIR + "COUNTS-" + auxFilesStr1
         self.polesPrevalenceFile =  base + METACALSDIR + auxFilesStr2 + "-PREVALENCE"
         self.combinedPolesPrevalenceFile =  base + METACALSDIR + auxFilesStr2 + "-PREVALENCECOMB"
@@ -224,13 +223,13 @@ class ResultFileHandler:
         self.writeLogStr(s)
         return fixPath(s)
 
-    def getPolePrevalenceTablePath(self, distFactor, ext=".tab"):
-        s = self.polesPrevalenceFile.replace(REPLACESTR, str(distFactor)) + ext
+    def getPolePrevalenceTablePath(self, distThreshold, ext=".tab"):
+        s = self.polesPrevalenceFile.replace(REPLACESTR, str(distThreshold)) + ext
         self.writeLogStr(s)
         return fixPath(s)
 
-    def getCombinedPolePrevalenceTablePath(self, distFactor, ext=".tab"):
-        s = self.combinedPolesPrevalenceFile.replace(REPLACESTR, str(distFactor)) + ext
+    def getCombinedPolePrevalenceTablePath(self, distThreshold, ext=".tab"):
+        s = self.combinedPolesPrevalenceFile.replace(REPLACESTR, str(distThreshold)) + ext
         self.writeLogStr(s)
         return fixPath(s)
 

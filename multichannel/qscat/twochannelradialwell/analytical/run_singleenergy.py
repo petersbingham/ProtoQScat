@@ -4,7 +4,7 @@ seArgs = argparse.ArgumentParser(description="Two Channel Radial Well - Single E
 seArgs.add_argument("ene_", help="Energy", type=complex)
 args = seArgs.parse_args()
 
-kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
+kCal = sm.kCalculator([args.t1_,args.t2_], massMult=MASSMULT)
 mats = Mats(args.v1_, args.v2_, args.lam_, kCal)
 smat = Smat(args.r0_, mats)  
 smat.setEnergy(args.ene_)

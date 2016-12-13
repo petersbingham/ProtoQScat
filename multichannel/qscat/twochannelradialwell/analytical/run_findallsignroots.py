@@ -6,7 +6,7 @@ args = rootArgs.parse_args()
 
 for i in [1.0,-1.0]:
     for j in [1.0,-1.0]:
-        kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[i,j], eneFactor=ENEFACTOR)  
+        kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[i,j], massMult=MASSMULT)  
         mats = Mats(args.v1_, args.v2_, args.lam_, kCal)
         smat = Smat(args.r0_, mats)
         try:

@@ -9,7 +9,7 @@ args = spArgs.parse_args()
 for i in [1.0,-1.0]:
     for j in [1.0,-1.0]:
         try:
-            kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[i,j], eneFactor=ENEFACTOR)
+            kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[i,j], massMult=MASSMULT)
             anaSmat, ratSmat = getSmats(args, kCal, kCal)
           
             try:

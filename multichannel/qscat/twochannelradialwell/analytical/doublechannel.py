@@ -14,7 +14,7 @@ from general.qstype import *
 
 EQUIVALENT_TESTS = False
 LIN_ALGEBRA = False
-ENEFACTOR = sm.EFROMK_HARTREES
+MASSMULT = sm.MASSMULT_HARTREES
 
 gu = num.Compare()
 
@@ -28,7 +28,7 @@ class DCException(Exception):
 class Mats:
     def __init__(self, v1, v2, lam, kCal):
         self.K = Mats.Kmat(kCal)
-        self.V = Mats.Vmat(v1, v2, lam, kCal.eneFactor)
+        self.V = Mats.Vmat(v1, v2, lam, kCal.massMult)
         self.A = Mats.Amat(self.K, self.V)
         if LIN_ALGEBRA:
             self.aSq = Mats.aSqMat(self.A)
@@ -66,17 +66,17 @@ class Mats:
             return self.kCal.getPhase(ch, self.ene)
     
     class Vmat(sm.mat):
-        def __init__(self, v1, v2, lam, eneFactor):
+        def __init__(self, v1, v2, lam, massMult):
             sm.mat.__init__(self, 2, num.PRECISION)
             self.v1 = v1
             self.v2 = v2
             self.lam = lam
-            self.eneFactor = eneFactor
+            self.massMult = massMult
         def _getRow(self, i):
             if i==0:
-                return [-self.v1*self.eneFactor, -0.5*self.lam*self.eneFactor]
+                return [-self.v1*self.massMult, -0.5*self.lam*self.massMult]
             else:
-                return [-0.5*self.lam*self.eneFactor, -self.v2*self.eneFactor]
+                return [-0.5*self.lam*self.massMult, -self.v2*self.massMult]
           
     class Amat(sm.mat):
         def __init__(self, K, V):

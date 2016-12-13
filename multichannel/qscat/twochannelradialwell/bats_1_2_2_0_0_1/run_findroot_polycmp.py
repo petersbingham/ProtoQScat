@@ -10,7 +10,7 @@ from analytical.runargsrange import *
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Poly Root compare", parents=[tcp_range])
 args = spArgs.parse_args()
 
-kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_COMP, ksigns=[QSfloat(1.0),QSfloat(1.0)], eneFactor=QSfloat(ENEFACTOR))
+kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_COMP, ksigns=[QSfloat(1.0),QSfloat(1.0)], massMult=QSfloat(MASSMULT))
 anaSmat = getAnaSmat(args, kCal)
 smats = getDiscreteAnaSmats(args)
 

@@ -50,17 +50,17 @@ K_SIGN = "kSign"
 K_ROT = "kRot"
 K_COMP = "kComp"
 
-EFROMK_RYDBERGS = 1.0
-EFROMK_HARTREES = 2.0
+MASSMULT_RYDBERGS = 1.0
+MASSMULT_HARTREES = 2.0
 
 class kCalculator:
-    def __init__(self, thresholds, ls=None, ktype=K_POS, ksigns=None, eneFactor=EFROMK_RYDBERGS, invertChannel=False):  #invertChannel is for test purposes.
+    def __init__(self, thresholds, ls=None, ktype=K_POS, ksigns=None, massMult=MASSMULT_RYDBERGS, invertChannel=False):  #invertChannel is for test purposes.
         self.thresholds = thresholds
         if ls is None:
             self.ls = [0]*len(thresholds)
         else:
             self.ls = ls
-        self.eneFactor = eneFactor
+        self.massMult = massMult
         self.ktype = ktype
         self.ksigns = ksigns
         self.invertChannel = invertChannel
@@ -70,13 +70,13 @@ class kCalculator:
         else:
             return floatList(self.ksigns)
     def e(self, k, primType=False):
-        ene = (1.0/(self.eneFactor*REDUCED_MASS))*k**2
+        ene = (1.0/(self.massMult*REDUCED_MASS))*k**2
         if primType:
             return complex(ene)
         else:
             return QScomplex(ene)
     def fk(self, ene, primType=False): #free k
-        k = QSsqrt(self.eneFactor*REDUCED_MASS*ene)
+        k = QSsqrt(self.massMult*REDUCED_MASS*ene)
         if primType:
             return complex(k)
         else:
@@ -122,7 +122,7 @@ class kCalculator:
                 sign = 1.0
         return sign*k
     def _getValue(self, ch, ene):
-        return self.eneFactor*REDUCED_MASS*(ene - self.thresholds[ch])
+        return self.massMult*REDUCED_MASS*(ene - self.thresholds[ch])
     def getPhase(self, ch, ene):
         if ene.real <= self.thresholds[ch]:
             return 0.0

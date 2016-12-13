@@ -745,7 +745,7 @@ class RatSMat(sm.mat):
                         for ci in range(self.numCoeffs):
                             A = alphas[ci][m,n]
                             B = betas[ci][m,n]
-                            val += (1.0/2.0)*(1.0/self.kCal.eneFactor)**(ci) * (QSToSympy(A)*k**(ln-lm+2*ci) - sy.I*QSToSympy(B)*k**(ln+lm+1+2*ci) )
+                            val += (1.0/2.0)*(1.0/self.kCal.massMult)**(ci) * (QSToSympy(A)*k**(ln-lm+2*ci) - sy.I*QSToSympy(B)*k**(ln+lm+1+2*ci) )
                         matLst[len(matLst)-1].append(poly(val))
                         #matLst[len(matLst)-1].append(val) #v1
                 mat = sy_matrix(matLst)

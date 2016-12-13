@@ -9,7 +9,7 @@ from analytical.runargsrange import *
 spArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Poly Root find", parents=[tcp_range])
 spArgs.add_argument("mode_", help="Mode", type=int)
 spArgs.add_argument("cfSteps_", help="Compare Steps", type=int)
-spArgs.add_argument("distFactor_", help="Distinguish Factor", type=float)
+spArgs.add_argument("distThreshold_", help="Distinguish Threshold", type=float)
 spArgs.add_argument("zeroValExp_", help="Zero Value Precision", type=int)
 spArgs.add_argument("cmpValue_", help="Compare Value", type=complex, nargs='?', default=None)
 
@@ -23,7 +23,7 @@ def _doPoleFind(mode, dirName):
     if not os.path.exists(path):
         os.makedirs(path)
     try:
-        kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,1.0], eneFactor=ENEFACTOR)
+        kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,1.0], massMult=MASSMULT)
         getPolyRoots(args, kCal, kCal, path, cmpValue=args.cmpValue_, mode=mode)
     except (sm.MatException) as inst:
         raise inst

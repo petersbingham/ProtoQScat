@@ -7,7 +7,7 @@ args = spArgs.parse_args()
 
 
 try:
-    kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_COMP, eneFactor=ENEFACTOR)
+    kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_COMP, massMult=MASSMULT)
     anaSmat, ratSmat = getSmats(args, kCal, kCal)
   
     print "   " + str(ratSmat.findRoot(args.startE_)) + "   at +ve"

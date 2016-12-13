@@ -3,7 +3,7 @@ from runargscommon import *
 rootArgs = argparse.ArgumentParser(description="Two Channel Radial Well - Find Bound Roots", parents=[parentArgs])
 args = rootArgs.parse_args()
 
-kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,1.0], eneFactor=ENEFACTOR)  
+kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,1.0], massMult=MASSMULT)  
 mats = Mats(args.v1_, args.v2_, args.lam_, kCal)
 smat = Smat(args.r0_, mats)
     

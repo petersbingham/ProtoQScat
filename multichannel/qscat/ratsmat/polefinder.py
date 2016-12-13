@@ -14,13 +14,13 @@ INC_N = 'incN'
 COMPLETE_STR = "Complete"
    
 class PoleFinder:
-    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distFactor, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX):
+    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distThreshold, numCmpSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX):
         self.sMats = sMats
         self.kCal = kCal
         self.resultFileHandler = resultFileHandler
         self.decimator = Decimator(startIndex, endIndex, offset, resultFileHandler)
         self.numCmpSteps = numCmpSteps
-        self.distFactor = distFactor
+        self.distThreshold = distThreshold
         self.zeroValue = 10**(-zeroValExp)
         self.ratCmp = num.RationalCompare(self.zeroValue)
         self.allPoles = []
@@ -83,7 +83,7 @@ class PoleFinder:
     def _getNroots(self, N):
         sMats, descStr = self.decimator.decimate(self.sMats, N)
         ratSmat = RatSMat(sMats, self.kCal, resultFileHandler=self.resultFileHandler, doCalc=False)
-        self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distFactor, self.zeroValue)
+        self.resultFileHandler.setPoleFindParameters(self.mode, self.numCmpSteps, self.distThreshold, self.zeroValue)
         
         roots = None
         cleanRoots = None
@@ -247,7 +247,7 @@ class PoleFinder:
                         cmpRoot2 = cmpRootSet[j]
                         cdiff = self.ratCmp.getComplexDiff(cmpRoot, cmpRoot2)
                         absCdiff = num.absDiff(cmpRoot, cmpRoot2) 
-                        if self.ratCmp.checkComplexDiff(cdiff, self.distFactor):
+                        if self.ratCmp.checkComplexDiff(cdiff, self.distThreshold):
                             if smallestAbsCdiff is None or absCdiff < smallestAbsCdiff:
                                 infoStr2 = " N=%d[%d]" % (self.allNs[k], j)
                                 smallestAbsCdiff = absCdiff
@@ -348,7 +348,7 @@ class PoleFinder:
             self.file_poles.write(writeStr)
           
         self.file_poles.write(COMPLETE_STR)
-        print "Poles calculated in mode " + self.mode + ", using dk=" + str(self.distFactor)
+        print "Poles calculated in mode " + self.mode + ", using dk=" + str(self.distThreshold)
         print "Calculated Poles for N=" + str(N) + ":"
         print "  " + str(poles) + " poles, of which " + str(newPoles) + " are new. " + str(lostPoles) + (" has" if lostPoles==1 else " have") + " been lost."
         if N == self.Nmax:

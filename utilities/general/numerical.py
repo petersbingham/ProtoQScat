@@ -75,23 +75,23 @@ class Compare:
 
 
 class RationalCompare:
-    def __init__(self, zeroValue=0.0, distFactor=None):
-        self.distFactor = distFactor
+    def __init__(self, zeroValue=0.0, distThreshold=None):
+        self.distThreshold = distThreshold
         self.zeroValue = zeroValue
 
-    def isClose(self, cval1, cval2, distFactor=None):
+    def isClose(self, cval1, cval2, distThreshold=None):
         diff = self.getComplexDiff(cval1, cval2)
-        return self.checkComplexDiff(diff, distFactor)
+        return self.checkComplexDiff(diff, distThreshold)
 
     def getComplexDiff(self, cval1, cval2):
         realdiff = self._getDiff(cval2.real, cval1.real)
         imagdiff = self._getDiff(cval2.imag, cval1.imag)
         return realdiff + 1.0j*imagdiff
 
-    def checkComplexDiff(self, cdiff, distFactor=None):
-        if distFactor is None:
-            distFactor = self.distFactor
-        return cdiff.imag<distFactor and cdiff.real<distFactor
+    def checkComplexDiff(self, cdiff, distThreshold=None):
+        if distThreshold is None:
+            distThreshold = self.distThreshold
+        return cdiff.imag<distThreshold and cdiff.real<distThreshold
 
     def _getDiff(self, val1, val2):
         absVal1 = abs(val1)

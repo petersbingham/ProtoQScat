@@ -41,13 +41,13 @@ class RatSMatWrap:
         self.numChannels = NUMCHANNELS
         self.ene = None
         if kfitSigns is None:
-            self.kFitCal = sm.kCalculator(THRESHOLDS, LS, eneFactor=ENEFACTOR)
+            self.kFitCal = sm.kCalculator(THRESHOLDS, LS, massMult=MASSMULT)
         else:
-            self.kFitCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=kfitSigns, eneFactor=ENEFACTOR)
+            self.kFitCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=kfitSigns, massMult=MASSMULT)
         if ksigns is None:
             self.kCal = self.kFitCal
         else:
-            self.kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=ksigns, eneFactor=ENEFACTOR)
+            self.kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=ksigns, massMult=MASSMULT)
         self.kmats = readkMats(fileName)
         self.mode = M_PIECEWISE
         self.N = N

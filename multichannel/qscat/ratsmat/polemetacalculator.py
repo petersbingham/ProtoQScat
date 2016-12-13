@@ -11,14 +11,14 @@ CALCULATIONS = ["Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]
 
 
 class PoleMetaCalculator:
-    def __init__(self, startIndex, endIndex, offset, mode, cfsteps, distFactors, relaxFactor, zeroValExp, Nmin, Nmax, resultFileHandler):
+    def __init__(self, startIndex, endIndex, offset, mode, cfsteps, distThresholds, amalgThreshold, zeroValExp, Nmin, Nmax, resultFileHandler):
         self.startIndex = startIndex
         self.endIndex = endIndex
         self.offset = offset
         self.mode = mode
         self.cfsteps = cfsteps
-        self.distFactors = distFactors
-        self.relaxFactor = relaxFactor
+        self.distThresholds = distThresholds
+        self.amalgThreshold = amalgThreshold
         self.zeroValExp = zeroValExp
         self.Nmin = Nmin
         self.Nmax = Nmax
@@ -34,8 +34,8 @@ class PoleMetaCalculator:
         self.errState = False
         for cfStep in self.cfsteps:
             poleSetsDict[cfStep] = []
-            for distFactor in sorted(self.distFactors, reverse=True):  #Want sorted for the prevalence, since each pole across the N in each pole set should be a subset of the same pole for a higer distFactor 
-                pf = PoleFinder(copy.deepcopy(smats), kCal, self.resultFileHandler, self.startIndex, self.endIndex, self.offset, distFactor, cfStep, cmpPole, mode, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax)
+            for distThreshold in sorted(self.distThresholds, reverse=True):  #Want sorted for the prevalence, since each pole across the N in each pole set should be a subset of the same pole for a higer distThreshold 
+                pf = PoleFinder(copy.deepcopy(smats), kCal, self.resultFileHandler, self.startIndex, self.endIndex, self.offset, distThreshold, cfStep, cmpPole, mode, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax)
                 self.errState = self.errState | pf.errState
                 if not self.errState:
                     tabList.append((pf.NmaxTotPoles, pf.NmaxLostPoles))
@@ -43,7 +43,7 @@ class PoleMetaCalculator:
                     pc.createPoleTable()
                     poleSetsDict[cfStep].append(pc.poleSets)
         if not self.errState:
-            self.resultFileHandler.setPoleMetaCalcParameters(self.relaxFactor, self.Nmin, self.Nmax)
+            self.resultFileHandler.setPoleMetaCalcParameters(self.amalgThreshold, self.Nmin, self.Nmax)
             self._writePoleCountTables(tabList, self.resultFileHandler)
             self._writePoleCalculationTable(poleSetsDict, self.resultFileHandler)
             
@@ -56,10 +56,10 @@ class PoleMetaCalculator:
                 tabHeader.append(str(cfstep)+" Steps")
         
         tabValues = []
-        for id in range(len(self.distFactors)):
-            tabRow = ["{:.2E}".format(self.distFactors[id])]
+        for id in range(len(self.distThresholds)):
+            tabRow = ["{:.2E}".format(self.distThresholds[id])]
             for ic in range(len(self.cfsteps)):
-                index = ic * len(self.distFactors) + id
+                index = ic * len(self.distThresholds) + id
                 if tabList[index][1] > 0:
                     tabRow.append(str(tabList[index][0])+"("+str(tabList[index][1])+")")
                 else:
@@ -101,15 +101,15 @@ class PoleMetaCalculator:
                             if i_dk not in q5_inter:
                                 q5_inter.append(i_dk)
                             uniquePoleSets[i] = [poleSet, q1_inter_old+q1_inter, q2_inter_old+q2_inter, q5_inter] #Update pole set
-            if self.relaxFactor > 0:
+            if self.amalgThreshold > 0:
                 uniquePoleSets, combinedPoleSets = self._combineUniquePoleSets(uniquePoleSets)
             self._writeTable(resultFileHandler.getPolePrevalenceTablePath, cfstep, uniquePoleSets, kTOT, lenPiSumkSumi, totPoleCnts)
-            if self.relaxFactor > 0:
+            if self.amalgThreshold > 0:
                 self._writeTable(resultFileHandler.getCombinedPolePrevalenceTablePath, cfstep, combinedPoleSets, kTOT, lenPiSumkSumi, totPoleCnts)
           
     def _combineUniquePoleSets(self, uniquePoleSets):
         zeroValue = 10**(-self.zeroValExp)
-        ratCmp = num.RationalCompare(zeroValue, self.relaxFactor)
+        ratCmp = num.RationalCompare(zeroValue, self.amalgThreshold)
         newUniquePoleSets = []
         combinedPoleSets = []
         combinedIndices = []

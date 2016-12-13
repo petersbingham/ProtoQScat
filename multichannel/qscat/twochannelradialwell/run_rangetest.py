@@ -8,7 +8,7 @@ if QSMODE == MODE_MPMATH:
     print "Not supported for mpmath. Change mode in QSType."
 else:
     try:
-        kCal = sm.kCalculator([args.t1_,args.t2_], eneFactor=ENEFACTOR)
+        kCal = sm.kCalculator([args.t1_,args.t2_], massMult=MASSMULT)
         anaSmat, ratSmat = getSmats(args, kCal, kCal)
         
         dEne = (args.eneEnd_-args.eneStart_) / float(args.eneSteps_)
