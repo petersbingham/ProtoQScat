@@ -145,8 +145,8 @@ class PoleMetaCalculator:
         tabValues = []
         uniquePoleSets.sort(key=lambda x: x[1], reverse=True)
         
-        tabHeader = ["pole.E.real", "pole.E.imag", "Number dks", "Total n Range"]
-        #tabHeader = ["pole.E.real", "pole.E.imag", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]
+        tabHeader = ["pole.E.real", "pole.E.imag", "Smallest dk", "Total n Range"]
+        #tabHeader = ["pole.E.real", "pole.E.imag", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"] # Some of these are experimental quantities.
         for uniquePoleSet in uniquePoleSets:
             Nmax = self._getMaxNInPoleSet(uniquePoleSet[0])
             q1 = str(uniquePoleSet[1]/kTOT) + NOTABULATEFORMAT
@@ -156,7 +156,8 @@ class PoleMetaCalculator:
             q5 = str(len(uniquePoleSet[3])) + NOTABULATEFORMAT
             q6 = str(len(uniquePoleSet[3])/nTOT) + NOTABULATEFORMAT
             q7 = str(len(uniquePoleSet[3])/totPoleCnts) + NOTABULATEFORMAT
-            tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), q5, q2])
+            smallestdk = str(self.distThresholds[max(uniquePoleSet[3])]) + NOTABULATEFORMAT
+            tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), smallestdk, q2])
             #tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), q1, q2, q3, q4, q5, q6, q7])
             
         outStr = getFormattedHTMLTable(tabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)
