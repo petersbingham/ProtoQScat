@@ -95,17 +95,30 @@ class PoleMetaCalculator:
                         if i == -1:
                             uniquePoleSets.append( [poleSet, q1_inter, q2_inter, [i_dk]] )
                         else:
+                            oldPoleSet = uniquePoleSets[i][0]
                             q1_inter_old = uniquePoleSets[i][1]
                             q2_inter_old = uniquePoleSets[i][2]
                             q5_inter = uniquePoleSets[i][3]
                             if i_dk not in q5_inter:
                                 q5_inter.append(i_dk)
-                            uniquePoleSets[i] = [poleSet, q1_inter_old+q1_inter, q2_inter_old+q2_inter, q5_inter] #Update pole set
+                            uniquePoleSets[i] = [self._combinePoleSets(oldPoleSet, poleSet), q1_inter_old+q1_inter, q2_inter_old+q2_inter, q5_inter] #Update pole set
             if self.amalgThreshold > 0:
                 uniquePoleSets, combinedPoleSets = self._combineUniquePoleSets(uniquePoleSets)
             self._writeTable(resultFileHandler.getPolePrevalenceTablePath, cfstep, uniquePoleSets, kTOT, lenPiSumkSumi, totPoleCnts)
             if self.amalgThreshold > 0:
                 self._writeTable(resultFileHandler.getCombinedPolePrevalenceTablePath, cfstep, combinedPoleSets, kTOT, lenPiSumkSumi, totPoleCnts)
+    
+    def _combinePoleSets(self, oldPoleSet, newPoleSet):
+        combinedPoleSet = {}
+        for N in oldPoleSet:
+            pole = oldPoleSet[N]
+            if not pole.isLost:
+                combinedPoleSet[N] = pole
+        for N in newPoleSet:
+            pole = newPoleSet[N]
+            if not pole.isLost:
+                combinedPoleSet[N] = pole
+        return combinedPoleSet
           
     def _combineUniquePoleSets(self, uniquePoleSets):
         zeroValue = 10**(-self.zeroValExp)
