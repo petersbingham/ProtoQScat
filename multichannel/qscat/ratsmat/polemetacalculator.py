@@ -11,59 +11,72 @@ CALCULATIONS = ["Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]
 
 
 class PoleMetaCalculator:
-    def __init__(self, startIndex, endIndex, offset, mode, cfsteps, distThresholds, amalgThreshold, zeroValExp, Nmin, Nmax, resultFileHandler):
+    def __init__(self, startIndex, endIndex, offset, mode, cfSteps, startingDistThreshold, amalgThreshold, zeroValExp, Nmin, Nmax, resultFileHandler):
         self.startIndex = startIndex
         self.endIndex = endIndex
         self.offset = offset
         self.mode = mode
-        self.cfsteps = cfsteps
-        self.distThresholds = distThresholds
+        self.cfSteps = cfSteps
+        self.startingDistThreshold = startingDistThreshold
         self.amalgThreshold = amalgThreshold
         self.zeroValExp = zeroValExp
         self.Nmin = Nmin
         self.Nmax = Nmax
         self.resultFileHandler = resultFileHandler
+        self.distThresholds = {k:[] for k in self.cfSteps}
+        self.allDistThresholds = []
 
     def doPoleCalculations(self, smats, kCal, mode, cmpPole=None):
         if len(smats) <= self.endIndex:
             raise Exception("Specified End Index outside range.")
         if self.startIndex < 0:
             raise Exception("Specified Start Index less than zero.")
-        tabList = []
+        tabCounts = {}
         poleSetsDict = {}
         self.errState = False
-        for cfStep in self.cfsteps:
-            poleSetsDict[cfStep] = []
-            for distThreshold in sorted(self.distThresholds, reverse=True):  #Want sorted for the prevalence, since each pole across the N in each pole set should be a subset of the same pole for a higer distThreshold 
-                pf = PoleFinder(copy.deepcopy(smats), kCal, self.resultFileHandler, self.startIndex, self.endIndex, self.offset, distThreshold, cfStep, cmpPole, mode, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax)
+        for cfSteps in self.cfSteps:
+            tabCounts[cfSteps] = []
+            poleSetsDict[cfSteps] = []
+            distThreshold = self.startingDistThreshold
+            while True:
+                self.distThresholds[cfSteps].append(distThreshold)
+                if distThreshold not in self.allDistThresholds:
+                    self.allDistThresholds.append(distThreshold)
+                pf = PoleFinder(copy.deepcopy(smats), kCal, self.resultFileHandler, self.startIndex, self.endIndex, self.offset, distThreshold, cfSteps, cmpPole, mode, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax)
                 self.errState = self.errState | pf.errState
                 if not self.errState:
-                    tabList.append((pf.NmaxTotPoles, pf.NmaxLostPoles))
+                    tabCounts[cfSteps].append((pf.NmaxTotPoles, pf.NmaxLostPoles))
                     pc = PoleConverger(self.resultFileHandler, self.Nmin, self.Nmax)
                     pc.createPoleTable()
-                    poleSetsDict[cfStep].append(pc.poleSets)
+                    poleSetsDict[cfSteps].append(pc.poleSets)
+                    if pf.NmaxTotPoles != 0:
+                        distThreshold /= 10.0
+                    else:
+                        break
         if not self.errState:
             self.resultFileHandler.setPoleMetaCalcParameters(self.amalgThreshold, self.Nmin, self.Nmax)
-            self._writePoleCountTables(tabList, self.resultFileHandler)
+            self._writePoleCountTables(tabCounts, self.resultFileHandler)
             self._writePoleCalculationTable(poleSetsDict, self.resultFileHandler)
             
-    def _writePoleCountTables(self, tabList, resultFileHandler):
+    def _writePoleCountTables(self, tabCounts, resultFileHandler):
         tabHeader = ["dk"]
-        for cfstep in self.cfsteps:
-            if cfstep == 1:
-                tabHeader.append(str(cfstep)+" Step")
+        for cfSteps in self.cfSteps:
+            if cfSteps == 1:
+                tabHeader.append(str(cfSteps)+" Step")
             else:
-                tabHeader.append(str(cfstep)+" Steps")
-        
+                tabHeader.append(str(cfSteps)+" Steps")
+             
         tabValues = []
-        for id in range(len(self.distThresholds)):
-            tabRow = ["{:.2E}".format(self.distThresholds[id])]
-            for ic in range(len(self.cfsteps)):
-                index = ic * len(self.distThresholds) + id
-                if tabList[index][1] > 0:
-                    tabRow.append(str(tabList[index][0])+"("+str(tabList[index][1])+")")
+        for id in range(len(self.allDistThresholds)):
+            tabRow = [num.format_e(self.allDistThresholds[id]) + NOTABULATEFORMAT]
+            for cfSteps in self.cfSteps:
+                if id < len(tabCounts[cfSteps]):
+                    if tabCounts[cfSteps][id][1] > 0:
+                        tabRow.append(str(tabCounts[cfSteps][id][0])+"("+str(tabCounts[cfSteps][id][1])+")")
+                    else:
+                        tabRow.append(str(tabCounts[cfSteps][id][0]))
                 else:
-                    tabRow.append(str(tabList[index][0]))
+                    tabRow.append("-")
             tabValues.append(tabRow)
                 
         outStr = getFormattedHTMLTable(tabValues, tabHeader, stralign="center", numalign="center", border=True)
@@ -72,8 +85,8 @@ class PoleMetaCalculator:
         print outStr
 
     def _writePoleCalculationTable(self, poleSetsDict, resultFileHandler):   
-        for cfstep in poleSetsDict:
-            poleSetsList = poleSetsDict[cfstep]
+        for cfSteps in poleSetsDict:
+            poleSetsList = poleSetsDict[cfSteps]
             uniquePoleSets = []
             kTOT = 0.0
             lenPiSumkSumi = 0.0
@@ -104,9 +117,9 @@ class PoleMetaCalculator:
                             uniquePoleSets[i] = [self._combinePoleSets(oldPoleSet, poleSet), q1_inter_old+q1_inter, q2_inter_old+q2_inter, q5_inter] #Update pole set
             if self.amalgThreshold > 0:
                 uniquePoleSets, combinedPoleSets = self._combineUniquePoleSets(uniquePoleSets)
-            self._writeTable(resultFileHandler.getPolePrevalenceTablePath, cfstep, uniquePoleSets, kTOT, lenPiSumkSumi, totPoleCnts)
+            self._writeTable(resultFileHandler.getPolePrevalenceTablePath, cfSteps, uniquePoleSets, kTOT, lenPiSumkSumi, totPoleCnts)
             if self.amalgThreshold > 0:
-                self._writeTable(resultFileHandler.getCombinedPolePrevalenceTablePath, cfstep, combinedPoleSets, kTOT, lenPiSumkSumi, totPoleCnts)
+                self._writeTable(resultFileHandler.getCombinedPolePrevalenceTablePath, cfSteps, combinedPoleSets, kTOT, lenPiSumkSumi, totPoleCnts)
     
     def _combinePoleSets(self, oldPoleSet, newPoleSet):
         combinedPoleSet = {}
@@ -150,7 +163,7 @@ class PoleMetaCalculator:
                 newUniquePoleSets.append(uniquePoleSets[i])
         return newUniquePoleSets, combinedPoleSets
             
-    def _writeTable(self, fileFun, cfstep, uniquePoleSets, kTOT, lenPiSumkSumi, totPoleCnts):
+    def _writeTable(self, fileFun, cfSteps, uniquePoleSets, kTOT, lenPiSumkSumi, totPoleCnts):
         if self.mode == DOUBLE_N:
             nTOT = math.log(self.Nmax,2.0) - math.log(self.Nmin,2.0) + 1.0
         else:
@@ -169,12 +182,12 @@ class PoleMetaCalculator:
             q5 = str(len(uniquePoleSet[3])) + NOTABULATEFORMAT
             q6 = str(len(uniquePoleSet[3])/nTOT) + NOTABULATEFORMAT
             q7 = str(len(uniquePoleSet[3])/totPoleCnts) + NOTABULATEFORMAT
-            smallestdk = str(self.distThresholds[max(uniquePoleSet[3])]) + NOTABULATEFORMAT
+            smallestdk = num.format_e(self.distThresholds[cfSteps][max(uniquePoleSet[3])]) + NOTABULATEFORMAT
             tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), smallestdk, q2])
             #tabValues.append([formatRoot(uniquePoleSet[0][Nmax].E.real), formatRoot(uniquePoleSet[0][Nmax].E.imag), q1, q2, q3, q4, q5, q6, q7])
             
         outStr = getFormattedHTMLTable(tabValues, tabHeader, floatFmtFigs=DISPLAY_DIFFPRECISION, stralign="center", numalign="center", border=True)
-        with open(fileFun(cfstep), 'w+') as f:
+        with open(fileFun(cfSteps), 'w+') as f:
             f.write(outStr)
     
     def _getUniquePoleSetIndex(self, uniquePoleSets, poleSet):

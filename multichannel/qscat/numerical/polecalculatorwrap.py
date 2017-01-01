@@ -24,7 +24,7 @@ parentArgs.add_argument("endIndex_", help="End Index", type=int)
 parentArgs.add_argument("offset_", help="Offset", type=int)
 parentArgs.add_argument("mode_", help="Mode", type=int)
 parentArgs.add_argument("cfSteps_", help="Compare Steps", type=str)
-parentArgs.add_argument("distThresholds_", help="Distinguish Threshold", type=str)
+parentArgs.add_argument("startingDistThreshold_", help="Starting Distinguish Threshold", type=float)
 parentArgs.add_argument("amalgThreshold_", help="Amalgamation Threshold", type=float)
 parentArgs.add_argument("zeroValExp_", help="Zero Value Precision", type=int)
 parentArgs.add_argument("Nmin_", help="Starting N value", type=int)
@@ -41,9 +41,8 @@ def _doPoleFind(kCal, mode):
         args.endIndex_ = len(smats)-1
     resultFileHandler = getFileHandler(kCal, args.startIndex_, args.endIndex_)
     
-    cfsteps = map(int, args.cfSteps_.split(','))
-    distThresholds = map(float, args.distThresholds_.split(','))
-    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfsteps, distThresholds, args.amalgThreshold_, args.zeroValExp_, args.Nmin_, args.Nmax_, resultFileHandler)
+    cfSteps = map(int, args.cfSteps_.split(','))
+    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfSteps, args.startingDistThreshold_, args.amalgThreshold_, args.zeroValExp_, args.Nmin_, args.Nmax_, resultFileHandler)
     cmpPole = RMATRIX_POLES[args.cmpIndex_] if args.cmpIndex_<len(RMATRIX_POLES) else None
     p.doPoleCalculations(smats, kCal, mode, cmpPole)
 

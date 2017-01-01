@@ -134,4 +134,7 @@ def getPermutations(possVals, numOf):
             for nextPerm in nextPerms:
                 perms.append([val]+nextPerm)
     return perms
-            
+   
+def format_e(n):
+    a = '%E' % n
+    return a.split('E')[0].rstrip('0').rstrip('.') + 'e' + a.split('E')[1]         

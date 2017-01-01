@@ -7,6 +7,7 @@ from sys import platform as _platform
 basedir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,basedir+'/../../../Utilities')
 from general.file import *
+import general.numerical as num
 
 REPLACESTR = "REPLACETHIS"
 
@@ -34,9 +35,12 @@ class ResultFileHandler:
         self.logTimes = {}
         
         #Following for the pole table. To keep track of max and min values
-        self.numCmpStepsStart = None
-        self.numCmpStepsEnd = None
+        self.cfStepStart = None
+        self.cfStepEnd = None
         self.distThresholdStart = None 
+        
+        #First is for each cfSteps. Second is highest across all cfSteps.
+        self.distThresholdsEnd = {}
         self.distThresholdEnd = None
     
         self.cleanRootRoutine = None
@@ -81,43 +85,46 @@ class ResultFileHandler:
             self._makeDir(self.rejectRootPath)
             self.rejectRootPath += self.getPostStr()
         
-    def setPoleFindParameters(self, mode, numCmpSteps, distThreshold, zeroVal):
+    def setPoleFindParameters(self, mode, cfSteps, distThreshold, zeroVal):
         self.mode = mode
         self.zeroVal = zeroVal
         
         base = self._getRootsPath()
-        self.polesDirName = str(self.mode) + "_cfStep" + str(numCmpSteps) + "_dk" + str(distThreshold) + "_zk" + str(self.zeroVal)
+        self.polesDirName = str(self.mode) + "_cfSteps" + str(cfSteps) + "_dk" + num.format_e(distThreshold) + "_zk" + num.format_e(self.zeroVal)
         self.polesDir = base + POLESDIR + self.polesDirName + sep() 
         self.polesPath = self.polesDir
         self._makeDir(self.polesPath)
         self.polesPath += self.getPostStr()
         
-        if self.numCmpStepsStart is None or numCmpSteps<self.numCmpStepsStart:
-            self.numCmpStepsStart = numCmpSteps
-        if self.numCmpStepsEnd is None or numCmpSteps>self.numCmpStepsEnd:
-            self.numCmpStepsEnd = numCmpSteps
-        if self.distThresholdStart is None or distThreshold<self.distThresholdStart:
+        if self.cfStepStart is None or cfSteps<self.cfStepStart:
+            self.cfStepStart = cfSteps
+        if self.cfStepEnd is None or cfSteps>self.cfStepEnd:
+            self.cfStepEnd = cfSteps
+            
+        if self.distThresholdStart is None or distThreshold>self.distThresholdStart:
             self.distThresholdStart = distThreshold
-        if self.distThresholdEnd is None or distThreshold>self.distThresholdEnd:
+        if cfSteps not in self.distThresholdsEnd or distThreshold<self.distThresholdsEnd[cfSteps]:
+            self.distThresholdsEnd[cfSteps] = distThreshold
+        if self.distThresholdEnd is None or distThreshold<self.distThresholdEnd:
             self.distThresholdEnd = distThreshold
     
     def setPoleMetaCalcParameters(self, amalgThreshold, Nmin, Nmax):        
         auxFilesRange = "_Nmin="+str(Nmin)+"_Nmax="+str(Nmax)
-        auxFilesStrStart = str(self.mode) + auxFilesRange + "_cfStep"
-        
+        auxFilesStrStart = str(self.mode) + auxFilesRange + "_cfSteps"
+          
         if self.distThresholdStart == self.distThresholdEnd:
-            dkStr = "_dk" + str(self.distThresholdStart)
+            dkStr = "_dk" + num.format_e(self.distThresholdStart)
         else:
-            dkStr = "_dk" + str(self.distThresholdStart) + "-" + str(self.distThresholdEnd)
+            dkStr = "_dk" + num.format_e(self.distThresholdStart) + "-" + num.format_e(self.distThresholdEnd)
         
-        if self.numCmpStepsStart == self.numCmpStepsEnd:
-            cfStepStr = auxFilesStrStart + str(self.numCmpStepsStart)
+        if self.cfStepStart == self.cfStepEnd:
+            cfStepStr = auxFilesStrStart + str(self.cfStepStart)
         else:
-            cfStepStr = auxFilesStrStart + str(self.numCmpStepsStart) + "-" + str(self.numCmpStepsEnd)
-        auxFilesStr1 = cfStepStr + dkStr + "_zk" + str(self.zeroVal)
+            cfStepStr = auxFilesStrStart + str(self.cfStepStart) + "-" + str(self.cfStepEnd)
+        auxFilesStr1 = cfStepStr + dkStr + "_zk" + num.format_e(self.zeroVal)
         base = self._getRootsPath()
         self._makeDir(base + METACALSDIR)
-        auxFilesStr2 = auxFilesStrStart + REPLACESTR + dkStr + "_ak" + str(amalgThreshold) + "_zk" + str(self.zeroVal)
+        auxFilesStr2 = auxFilesStrStart + REPLACESTR + "_ak" + num.format_e(amalgThreshold) + "_zk" + num.format_e(self.zeroVal)
         
         self.polesCountFile =  base + METACALSDIR + "COUNTS-" + auxFilesStr1
         self.polesPrevalenceFile =  base + METACALSDIR + auxFilesStr2 + "-PREVALENCE"
@@ -223,15 +230,22 @@ class ResultFileHandler:
         self.writeLogStr(s)
         return fixPath(s)
 
-    def getPolePrevalenceTablePath(self, distThreshold, ext=".tab"):
-        s = self.polesPrevalenceFile.replace(REPLACESTR, str(distThreshold)) + ext
+    def getPolePrevalenceTablePath(self, cfSteps, ext=".tab"):
+        s = self.polesPrevalenceFile.replace(REPLACESTR, self._getPrevalenceDescStr(cfSteps)) + ext
         self.writeLogStr(s)
         return fixPath(s)
 
-    def getCombinedPolePrevalenceTablePath(self, distThreshold, ext=".tab"):
-        s = self.combinedPolesPrevalenceFile.replace(REPLACESTR, str(distThreshold)) + ext
+    def getCombinedPolePrevalenceTablePath(self, cfSteps, ext=".tab"):
+        s = self.combinedPolesPrevalenceFile.replace(REPLACESTR, self._getPrevalenceDescStr(cfSteps)) + ext
         self.writeLogStr(s)
         return fixPath(s)
+
+    def _getPrevalenceDescStr(self, cfSteps):
+        if self.distThresholdStart == self.distThresholdsEnd[cfSteps]:
+            dkStr = str(cfSteps) + "_dk" + num.format_e(self.distThresholdStart)
+        else:
+            dkStr = str(cfSteps) + "_dk" + num.format_e(self.distThresholdStart) + "-" + num.format_e(self.distThresholdsEnd[cfSteps])
+        return dkStr
 
     def _getAfitNames(self): 
         return self._getFitNames("A")
