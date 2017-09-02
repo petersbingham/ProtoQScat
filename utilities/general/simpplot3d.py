@@ -7,6 +7,13 @@ import numpy as np
 import mpmath
 mpmath.dps = 5
 
+@np.vectorize
+def toreal(val):
+    return val.real
+
+@np.vectorize
+def toimag(val):
+    return val.imag
 
 def plot(Rs, Is, fun, real, indepLabel="", depLabel=""):
     real = True
@@ -18,17 +25,14 @@ def plot(Rs, Is, fun, real, indepLabel="", depLabel=""):
       
     fig = plt.figure()
     ax = fig.gca(projection='3d')
-      
-    fr = lambda x:x.real
-    fi = lambda x:x.imag
 
     Rs, Is = np.meshgrid(Rs,Is)
     if real:
-        Zs = map(fr, fun(Rs,Is))
+        Zs = toreal(fun(Rs,Is))
     else:
-        Zs = map(fi, fun(Rs,Is))
+        Zs = toimag(fun(Rs,Is))
+        
     ax.plot_wireframe(Rs, Is, Zs, rstride=10, cstride=10)
-    
     ax.set_xlabel(indepLabel+' real')
     ax.set_ylabel(indepLabel+' imag')
     ax.set_zlabel(axlabel)  

@@ -34,12 +34,17 @@ class StaticPlot:
         self.fig.add_subplot(self.rows,self.cols,plotNum)
         plt.xlabel(xlabel, fontsize=12)
         plt.ylabel(ylabel, fontsize=12)
+        #plt.gca().set_color_cycle(['red', 'blue', 'red', 'purple'])
         self.axisConfig.append([logx,logy])
     
     def addLine(self, plotNum, xs, ys, legend=None, markerSz=None, markWithLine=False):
         self._addData(plotNum, xs, ys, legend, markerSz, False, markWithLine)
     
-    def addScat(self, plotNum, xs, ys, legend=None, markerSz=None):
+    def addScat(self, plotNum, xs, ys, logx=False, logy=False, legend=None, markerSz=None):
+        if logx:
+          plt.gca().set_xscale('log')
+        if logy:
+          plt.gca().set_yscale('log')
         self._addData(plotNum, xs, ys, legend, markerSz, True, False)
   
     def _addData(self, plotNum, xs, ys, legend, markerSz, scatter, markWithLine):
@@ -60,12 +65,12 @@ class StaticPlot:
         return (xs,ys)
   
     def _addScatType(self, plotNum, xs, ys, markerSz):
-        plt.scatter(xs,ys,color='blue',s=5,edgecolor='none')
+        plt.scatter(xs,ys,color=['black', 'red', 'blue', 'purple'][plotNum],s=20,edgecolor='none')
   
     def _addLineType(self, plotNum, xs, ys, markerSz, markWithLine):
         kwargs = {'basex':10}
         if markerSz:
-            kwargs = {'basex':10, 'linestyle':'None' if not markWithLine else 'solid', 'marker':'o', 'markerfacecolor':'r', 'markersize':markerSz}
+            kwargs = {'basex':10, 'linestyle':'None' if not markWithLine else 'solid', 'marker':'o', 'markerfacecolor':'black', 'markersize':markerSz}
         if self.axisConfig[plotNum-1][0] and self.axisConfig[plotNum-1][1]:
             l, = plt.loglog(xs, ys, **kwargs)
         elif self.axisConfig[plotNum-1][0]:
@@ -77,6 +82,8 @@ class StaticPlot:
             kwargs.pop('basex')
             #print str(len(xs)) + " " + str(len(ys))
             l, = plt.plot(xs, ys, **kwargs)
+        #for a,b in zip(xs, ys): 
+        #    plt.text(a+0.002, b+0.02, '{0:.5f}'.format(b))
         return l
   
     def reveal(self):  
@@ -166,10 +173,15 @@ def _plot2(title,xss,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,p
     p = StaticPlot(title,drawAxes=drawAxes)
     p.addPlot(xlabel, ylabel, logx, logy)
     for i in range(len(xss)):
-        if legends is not None:
-            p.addLine(1,xss[i],yss[i],legends[i],markerSz,markWithLine)
+        if type(markerSz) is list:
+          ms = markerSz[i]
         else:
-            p.addLine(1,xss[i],yss[i],None,markerSz,markWithLine)
+          ms = markerSz
+    
+        if legends is not None:
+            p.addLine(1,xss[i],yss[i],legends[i],ms,False)
+        else:
+            p.addLine(1,xss[i],yss[i],None,ms,False)
     p.reveal()
     if path is not None:
         p.save(path)
@@ -177,7 +189,16 @@ def _plot2(title,xss,yss,xlabel,ylabel,legends,logx,logy,markerSz,markWithLine,p
 def plotScat(title,xs,ys,xlabel="",ylabel="",logx=False,logy=False,legend=None,markerSz=None,path=None,drawAxes=False):
     p = StaticPlot(title,drawAxes=drawAxes)
     p.addPlot(xlabel, ylabel, logx, logy)
-    p.addScat(1,xs,ys,legend,markerSz)
+    p.addScat(1,xs,ys, logx, logy,legend,markerSz)
+    p.reveal()
+    if path is not None:
+        p.save(path) 
+  
+def plotScats(title,xss,yss,xlabel="",ylabel="",logx=False,logy=False,legend=None,markerSz=None,path=None,drawAxes=False):
+    p = StaticPlot(title,drawAxes=drawAxes)
+    p.addPlot(xlabel, ylabel, logx, logy)
+    for i in range(len(xss)):
+      p.addScat(i,xss[i],yss[i],logx,logy,legend,markerSz)
     p.reveal()
     if path is not None:
         p.save(path)  
