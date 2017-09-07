@@ -7,6 +7,7 @@ from analytical.doublechannel import *
 from ratsmat.polefinder import *
 from ratsmat.resultfilehandler import *
 from ratsmat.poleconverger import *
+from ratsmat.polemetacalculator import *
 
 def _getFileHandler(args, anakCal, fitkCal):
     sysName = "Two Channel Radial Well_" + str(anakCal) + "_" + str(fitkCal) + "_" + str(args.r0_) + "_" + str(args.v1_) + "_" + str(args.v2_) + "_" + str(args.t1_) + "_" + str(args.t2_) + "_" + str(args.lam_) + "_" + str(args.eneStart_) + "_" + str(args.eneEnd_) + "_" + str(args.eneComplex_) + "_" + str(args.eneSteps_)
@@ -52,14 +53,24 @@ def getDecimatedRatSmat(args, smats, anakCal, fitkCal, N, anaSmat=None, suppress
         popSmat(anaSmat, newSMats, smats)
     return RatSMat(newSMats, fitkCal, resultFileHandler=resultFileHandler, suppressCmdOut=suppressCmdOut)
 
-def getPolyRoots(args, anakCal, fitkCal, resultsPath, mode, cmpValue=None):
+def getPolyRoots(args, anakCal, fitkCal, mode, cmpValue=None, Nmax=DEFAULT_N_MAX):
     anaSmat = getAnaSmat(args, anakCal)
     smats = getDiscreteAnaSmats(args)
     resultFileHandler = _getFileHandler(args, anakCal, fitkCal)
-    PoleFinder(smats, fitkCal, resultFileHandler, 0, len(smats)-1, 0, args.distThreshold_, args.cfSteps_, cmpValue=cmpValue, mode=mode, populateSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2), zeroValExp=args.zeroValExp_)
+    PoleFinder(smats, fitkCal, resultFileHandler, 0, len(smats)-1, 0, args.distThreshold_, args.cfSteps_, cmpValue=cmpValue, mode=mode, populateSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2), zeroValExp=args.zeroValExp_, Nmax=Nmax)
     r = PoleConverger(resultFileHandler)
     r.createPoleTable()    
 
+def calculateQIs(args, anakCal, fitkCal, mode, cmpValue=None):
+    anaSmat = getAnaSmat(args, anakCal)
+    smats = getDiscreteAnaSmats(args)
+    if args.endIndex_ == -1:
+        args.endIndex_ = len(smats)-1
+    resultFileHandler = _getFileHandler(args, anakCal, fitkCal)
+    cfSteps = map(int, args.cfSteps_.split(','))
+    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfSteps, args.startingDistThreshold_, args.amalgThreshold_, args.zeroValExp_, args.Nmin_, args.Nmax_, resultFileHandler)
+    p.doPoleCalculations(smats, fitkCal, mode, lambda sm1,sm2: popSmat(anaSmat, sm1, sm2), cmpValue)
+    
 def popSmat(anaSmat, smats1, smats2=None):
     for ene in smats1:
         if smats1[ene] is None:

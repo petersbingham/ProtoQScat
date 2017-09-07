@@ -760,5 +760,7 @@ class RatSMat(sm.mat):
         return allRoots
 
     def cleanPolyRoots(self, roots):
-        badRoot = self.kCal.fk(sorted(self.sMatData, key=lambda val: val.real)[0])
+        #Originally thought that bad roots around start of data set but moved data set away from zero and bad roots did not follow.
+        #badRoot = self.kCal.fk(sorted(self.sMatData, key=lambda val: val.real)[0])
+        badRoot = 0.0
         return self.rootCleaner.cleanRoots(roots, badRoot)

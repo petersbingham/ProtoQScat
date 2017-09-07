@@ -82,7 +82,7 @@ class PoleConverger:
                 
         if self.setNmin!=self.Nmin or self.setNmax!=self.Nmax:
             s = str(self.setNmin) + " " + str(self.Nmin) + " " + str(self.setNmax) + " " + str(self.Nmax) + " "
-            raise Exception("Required pole files do not exist: " + s + "Likely a prior exception.")
+            raise Exception("Required pole files do not exist: " + s + "Likely a prior exception or impossible Nmax value.")
         
         self.zeroVal = float(poleDirName[poleDirName.find("_zk")+3:])
 

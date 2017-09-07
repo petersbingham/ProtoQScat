@@ -17,7 +17,7 @@ def decimate(mats, startIndex, endIndex, N):
     startEne = None
     for ene in sorted(mats, key=lambda val: val.real):
         if index>endIndex:
-            return None, None
+            return None, None, None, None, None
         if index>=startIndex:
             if stepCnt == 0:
                 if startEne is None:

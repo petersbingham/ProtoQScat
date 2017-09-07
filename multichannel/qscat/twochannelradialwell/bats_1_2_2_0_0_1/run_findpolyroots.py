@@ -18,17 +18,14 @@ args = spArgs.parse_args()
 MODE_DOUBLE = 0
 MODE_INC = 1
 
-def _doPoleFind(mode, dirName):
-    path = "./Results/"+dirName
-    if not os.path.exists(path):
-        os.makedirs(path)
+def _doPoleFind(mode):
     try:
         kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,1.0], massMult=MASSMULT)
-        getPolyRoots(args, kCal, kCal, path, cmpValue=args.cmpValue_, mode=mode)
+        getPolyRoots(args, kCal, kCal, cmpValue=args.cmpValue_, mode=mode, Nmax=30)
     except (sm.MatException) as inst:
         raise inst
  
 if args.mode_ == MODE_DOUBLE:
-    _doPoleFind(DOUBLE_N, "Double")
+    _doPoleFind(DOUBLE_N)
 elif args.mode_ == MODE_INC:
-    _doPoleFind(INC_N, "Inc")
+    _doPoleFind(INC_N)
