@@ -5,7 +5,7 @@ import time
 from sys import platform as _platform
 
 basedir = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0,basedir+'/../../../Utilities')
+sys.path.insert(0,basedir+'/../../../utilities')
 from general.file import *
 import general.numerical as num
 

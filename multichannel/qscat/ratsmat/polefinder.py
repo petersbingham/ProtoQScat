@@ -1,7 +1,7 @@
 import sys
 import os
 import traceback
-sys.path.append("../Utilities")
+sys.path.append("../utilities")
 import general.numerical as num
 from ratsmat import *
 from decimator import *

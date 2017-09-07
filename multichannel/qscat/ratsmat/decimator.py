@@ -1,5 +1,5 @@
 import sys
-sys.path.append("../Utilities")
+sys.path.append("../utilities")
 import scattering.matrices as sm
 
 class Decimator():
