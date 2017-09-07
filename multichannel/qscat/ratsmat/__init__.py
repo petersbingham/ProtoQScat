@@ -11,7 +11,7 @@ import collections
 import sys
 import os
 base =  os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0,base+'/../../../Utilities')
+sys.path.insert(0,base+'/../../../utilities')
 sys.path.insert(0,base+'.')
 import scattering.matrices as sm
 from general import *

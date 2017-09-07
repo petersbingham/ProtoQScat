@@ -4,7 +4,7 @@ import __main__
 
 sys.path.append(".")
 base =  os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0,base+'/../../Utilities')
+sys.path.insert(0,base+'/../../utilities')
 sys.path.insert(0,base+'../..')
 
 if __name__ != '__main__': #Can test without these imports

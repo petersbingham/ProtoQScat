@@ -6,7 +6,7 @@ import mpmath as mpm
 import sys
 import os
 base = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0,base+'/../../../../Utilities')
+sys.path.insert(0,base+'/../../../../utilities')
 import scattering.matrices as sm
 import general.numerical as num
 import general.simpplot3d as plot3D

@@ -2,7 +2,7 @@ import os
 import sys
 base =  os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0,base+'/..')
-sys.path.insert(0,base+'/../../../Utilities')
+sys.path.insert(0,base+'/../../../utilities')
 from general import *
 from general.file import *
 from globalSettings import *
