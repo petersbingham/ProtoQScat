@@ -32,11 +32,12 @@ parentArgs.add_argument("amalgThreshold_", help="Amalgamation Threshold", type=f
 parentArgs.add_argument("zeroValExp_", help="Zero Value Precision", type=int)
 parentArgs.add_argument("Nmin_", help="Starting N value", type=int)
 parentArgs.add_argument("Nmax_", help="Ending N value", type=int)
+parentArgs.add_argument("resultsType_", help="Results Type", type=int, nargs='?', default=0)
 parentArgs.add_argument("cmpIndex_", help="Compare Index", type=int, nargs='?', default=0)
 args = parentArgs.parse_args()
 
 def _doPoleFind(kCal, mode):
-    calculateQIs(args, kCal, kCal, mode)
+    calculateQIs(args, kCal, kCal, mode, args.resultsType_)
 
 def _polesForAllSigns(mode):
     kperms = num.getPermutations([1.0,-1.0], 2)
