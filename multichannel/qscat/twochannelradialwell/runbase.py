@@ -9,8 +9,16 @@ from ratsmat.resultfilehandler import *
 from ratsmat.poleconverger import *
 from ratsmat.polemetacalculator import *
 
-def _getFileHandler(args, anakCal, fitkCal):
+def _getFileHandler(args, anakCal, fitkCal, resultsType=RESULTS_TYPE_DEFAULT):
     sysName = "Two Channel Radial Well_" + str(anakCal) + "_" + str(fitkCal) + "_" + str(args.r0_) + "_" + str(args.v1_) + "_" + str(args.v2_) + "_" + str(args.t1_) + "_" + str(args.t2_) + "_" + str(args.lam_) + "_" + str(args.eneStart_) + "_" + str(args.eneEnd_) + "_" + str(args.eneComplex_) + "_" + str(args.eneSteps_)
+    if resultsType != RESULTS_TYPE_DEFAULT:
+        if resultsType == RESULTS_TYPE_FLOAT64:
+            sysName += "_float64"
+        elif resultsType == RESULTS_TYPE_FLOAT32:
+            sysName += "_float32"
+        else:
+            sysName += "_" + str(resultsType) + "dgts"
+            
     return ResultFileHandler(sysName)
 
 def getEnergy(type, x): 
@@ -19,9 +27,9 @@ def getEnergy(type, x):
     elif type=="Log" or type=="LogLog":
         return pow(10.0, x)
 
-def getAnaSmat(args, anakCal):  
+def getAnaSmat(args, anakCal, resultsType=RESULTS_TYPE_DEFAULT):  
     mats = Mats(args.v1_, args.v2_, args.lam_, anakCal)
-    return Smat(args.r0_, mats)
+    return Smat(args.r0_, mats, resultsType)
 
 def getDiscreteAnaSmats(args, anaSmat=None):
     dEne = (args.eneEnd_-args.eneStart_) / QSfloat(args.eneSteps_)
@@ -36,37 +44,37 @@ def getDiscreteAnaSmats(args, anaSmat=None):
         ene += dEne
     return sMats 
 
-def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False):
+def getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut=False, resultsType=RESULTS_TYPE_DEFAULT):
     sMats = getDiscreteAnaSmats(args, anaSmat)  
-    return RatSMat(sMats, fitkCal, resultFileHandler=_getFileHandler(args, anakCal, fitkCal), suppressCmdOut=suppressCmdOut)
+    return RatSMat(sMats, fitkCal, resultFileHandler=_getFileHandler(args, anakCal, fitkCal, resultsType), suppressCmdOut=suppressCmdOut)
 
-def getSmats(args, anakCal, fitkCal):
-    anaSmat = getAnaSmat(args, anakCal)
-    ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal)
+def getSmats(args, anakCal, fitkCal, resultsType=RESULTS_TYPE_DEFAULT):
+    anaSmat = getAnaSmat(args, anakCal, resultsType)
+    ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal, resultsType)
     return (anaSmat, ratSmat)
 
-def getDecimatedRatSmat(args, smats, anakCal, fitkCal, N, anaSmat=None, suppressCmdOut=False): #To get ratSmat for same data set as for getPolyRoots to allow comparison with Muller
-    resultFileHandler = _getFileHandler(args, anakCal, fitkCal)
+def getDecimatedRatSmat(args, smats, anakCal, fitkCal, N, anaSmat=None, suppressCmdOut=False, resultsType=RESULTS_TYPE_DEFAULT): #To get ratSmat for same data set as for getPolyRoots to allow comparison with Muller
+    resultFileHandler = _getFileHandler(args, anakCal, fitkCal, resultsType)
     decimator = Decimator(0, len(smats)-1, 0, resultFileHandler)
     newSMats, decStr = decimator.decimate(smats, N)
     if anaSmat is not None:
         popSmat(anaSmat, newSMats, smats)
     return RatSMat(newSMats, fitkCal, resultFileHandler=resultFileHandler, suppressCmdOut=suppressCmdOut)
 
-def getPolyRoots(args, anakCal, fitkCal, mode, cmpValue=None, Nmax=DEFAULT_N_MAX):
-    anaSmat = getAnaSmat(args, anakCal)
+def getPolyRoots(args, anakCal, fitkCal, mode, Nmax=DEFAULT_N_MAX, overrideMode=QSMODE, resultsType=RESULTS_TYPE_DEFAULT):
+    anaSmat = getAnaSmat(args, anakCal, resultsType)
     smats = getDiscreteAnaSmats(args)
-    resultFileHandler = _getFileHandler(args, anakCal, fitkCal)
+    resultFileHandler = _getFileHandler(args, anakCal, fitkCal, resultsType)
     PoleFinder(smats, fitkCal, resultFileHandler, 0, len(smats)-1, 0, args.distThreshold_, args.cfSteps_, cmpValue=cmpValue, mode=mode, populateSmatCB=lambda sm1,sm2: popSmat(anaSmat, sm1, sm2), zeroValExp=args.zeroValExp_, Nmax=Nmax)
     r = PoleConverger(resultFileHandler)
     r.createPoleTable()    
 
-def calculateQIs(args, anakCal, fitkCal, mode, cmpValue=None):
-    anaSmat = getAnaSmat(args, anakCal)
+def calculateQIs(args, anakCal, fitkCal, mode, resultsType=RESULTS_TYPE_DEFAULT, cmpValue=None):
+    anaSmat = getAnaSmat(args, anakCal, resultsType)
     smats = getDiscreteAnaSmats(args)
     if args.endIndex_ == -1:
         args.endIndex_ = len(smats)-1
-    resultFileHandler = _getFileHandler(args, anakCal, fitkCal)
+    resultFileHandler = _getFileHandler(args, anakCal, fitkCal, resultsType)
     cfSteps = map(int, args.cfSteps_.split(','))
     p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfSteps, args.startingDistThreshold_, args.amalgThreshold_, args.zeroValExp_, args.Nmin_, args.Nmax_, resultFileHandler)
     p.doPoleCalculations(smats, fitkCal, mode, lambda sm1,sm2: popSmat(anaSmat, sm1, sm2), cmpValue)
@@ -80,7 +88,7 @@ def popSmat(anaSmat, smats1, smats2=None):
             if smats2 is not None:
                 smats2[ene] = mat     
  
-def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppressCmdOut=False, signsAsList=False):
+def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppressCmdOut=False, signsAsList=False, resultsType=RESULTS_TYPE_DEFAULT):
     try:
         first = True
         for anaSigns in anaSignList:
@@ -88,7 +96,7 @@ def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppr
                 print "\n"
             first = False
             anakCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=anaSigns, massMult=MASSMULT)
-            anaSmat = getAnaSmat(args, anakCal)
+            anaSmat = getAnaSmat(args, anakCal, resultsType)
             if signsAsList:
                 signs = [str(anakCal)]
             else:
@@ -98,7 +106,7 @@ def dokSignIt(args, anaSignList, fitSignList, ratSignList, anaFun, ratFun, suppr
             if ratFun is not None:
                 for fitSigns in fitSignList:
                     fitkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=fitSigns, massMult=MASSMULT)
-                    ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut)
+                    ratSmat = getRatSmat(args, anaSmat, anakCal, fitkCal, suppressCmdOut, resultsType)
                     for ratSigns in ratSignList:
                         ratkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=ratSigns, massMult=MASSMULT)
                         ratSmat.kCal = ratkCal

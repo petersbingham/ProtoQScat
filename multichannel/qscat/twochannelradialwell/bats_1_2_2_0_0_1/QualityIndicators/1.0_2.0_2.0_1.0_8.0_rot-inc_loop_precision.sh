@@ -1,5 +1,3 @@
-# To simulate results that had been obtained for the pyrazine molecular. The selected depth results in a resonance of similar width.
-
 SET_START=0
 SET_END=-1 # To end of data
 SET_OFFSET=0

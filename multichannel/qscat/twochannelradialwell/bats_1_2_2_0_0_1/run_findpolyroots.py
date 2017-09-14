@@ -21,7 +21,7 @@ MODE_INC = 1
 def _doPoleFind(mode):
     try:
         kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,1.0], massMult=MASSMULT)
-        getPolyRoots(args, kCal, kCal, cmpValue=args.cmpValue_, mode=mode, Nmax=30)
+        getPolyRoots(args, kCal, kCal, mode=mode, Nmax=30, cmpValue=args.cmpValue_)
     except (sm.MatException) as inst:
         raise inst
  

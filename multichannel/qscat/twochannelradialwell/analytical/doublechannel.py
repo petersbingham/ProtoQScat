@@ -16,6 +16,10 @@ EQUIVALENT_TESTS = False
 LIN_ALGEBRA = False
 MASSMULT = sm.MASSMULT_HARTREES
 
+RESULTS_TYPE_FLOAT32 = -1
+RESULTS_TYPE_FLOAT64 = -2
+RESULTS_TYPE_DEFAULT = 0
+
 gu = num.Compare()
 
 class DCException(Exception):
@@ -110,8 +114,9 @@ class Mats:
             return [self.a[i,0], self.a[i,1]]
 
 class Smat(sm.mat):
-    def __init__(self, r0, mats):
+    def __init__(self, r0, mats, resultsType=RESULTS_TYPE_DEFAULT):
         sm.mat.__init__(self, 2, num.PRECISION)
+        self.resultsType = resultsType
         self.numChannels = 2
         self.mats = mats
         self.r0 = r0
@@ -187,19 +192,38 @@ class Smat(sm.mat):
             return [self.uniOpS[i,0], self.uniOpS[i,1]]
        
 #######
+    def _truncate_float(self, num, digits):
+        s = "{:."+str(digits)+"e}"
+        m, e = s.format(num).split('e')
+        return float(float(m)*float(10**float(e)))
+
+    def _cast_result(self, result):
+        if self.resultsType != RESULTS_TYPE_DEFAULT:
+            if self.resultsType == RESULTS_TYPE_FLOAT64:
+                return complex(result)
+            elif self.resultsType == RESULTS_TYPE_FLOAT32:
+                return complex(float(np.float32(result.real)), float(np.float32(result.imag)))
+            else:
+                return complex(self._truncate_float(float(result.real), self.resultsType), self._truncate_float(float(result.imag), self.resultsType))
+        else:
+            return result    
     
     def _S_11(self):
-        return self._g(-self._rho_1(), self._rho_2()) / self._denum() * self._exp(2.0*self._rho_1())
-    
+        ret = self._g(-self._rho_1(), self._rho_2()) / self._denum() * self._exp(2.0*self._rho_1())
+        return self._cast_result(ret)
+
     def _S_12(self):
-        return 2.0 * (self._zeta_1()-self._zeta_2()) * QSsqrt(self._alp_1()*self._alp_2()*self._rho_1()*self._rho_2()) / self._denum() * self._exp(self._rho_1() + self._rho_2())
-    
+        ret = 2.0 * (self._zeta_1()-self._zeta_2()) * QSsqrt(self._alp_1()*self._alp_2()*self._rho_1()*self._rho_2()) / self._denum() * self._exp(self._rho_1() + self._rho_2())
+        return self._cast_result(ret)
+
     def _S_21(self):
-        return self._S_12()
-    
+        ret = self._S_12()
+        return self._cast_result(ret)
+
     def _S_22(self):
-        return self._g(self._rho_1(), -self._rho_2()) / self._denum() * self._exp(2.0*self._rho_2())
-    
+        ret = self._g(self._rho_1(), -self._rho_2()) / self._denum() * self._exp(2.0*self._rho_2())
+        return self._cast_result(ret)
+
     def _g(self, rho_1, rho_2):
         complex1 = rho_1 * (self._zeta_1()*self._alp_1() - self._zeta_2()*self._alp_2())
         complex2 = rho_2 * (self._zeta_2()*self._alp_1() - self._zeta_1()*self._alp_2())
