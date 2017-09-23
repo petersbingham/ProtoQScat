@@ -34,7 +34,7 @@ try:
                 print "Jost Signs\t\t" + str(args.sene_) + "\t\t\t" + str(args.sene_.real-1.0j*args.sene_.imag)
         for ksigns in kperms:
             kmat = RatSMatWrap(FILENAME,args.subN_,args.subStart_,args.subEnd_,kfitSigns,ksigns,True)
-            roots = kmat.findConjRoots(args.sene_)
+            roots = kmat.findERoot_Conj(args.sene_)
             if FORWIKI:
                 print "|| "+str(ksigns)+" || "+getRootStr(roots[0])+" || "+getRootStr(roots[1])+" ||"
             else:

@@ -168,21 +168,21 @@ class RatSMatWrap:
             ratEPhaseMats[ene] = ratEPhaseMat.getMatrix()
         return ratEPhaseMats
       
-    def findRoot(self, startingEne, multipler=1.0):
+    def findERoot(self, startingEne, multipler=1.0):
         ratSmat = self._getRatSmat()
-        return ratSmat.findRoot(startingEne, multipler)
+        return ratSmat.findERoot(startingEne, multipler)
     
-    def findRoot_Multi(self, startingEne, multipler=1.0):
+    def findERoot_Multi(self, startingEne, multipler=1.0):
         ratSmat = self._getRatSmat()
-        return ratSmat.findRoot_Multi(startingEne, multipler)
+        return ratSmat.findERoot_Multi(startingEne, multipler)
       
-    def findConjRoots(self, startingEne, multipler=1.0):
+    def findERoot_Conj(self, startingEne, multipler=1.0):
         ratSmat = self._getRatSmat()
-        return ratSmat.findConjRoots(startingEne, multipler)
+        return ratSmat.findERoot_Conj(startingEne, multipler)
       
-    def findPolyRoots(self):
+    def findElastickRoots(self):
         ratSmat = self._getRatSmat()
-        return ratSmat.findPolyRoots()
+        return ratSmat.findElastickRoots()
       
     def getFinDetRange(self, startEne, endEne, complexOffset, steps):
         ratSmat = self._getRatSmat()

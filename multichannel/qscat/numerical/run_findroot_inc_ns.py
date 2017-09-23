@@ -12,7 +12,7 @@ NUM_FND = 0
 def _findKnownRoot(N):
     kmat = RatSMatWrap(FILENAME,N,args.subStart_,args.subEnd_, kfitSigns=[1.0]*len(THRESHOLDS))
     starting = args.sene_
-    print str(starting) + "   " + str(kmat.findRoot(starting)) + "\n\n"
+    print str(starting) + "   " + str(kmat.findERoot(starting)) + "\n\n"
         
 try:
     for N in range (4,32,2):

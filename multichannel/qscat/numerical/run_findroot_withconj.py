@@ -18,7 +18,7 @@ print "\n\n"
 first = True
 try:
     kmat = RatSMatWrap(FILENAME,args.subN_,args.subStart_,args.subEnd_)
-    roots = kmat.findConjRoots(args.sene_)
+    roots = kmat.findERoot_Conj(args.sene_)
     print getRootStr(roots[0])+" || "+getRootStr(roots[1])+" ||"
                                 
 except (sm.MatException) as inst:

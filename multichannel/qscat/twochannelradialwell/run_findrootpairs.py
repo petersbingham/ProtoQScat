@@ -10,8 +10,8 @@ try:
     kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_COMP, massMult=MASSMULT)
     anaSmat, ratSmat = getSmats(args, kCal, kCal)
   
-    print "   " + str(ratSmat.findRoot(args.startE_)) + "   at +ve"
-    print "   " + str(ratSmat.findRoot(args.startE_.real-1.0j*args.startE_.imag)) + "   at -ve"
+    print "   " + str(ratSmat.findERoot(args.startE_)) + "   at +ve"
+    print "   " + str(ratSmat.findERoot(args.startE_.real-1.0j*args.startE_.imag)) + "   at -ve"
 
 except (DCException, sm.MatException) as inst:
     print str(inst)

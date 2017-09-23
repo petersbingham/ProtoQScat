@@ -8,7 +8,7 @@ args = childArgs.parse_args()
 
 try:
     kmat = RatSMatWrap(FILENAME,args.subN_,args.subStart_,args.subEnd_)
-    print kmat.findConjRoots(args.sene_, 1.0)
+    print kmat.findERoot_Conj(args.sene_, 1.0)
 except (sm.MatException) as inst:
     print str(inst)
     sys.exit()

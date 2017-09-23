@@ -61,7 +61,7 @@ def getDecimatedRatSmat(args, smats, anakCal, fitkCal, N, anaSmat=None, suppress
         popSmat(anaSmat, newSMats, smats)
     return RatSMat(newSMats, fitkCal, resultFileHandler=resultFileHandler, suppressCmdOut=suppressCmdOut)
 
-def getPolyRoots(args, anakCal, fitkCal, mode, Nmax=DEFAULT_N_MAX, overrideMode=QSMODE, resultsType=RESULTS_TYPE_DEFAULT):
+def getPolyRoots(args, anakCal, fitkCal, mode, Nmax=DEFAULT_N_MAX, overrideMode=QSMODE, resultsType=RESULTS_TYPE_DEFAULT, cmpValue=None):
     anaSmat = getAnaSmat(args, anakCal, resultsType)
     smats = getDiscreteAnaSmats(args)
     resultFileHandler = _getFileHandler(args, anakCal, fitkCal, resultsType)

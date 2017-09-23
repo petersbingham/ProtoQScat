@@ -12,15 +12,18 @@ args = args_ephasefit.parse_args()
 
 FIT_CYCLE = ['red', 'blue', 'purple', 'orange', 'cyan']
 
-try:
-    kmat = RatSMatWrap(FILENAME)
-    ratEPhaseMats, ePhaseFitPointsLst = kmat.getEigenSumFit(CALCULATED_POLES, args.polyOrder_, args.plotStart_, args.plotEnd_, args.steps_)
-    
-    ratEPhaseMats.setDetails("R-matrix", ['green'])
-    for i in range(len(ePhaseFitPointsLst)):
-        ePhaseFitPointsLst[i].setDetails(str(truncateComplex(6,CALCULATED_POLES[i])), FIT_CYCLE[i])
-    
-    sm.plotSum("Lin", [ratEPhaseMats]+ePhaseFitPointsLst, title=DESC_STR+" Fitted Resonance Model", xlabel="Electron Energy (rydbergs)", ylabel="Total Phase") 
-except (sm.MatException) as inst:
-    print str(inst)
-    sys.exit()
+if QSMODE == MODE_MPMATH:
+    print "Not supported for mpmath. Change mode in QSType."
+else:
+    try:
+        kmat = RatSMatWrap(FILENAME)
+        ratEPhaseMats, ePhaseFitPointsLst = kmat.getEigenSumFit(CALCULATED_POLES, args.polyOrder_, args.plotStart_, args.plotEnd_, args.steps_)
+        
+        ratEPhaseMats.setDetails("R-matrix", ['green'])
+        for i in range(len(ePhaseFitPointsLst)):
+            ePhaseFitPointsLst[i].setDetails(str(truncateComplex(6,CALCULATED_POLES[i])), FIT_CYCLE[i])
+        
+        sm.plotSum("Lin", [ratEPhaseMats]+ePhaseFitPointsLst, title=DESC_STR+" Fitted Resonance Model", xlabel="Electron Energy (rydbergs)", ylabel="Total Phase") 
+    except (sm.MatException) as inst:
+        print str(inst)
+        sys.exit()

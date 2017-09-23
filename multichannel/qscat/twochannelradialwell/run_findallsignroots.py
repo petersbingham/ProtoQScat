@@ -23,7 +23,7 @@ def getRootStr(root):
 def getRoot(ratkCal, ratSmat, signString):
     row = signString
     #row = [" ", "|", " "]
-    roots = ratSmat.findConjRoots(args.startE_)
+    roots = ratSmat.findERoot_Conj(args.startE_)
     row.append(getRootStr(roots[0]))
     cmp = num.Compare()
     if roots[1] is not None and roots[0] is not None and cmp.complexCompare(roots[1], roots[0]):

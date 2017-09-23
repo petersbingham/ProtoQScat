@@ -13,10 +13,10 @@ for i in [1.0,-1.0]:
             anaSmat, ratSmat = getSmats(args, kCal, kCal)
           
             try:
-                print str([i,j]) + "   " + str(ratSmat.findRoot(args.startE_)) + "   at +ve"
+                print str([i,j]) + "   " + str(ratSmat.findERoot(args.startE_)) + "   at +ve"
             except ValueError:
                 try:
-                    print str([i,j]) + "   " + str(ratSmat.findRoot(-1.0*args.startE_)) + "   at -ve"
+                    print str([i,j]) + "   " + str(ratSmat.findERoot(-1.0*args.startE_)) + "   at -ve"
                 except ValueError:
                     print str([i,j]) + "   Val Err"
         
