@@ -128,6 +128,8 @@ class kCalculator:
             return 0.0
         else:
             return QSPI
+    def isElastic(self):
+        return self.thresholds[1:] == self.thresholds[:-1]
 
 class MatException(Exception):
     def __init__(self, string):

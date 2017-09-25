@@ -5,7 +5,7 @@ args = parentArgs.parse_args()
 
 try:
     kmat = RatSMatWrap(FILENAME,args.subN_,args.subStart_,args.subEnd_)
-    roots = kmat.findElastickRoots()
+    roots = kmat.findRoots()
     for root in roots:
         print root
 except (sm.MatException) as inst:

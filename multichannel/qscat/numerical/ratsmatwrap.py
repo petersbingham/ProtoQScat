@@ -180,9 +180,9 @@ class RatSMatWrap:
         ratSmat = self._getRatSmat()
         return ratSmat.findERoot_Conj(startingEne, multipler)
       
-    def findElastickRoots(self):
+    def findRoots(self):
         ratSmat = self._getRatSmat()
-        return ratSmat.findElastickRoots()
+        return ratSmat.findRoots()
       
     def getFinDetRange(self, startEne, endEne, complexOffset, steps):
         ratSmat = self._getRatSmat()

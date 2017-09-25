@@ -1,3 +1,3 @@
 from auxhelper import *
 from coeffsolve import *
-from symdetroots import *
+from rootsolve import *

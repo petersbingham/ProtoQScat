@@ -1,4 +1,5 @@
 from auxhelper import *
+from gilroots import *
 
 #v2: In _findRoots function matrix elements with poly(...): matLst[len(matLst)-1].append(poly(val))
 class SymDetRoots(AuxHelper):
@@ -63,8 +64,21 @@ class SymDetRoots(AuxHelper):
         return ret 
     
     def printCalStr(self, wereLoaded=False):
-        self._printCalStr("Roots", "calculated", wereLoaded)
+        self._printCalStr("SymDetRoots", "calculated", wereLoaded)
 
+
+class DelvesRoots(AuxHelper):
+    def __init__(self, suppressCmdOut, x_cent, y_cent, width, height, N, outlier_coeff, max_steps, known_roots, verbose):
+        AuxHelper.__init__(self, suppressCmdOut)
+        self.delves_Args = {'x_cent':x_cent, 'y_cent':y_cent, 'width':width, 'height':height, 'N':N, 'outlier_coeff':outlier_coeff, 'max_steps':max_steps, 'known_roots':known_roots, 'verbose':verbose}
+        self.typeStr = "get_roots_rect"+getArgDesc(get_roots_rect, self.delves_Args)
+    
+    def getRoots(self, f, fp):
+        return get_roots_rect(f, fp, **self.delves_Args)
+    
+    def printCalStr(self, wereLoaded=False):
+        self._printCalStr("DelvesRoots", "calculated", wereLoaded)
+    
 
 class RootClean(AuxHelper):
     def __init__(self, suppressCmdOut, clean_width):

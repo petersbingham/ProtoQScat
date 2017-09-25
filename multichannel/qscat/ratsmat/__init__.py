@@ -14,7 +14,7 @@ ALWAYS_CALCULATE = False
 
 PYTYPE_COEFF_SOLVE_METHOD = "numpy_solve"      #"numpy_solve""numpy_lstsq""numpy_sparse_bicg""numpy_sparse_bicgstab""numpy_sparse_lgmres""numpy_sparse_minres""numpy_sparse_qmr""numpy_qr"
 
-EXPANDEDDET_ROOTS_FINDTYPE = "sympy_nroots"    #"numpy_roots""sympy_nroots"
+EXPANDEDDET_ROOTS_FINDTYPE = "delves"    #"delves""numpy_roots""sympy_nroots"
 EXPANDEDDET_ROOTS_CLEANWIDTH = 10.0**-3        #Set to None to turn off
 
 SINGLEROOT_FINDTYPE = "muller"                 #"muller""secant"
@@ -26,8 +26,21 @@ DISPLAY_PRECISION = 8
 SYMPY_NROOTS_N = DPS
 SYMPY_NROOTS_MAXSTEPS = 5000
 
+DELVES_X_CENT = 0.
+DELVES_Y_CENT = 0.
+DELVES_WIDTH = 20.
+DELVES_HEIGHT = 20.
+DELVES_N = 10
+DELVES_OUTLIER_COEFF = 100.
+DELVES_MAX_STEPS = 5
+DELVES_KNOWN_ROOTS = []
+DELVES_VERBOSE = False
+
 ##########################################################
 ##########################################################
+
+def _isElasticRootMethod():
+    return EXPANDEDDET_ROOTS_FINDTYPE=="numpy_roots" or EXPANDEDDET_ROOTS_FINDTYPE=="sympy_nroots"
 
 class RatSMat(sm.mat):
     def __init__(self, sMatData, kCal, fitSize=None, resultFileHandler=None, suppressCmdOut=False, doCalc=True):
@@ -38,9 +51,16 @@ class RatSMat(sm.mat):
         self.type = TYPE_S
         self.hasCoeffs = False
         self.ene = None
-
+        
         self.coeffSolve = CoeffSolve(self.suppressCmdOut, QSMODE, PYTYPE_COEFF_SOLVE_METHOD)
-        self.rootSolver = SymDetRoots(self.suppressCmdOut, EXPANDEDDET_ROOTS_FINDTYPE, SYMPY_NROOTS_N, SYMPY_NROOTS_MAXSTEPS)
+        
+        if _isElasticRootMethod():
+            if not self.kCal.isElastic():
+                raise sm.MatException("Selected root finding method not applicable to inelastic scattering data.")
+            self.rootSolver = SymDetRoots(self.suppressCmdOut, EXPANDEDDET_ROOTS_FINDTYPE, SYMPY_NROOTS_N, SYMPY_NROOTS_MAXSTEPS)
+        else:
+            self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_X_CENT, DELVES_Y_CENT, DELVES_WIDTH, DELVES_HEIGHT, DELVES_N, DELVES_OUTLIER_COEFF, DELVES_MAX_STEPS, DELVES_KNOWN_ROOTS, DELVES_VERBOSE)
+            
         self.rootCleaner = RootClean(self.suppressCmdOut, EXPANDEDDET_ROOTS_CLEANWIDTH)
 
         self.resultFileHandler = resultFileHandler
@@ -90,9 +110,15 @@ class RatSMat(sm.mat):
     # Get the determinant of Fin for the energy set above.
     def getFinDet(self):
         if self.type != TYPE_FIN:
-            raise GenUtils.MatException("Wrong type set")
+            raise sm.MatException("Wrong type set")
         else:
-            return QSdet(self.getMatrix())
+            return QSdet(self.selMat)
+    def getDiffFinDet(self):
+        if self.type != TYPE_FIN:
+            raise sm.MatException("Wrong type set")
+        else:
+            self.selDiffMat2 = self.selDiffMat + (QSshape(self.selDiffMat)[0]-1) * self.selMat
+            return QSdet(self.selDiffMat2)
     # This returns values of Fin across a specified range.
     def getFinDetRange(self, startEne, endEne, complexOffset, steps):
         xs = np.ndarray((steps,), dtype=float)
@@ -138,11 +164,15 @@ class RatSMat(sm.mat):
         return root
 
 
-    # This returns all of the roots for the elastic case.
-    def findElastickRoots(self, convertToEne=True):
-        return self._findRoots(convertToEne, self.rootSolver.getRoots)
-    # This cleans the roots for the elastic case.
-    def cleanElastickRoots(self, roots):
+    # This returns all of the roots.
+    def findRoots(self, inEne=True):
+        if _isElasticRootMethod():
+            return self._findElasticRoots(inEne, self.rootSolver.getRoots)
+        else:
+            self._setType(TYPE_FIN)
+            return self._findDelvesRoots(inEne)
+    # This cleans the roots.
+    def cleanRoots(self, roots):
         #Originally thought that bad roots around start of data set but moved data set away from zero and bad roots did not follow.
         #badRoot = self.kCal.fk(sorted(self.sMatData, key=lambda val: val.real)[0])
         badRoot = 0.0
@@ -200,6 +230,7 @@ class RatSMat(sm.mat):
             self.alphas[sz] = self._initialiseCoefficients()
             self.betas[sz] = self._initialiseCoefficients()
         self.selMat = QSmatrix(self._getZeroListMats())
+        self.selDiffMat = QSmatrix(self._getZeroListMats())
 
     def _initialiseCoefficients(self):
         coeffs = []
@@ -368,6 +399,7 @@ class RatSMat(sm.mat):
     def _calculate(self):
         if self.hasCoeffs:
             Fin = QSmatrix(self._getZeroListMats())
+            FinDiff = QSmatrix(self._getZeroListMats())
             Fout = QSmatrix(self._getZeroListMats())
             alphas = self._getAlphaSet()
             betas = self._getBetaSet()
@@ -383,13 +415,34 @@ class RatSMat(sm.mat):
                     t2 = 1.0j*self.kCal.kl(m,self.ene,0.0)*self.kCal.kl(n,self.ene,1.0)*B
                     Fin[m,n] = (t1-t2) / 2.0
                     Fout[m,n] = (t1+t2) / 2.0
+                    
+                    diff_facts = self._getDiffFacs(m, n, exp)
+                    FinDiff[m,n] = (t1*diff_facts[0]-t2*diff_facts[1]) / 2.0
             #print str(self.ene) + " , " + str(Fin[0,0]) + " , " + str(Fin[0,1]) + " , " + str(Fin[1,0]) + " , " + str(Fin[1,1])
             if self.type == TYPE_FIN:
                 self.selMat = Fin
+                self.selDiffMat = FinDiff
             else:
                 self.selMat = Fout * QSinvert(Fin)  #S-matrix
         else:
-            raise GenUtils.MatException("Calculation Error")
+            raise sm.MatException("Calculation Error")
+      
+    def _getDiffFacs(self, m, n, exp):
+        lm = self.kCal.l(m)
+        lnp1 = self.kCal.l(n)+1.0
+        lmp1 = self.kCal.l(m)+1.0
+        knsq = 2*QSpow(self.kCal.k(n,self.ene),2.0)
+        kmsq = 2*QSpow(self.kCal.k(m,self.ene),2.0)
+        muOverE = exp / self.ene
+        
+        t1_fact = lnp1/knsq - lmp1/kmsq + muOverE
+        t2_fact = lm/kmsq + lnp1/knsq + muOverE
+        return t1_fact, t2_fact
+      
+    def _gett2Diff(self, n, m, exp):
+        a = self.kCal.l(m) / (2*QSpow(self.kCal.k(m,self.ene),2.0))
+        b = (self.kCal.l(n)+1.0) / (2*QSpow(self.kCal.k(n,self.ene),2.0))
+        c = exp / self.ene
       
     def _getAlphaSet(self):
         return self._getCoeffSet(self.alphas)
@@ -430,9 +483,9 @@ class RatSMat(sm.mat):
         if self.hasCoeffs:
             return QSgetRow(self.selMat, m)
         else:
-            raise GenUtils.MatException("Calculation Error")
+            raise sm.MatException("Calculation Error")
 
-#### Single Root Finders ####
+#### Root Finders ####
 
     def _getDet(self, e, multipler=1.0):
         self.setEnergy(e)
@@ -440,11 +493,11 @@ class RatSMat(sm.mat):
         #print str(e) + "\n" + str(val) + "\n"
         return val
     
+    # Muller
     def _getModifier(self, i, j):
         mod1 = QSpow(10,float(i))
         mod2 = QSpow(10,float(i-1))
         return mod1 + j*mod2
-    
     def _findERootAttempt(self, startingEne, multipler, type):
         try:
             fun = lambda e: self._getDet(e, multipler)
@@ -455,6 +508,25 @@ class RatSMat(sm.mat):
         except ValueError:
             return None
 
+    # Delves
+    def _getDiffDet(self, e, multipler=1.0):
+        self.setEnergy(e)
+        val = multipler*self.getDiffFinDet()
+        #print str(e) + "\n" + str(val) + "\n"
+        return val    
+
+    def _findDelvesRoots(self, inEne):
+        if self.resultFileHandler:
+            self.resultFileHandler.startLogAction("_findDelvesRoots")
+        if self.hasCoeffs:
+            allRoots = []
+            for eKey in self.alphas:
+                allRoots.append(self.rootSolver.getRoots(self._getDet, self._getDiffDet))
+        else:
+            raise sm.MatException("Calculation Error")
+        if self.resultFileHandler:
+            self.resultFileHandler.endLogAction("_findDelvesRoots")
+        return allRoots
 
 ########################################################################
 ############################## Symbolic ################################
@@ -462,9 +534,9 @@ class RatSMat(sm.mat):
 
 #### Elastic Wavenumber Calculation ####
 
-    def _findRoots(self, convertToEne, fun, **args):
+    def _findElasticRoots(self, inEne, fun, **args):
         if self.resultFileHandler:
-            self.resultFileHandler.startLogAction("_findRoots")
+            self.resultFileHandler.startLogAction("_findElasticRoots")
         if self.hasCoeffs:
             allRoots = []
             for eKey in self.alphas:
@@ -486,11 +558,13 @@ class RatSMat(sm.mat):
                         #matLst[len(matLst)-1].append(val) #v1
                 mat = sy_matrix(matLst)
                 roots = fun(mat, k, **args)
-                if convertToEne:
+                if inEne:
                     mappedRoots = map(lambda val: self.kCal.e(val,True), roots)
                 else:
                     mappedRoots = map(lambda val: complex(val), roots)
                 allRoots.extend(mappedRoots)
+        else:
+            raise sm.MatException("Calculation Error")
         if self.resultFileHandler:
-            self.resultFileHandler.startLogAction("_findRoots")
+            self.resultFileHandler.endLogAction("_findElasticRoots")
         return allRoots
