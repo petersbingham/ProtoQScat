@@ -1,4 +1,4 @@
-import roots
+from gilroots import *
 
 def f(x):
   return x*x+4*x
@@ -21,16 +21,16 @@ def dh(x):
   
   
 def f_roots():
-  print Roots.get_roots_rect(f, df, 0, 0, 10, 10)
+  print get_roots_rect(f, df, 0, 0, 10, 10)
  
 def g_roots():
-  roots = Roots.get_roots_rect(g, dg, 1, 0, 1, 1)
+  roots = get_roots_rect(g, dg, 1, 0, 1, 1)
   print roots
   for root in roots:
     print g(root)
  
 def h_roots():
-  roots = Roots.get_roots_rect(h, dh, 1, 0, 1, 1)
+  roots = get_roots_rect(h, dh, 1, 0, 1, 1)
   print roots
   for root in roots:
     print h(root)

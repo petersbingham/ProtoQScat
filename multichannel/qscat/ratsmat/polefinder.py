@@ -182,7 +182,7 @@ class PoleFinder:
         file = open(self.resultFileHandler.getRootFilePath(), 'w')
         try:
             ratSmat.doCalc()
-            roots = ratSmat.findElastickRoots(False)
+            roots = ratSmat.findRoots(False)
             self._printInfoStr("Calculated", N, roots)
             self._recordRoots(file, descStr, roots)     
             file.close()
@@ -194,7 +194,7 @@ class PoleFinder:
         return roots
     
     def _cleanRoots(self, ratSmat, roots, descStr, N):
-        cleanRoots, rejectRoots = ratSmat.cleanElastickRoots(roots)
+        cleanRoots, rejectRoots = ratSmat.cleanRoots(roots)
         
         file = open(self.resultFileHandler.getCleanRootFilePath(), 'w')
         self._recordRoots(file, descStr, cleanRoots)

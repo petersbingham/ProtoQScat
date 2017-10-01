@@ -68,6 +68,12 @@ def QSToSympy(val):
     else:
         return sy.Float(str(val.real),DPS) + sy.Float(str(val.imag),DPS)*sy.I
 
+def QSTompmath(val):
+    if QSMODE == MODE_NORM:
+        pass
+    else:
+        return mpmath.mpc(real=sy.re(val),imag=sy.im(val))
+    
 ############### BASIC OPERATIONS ###############
 
 def QSpow(x, y):
@@ -167,6 +173,15 @@ def QSgetRow(mat, m):
             row.append(mat[m,n])
         return row
 
+def QScopyRow(src_mat, dest_mat, m):
+    if QSMODE == MODE_NORM:
+        pass
+    else:
+        newMat = dest_mat.copy()
+        for n in range(newMat.cols):
+            newMat[m,n] = src_mat[m,n]
+        return newMat
+
 def QSdet(mat):
     if QSMODE == MODE_NORM:
         return np.linalg.det(mat)
@@ -203,6 +218,28 @@ def QSatanElements(mat):
             for j in range(mat.cols):
                 at[i,j] = mpmath.atan(mat[i,j])
         return at
+
+def _mpmathToSymMatrix(mat):
+    symMat = sy.zeros(mat.rows, mat.cols)
+    for r in range(mat.rows):
+        for c in range(mat.cols):
+            symMat[r,c] = mat[r,c]
+    return symMat
+
+def _symToMpmathMatrix(mat):
+    mpMat = mpmath.matrix(mat.shape[0])
+    for r in range(mat.shape[0]):
+        for c in range(mat.shape[0]):
+            mpMat[r,c] = QSTompmath(mat[r,c])
+    return mpMat
+
+def QSadjugate(mat):
+    if QSMODE == MODE_NORM:
+        pass
+    else:
+        symMat = _mpmathToSymMatrix(mat)
+        return _symToMpmathMatrix(symMat.adjugate())
+    
     
 ############### OTHER ###############
 

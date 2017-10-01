@@ -26,10 +26,10 @@ DISPLAY_PRECISION = 8
 SYMPY_NROOTS_N = DPS
 SYMPY_NROOTS_MAXSTEPS = 5000
 
-DELVES_X_CENT = 0.
-DELVES_Y_CENT = 0.
-DELVES_WIDTH = 20.
-DELVES_HEIGHT = 20.
+DELVES_X_CENT = 0.15
+DELVES_Y_CENT = 0.0
+DELVES_WIDTH = 0.14
+DELVES_HEIGHT = 0.3
 DELVES_N = 10
 DELVES_OUTLIER_COEFF = 100.
 DELVES_MAX_STEPS = 5
@@ -102,7 +102,7 @@ class RatSMat(sm.mat):
         sm.mat.__init__(self, self.numChannels, DISPLAY_PRECISION)
 
 
-    # Set the energy values can be accessset for the set energy using the sm.mat interface.
+    # Set the energy value for the calculation. Results can be accesed using the sm.mat interface.
     def setEnergy(self, ene):
         #print "ene: " + str(ene)
         self.ene = ene
@@ -117,25 +117,23 @@ class RatSMat(sm.mat):
         if self.type != TYPE_FIN:
             raise sm.MatException("Wrong type set")
         else:
-            self.selDiffMat2 = self.selDiffMat + (QSshape(self.selDiffMat)[0]-1) * self.selMat
-            return QSdet(self.selDiffMat2)
-    # This returns values of Fin across a specified range.
+            #return QStrace( QSdot(QSadjugate(self.selMat), self.selDiffMat))
+            det = 0.
+            for m in range(QSshape(self.selMat)[0]):
+                det += QSdet(QScopyRow(self.selDiffMat, self.selMat, m))
+            return det
+        
+    # This returns values of the determinants across a specified range.
+    def getFinRange(self, startEne, endEne, complexOffset, steps, m, n):
+        return self._getRangeVals(startEne, endEne, complexOffset, steps, lambda : self.selMat[m,n])
+    def getDiffFinRange(self, startEne, endEne, complexOffset, steps, m, n):
+        return self._getRangeVals(startEne, endEne, complexOffset, steps, lambda : self.selDiffMat[m,n])
+    # This returns values of the determinants across a specified range.
     def getFinDetRange(self, startEne, endEne, complexOffset, steps):
-        xs = np.ndarray((steps,), dtype=float)
-        ys = np.ndarray((steps,), dtype=float)
-        zs = np.ndarray((steps,), dtype=float)
-        self._setType(TYPE_FIN)
-        ene = startEne
-        dene = (endEne - startEne) / float(steps)
-        for i in range(0,steps):
-            xs[i] = ene
-            self.setEnergy(ene + complexOffset*1.0j)
-            finDet = self.getFinDet()
-            ys[i] = finDet.real
-            zs[i] = finDet.imag
-            ene += dene
-        return (xs, ys, zs)
-
+        return self._getRangeVals(startEne, endEne, complexOffset, steps, self.getFinDet)
+    def getDiffFinDetRange(self, startEne, endEne, complexOffset, steps):
+        return self._getRangeVals(startEne, endEne, complexOffset, steps, self.getDiffFinDet)
+    
 
     # This attempts to find a root using a specified a starting value.
     def findERoot(self, startingEne, multipler=1.0):
@@ -397,6 +395,8 @@ class RatSMat(sm.mat):
 #### General Energy Calculation ####
 
     def _calculate(self):
+        #if self.resultFileHandler:
+        #    self.resultFileHandler.startLogAction("_calculate")
         if self.hasCoeffs:
             Fin = QSmatrix(self._getZeroListMats())
             FinDiff = QSmatrix(self._getZeroListMats())
@@ -405,19 +405,30 @@ class RatSMat(sm.mat):
             betas = self._getBetaSet()
             for m in range(self.numChannels):
                 for n in range(self.numChannels):
-                    A = 0.0
-                    B = 0.0
+                    t1 = 0.0
+                    t2 = 0.0
+                    dt1 = 0.0
+                    dt2 = 0.0
+                    k1_mult = self.kCal.kl(n,self.ene,1.0)/self.kCal.kl(m,self.ene,1.0)
+                    k2_mult = 1.0j*self.kCal.kl(m,self.ene,0.0)*self.kCal.kl(n,self.ene,1.0)
                     for ci in range(self.numCoeffs):
                         exp = ci
-                        A += alphas[ci][m,n] * QSpow(self.ene, exp)
-                        B += betas[ci][m,n] * QSpow(self.ene, exp)
-                    t1 = self.kCal.kl(n,self.ene,1.0)/self.kCal.kl(m,self.ene,1.0)*A
-                    t2 = 1.0j*self.kCal.kl(m,self.ene,0.0)*self.kCal.kl(n,self.ene,1.0)*B
+                        pow = QSpow(self.ene, exp)
+                        a = k1_mult * alphas[ci][m,n] * pow
+                        b = k2_mult * betas[ci][m,n] * pow
+
+                        t1 += a
+                        t2 += b
+                        
+                        t1_mult, t2_mult = self._getDiffMults(m, n, exp)
+                        dt1 += t1_mult * a
+                        dt2 += t2_mult * b
+                        
                     Fin[m,n] = (t1-t2) / 2.0
-                    Fout[m,n] = (t1+t2) / 2.0
+                    FinDiff[m,n] = (dt1-dt2) / 2.0
                     
-                    diff_facts = self._getDiffFacs(m, n, exp)
-                    FinDiff[m,n] = (t1*diff_facts[0]-t2*diff_facts[1]) / 2.0
+                    Fout[m,n] = (t1+t2) / 2.0
+        
             #print str(self.ene) + " , " + str(Fin[0,0]) + " , " + str(Fin[0,1]) + " , " + str(Fin[1,0]) + " , " + str(Fin[1,1])
             if self.type == TYPE_FIN:
                 self.selMat = Fin
@@ -426,13 +437,15 @@ class RatSMat(sm.mat):
                 self.selMat = Fout * QSinvert(Fin)  #S-matrix
         else:
             raise sm.MatException("Calculation Error")
+        #if self.resultFileHandler:
+        #    self.resultFileHandler.endLogAction("_calculate")
       
-    def _getDiffFacs(self, m, n, exp):
+    def _getDiffMults(self, m, n, exp):
         lm = self.kCal.l(m)
         lnp1 = self.kCal.l(n)+1.0
         lmp1 = self.kCal.l(m)+1.0
-        knsq = 2*QSpow(self.kCal.k(n,self.ene),2.0)
-        kmsq = 2*QSpow(self.kCal.k(m,self.ene),2.0)
+        knsq = 2.0*QSpow(self.kCal.k(n,self.ene),2.0)
+        kmsq = 2.0*QSpow(self.kCal.k(m,self.ene),2.0)
         muOverE = exp / self.ene
         
         t1_fact = lnp1/knsq - lmp1/kmsq + muOverE
@@ -485,6 +498,22 @@ class RatSMat(sm.mat):
         else:
             raise sm.MatException("Calculation Error")
 
+    def _getRangeVals(self, startEne, endEne, complexOffset, steps, fun):
+        xs = np.ndarray((steps,), dtype=float)
+        ys = np.ndarray((steps,), dtype=float)
+        zs = np.ndarray((steps,), dtype=float)
+        self._setType(TYPE_FIN)
+        ene = startEne
+        dene = (endEne - startEne) / float(steps)
+        for i in range(0,steps):
+            xs[i] = ene
+            self.setEnergy(ene + complexOffset*1.0j)
+            res = fun()
+            ys[i] = res.real
+            zs[i] = res.imag
+            ene += dene
+        return (xs, ys, zs)
+
 #### Root Finders ####
 
     def _getDet(self, e, multipler=1.0):
@@ -521,7 +550,7 @@ class RatSMat(sm.mat):
         if self.hasCoeffs:
             allRoots = []
             for eKey in self.alphas:
-                allRoots.append(self.rootSolver.getRoots(self._getDet, self._getDiffDet))
+                allRoots.extend(self.rootSolver.getRoots(self._getDet, self._getDiffDet))
         else:
             raise sm.MatException("Calculation Error")
         if self.resultFileHandler:
