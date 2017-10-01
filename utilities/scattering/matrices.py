@@ -70,13 +70,13 @@ class kCalculator:
         else:
             return floatList(self.ksigns)
     def e(self, k, primType=False):
-        ene = (1.0/(self.massMult*REDUCED_MASS))*k**2
+        ene = (1.0/self.getMult())*k**2
         if primType:
             return complex(ene)
         else:
             return QScomplex(ene)
     def fk(self, ene, primType=False): #free k
-        k = QSsqrt(self.massMult*REDUCED_MASS*ene)
+        k = QSsqrt(self.getMult()*ene)
         if primType:
             return complex(k)
         else:
@@ -122,12 +122,14 @@ class kCalculator:
                 sign = 1.0
         return sign*k
     def _getValue(self, ch, ene):
-        return self.massMult*REDUCED_MASS*(ene - self.thresholds[ch])
+        return self.getMult()*(ene - self.thresholds[ch])
     def getPhase(self, ch, ene):
         if ene.real <= self.thresholds[ch]:
             return 0.0
         else:
             return QSPI
+    def getMult(self):
+        return self.massMult*REDUCED_MASS
     def isElastic(self):
         return self.thresholds[1:] == self.thresholds[:-1]
 

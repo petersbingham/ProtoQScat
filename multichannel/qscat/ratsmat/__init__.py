@@ -441,6 +441,7 @@ class RatSMat(sm.mat):
         #    self.resultFileHandler.endLogAction("_calculate")
       
     def _getDiffMults(self, m, n, exp):
+        C = self.kCal.getMult()
         lm = self.kCal.l(m)
         lnp1 = self.kCal.l(n)+1.0
         lmp1 = self.kCal.l(m)+1.0
@@ -448,8 +449,8 @@ class RatSMat(sm.mat):
         kmsq = 2.0*QSpow(self.kCal.k(m,self.ene),2.0)
         muOverE = exp / self.ene
         
-        t1_fact = lnp1/knsq - lmp1/kmsq + muOverE
-        t2_fact = lm/kmsq + lnp1/knsq + muOverE
+        t1_fact = C*lnp1/knsq - C*lmp1/kmsq + muOverE
+        t2_fact = C*lm/kmsq + C*lnp1/knsq + muOverE
         return t1_fact, t2_fact
       
     def _gett2Diff(self, n, m, exp):
