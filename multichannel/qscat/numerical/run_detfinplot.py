@@ -4,5 +4,7 @@ from runargsplot import *
 
 kmat = RatSMatWrap(FILENAME,args.subN_,args.subStart_,args.subEnd_)
 vals = kmat.getFinDetRange(args.plotStart_, args.plotEnd_, args.plotComplex_, args.steps_)
+dvals = kmat.getDiffFinDetRange(args.plotStart_, args.plotEnd_, args.plotComplex_, args.steps_)
 
-sp.plotSingle("Numercal Data : det(Fin)", vals[0], [vals[1],vals[2]], 'Electron Energy (rydbergs)', 'det(Fin)', ['real','imag'])
+sp.plotSingle("Numercal Data : real det(Fin)", vals[0], [vals[1],dvals[1]], 'Electron Energy (rydbergs)', 'det(Fin)', ['function','differential'])
+sp.plotSingle("Numercal Data : imag det(Fin)", vals[0], [vals[2],dvals[2]], 'Electron Energy (rydbergs)', 'det(Fin)', ['function','differential'])

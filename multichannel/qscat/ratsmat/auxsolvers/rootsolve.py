@@ -1,5 +1,6 @@
 from auxhelper import *
 from gilroots import *
+from globalSettings import *
 
 #v2: In _findRoots function matrix elements with poly(...): matLst[len(matLst)-1].append(poly(val))
 class SymDetRoots(AuxHelper):
@@ -96,7 +97,7 @@ class RootClean(AuxHelper):
         if self.typeStr is not None:
             cmp = num.Compare(self.clean_width) 
             for root in roots:
-                if not cmp.complexCompare(abs(root), badRoot):
+                if not cmp.complexCompare(abs(root[k_INDEX]), badRoot):
                     cleanRoots.append(root)
                 else:
                     rejectRoots.append(root)

@@ -4,6 +4,7 @@ import sets
 
 from polefinder import *
 from poleconverger import *
+from globalSettings import *
 from general import *
 import general.numerical as num
 

@@ -187,6 +187,10 @@ class RatSMatWrap:
     def getFinDetRange(self, startEne, endEne, complexOffset, steps):
         ratSmat = self._getRatSmat()
         return ratSmat.getFinDetRange(startEne, endEne, complexOffset, steps)
+      
+    def getDiffFinDetRange(self, startEne, endEne, complexOffset, steps):
+        ratSmat = self._getRatSmat()
+        return ratSmat.getDiffFinDetRange(startEne, endEne, complexOffset, steps)
     
     def _getRatSmatFitSize(self):
         if self.mode==M_NORM:

@@ -68,7 +68,7 @@ class PoleFinder:
             roots = self._getNroots(N)
             self._locatePoles(roots, N)
             self.allNs.append(N)
-        except Exception as inst:
+        except InternalException as inst:
             string = "Unhandled Exception: " + str(inst) + "\n"
             print string
             if self.file_poles is not None:
@@ -129,7 +129,7 @@ class PoleFinder:
             ratSmat.rootSolver.printCalStr(True)
             ratSmat.rootCleaner.printCalStr(True)
             self._printInfoStr("Loaded Clean", N, roots)
-        except Exception as e:
+        except InternalException as e:
             print "Error reading clean roots will attempt to recalculate: " + str(e)        
         return roots
 
@@ -143,7 +143,7 @@ class PoleFinder:
             roots = self._readNroots(N, self.resultFileHandler.getRootFilePath())
             ratSmat.rootSolver.printCalStr(True)
             self._printInfoStr("Loaded", N, roots)
-        except Exception as e:
+        except InternalException as e:
             print "Error reading roots will attempt to recalculate: " + str(e)        
         return roots
         
@@ -156,8 +156,9 @@ class PoleFinder:
                 if COMPLETE_STR in line:
                     return roots
                 elif not firstLine:
-                    str = line[line.find('=')+1:line.find('i')]+'j'
-                    roots.append(complex(str))
+                    k_str = line[line.find('=')+1:line.find('i')]+'j'
+                    E_str = line[line.rfind('=')+1:line.rfind('i')]+'j'
+                    roots.append((complex(k_str),complex(E_str)))
                 firstLine = False
         raise Exception("Incomplete Root File")        
 
@@ -182,11 +183,11 @@ class PoleFinder:
         file = open(self.resultFileHandler.getRootFilePath(), 'w')
         try:
             ratSmat.doCalc()
-            roots = ratSmat.findRoots(False)
+            roots = ratSmat.findRoots()
             self._printInfoStr("Calculated", N, roots)
             self._recordRoots(file, descStr, roots)     
             file.close()
-        except Exception as inst:
+        except InternalException as inst:
             string = "Unhandled Exception: " + str(inst) + "\n"
             file.write(string)  
             file.close()
@@ -217,8 +218,7 @@ class PoleFinder:
         endStr = ""
         if self.cmpValue is not None and closestIndex==i:
             endStr = " @<****>@"
-        eneRoot = self._calEnergy(root)
-        writeStr = ("Root_k[%d]="+self._getComplexFormat()+"\tRoot_E[%d]="+self._getComplexFormat()+"\t%s\n") % (i,root.real,root.imag,i,eneRoot.real,eneRoot.imag,endStr)
+        writeStr = ("Root_k[%d]="+self._getComplexFormat()+"\tRoot_E[%d]="+self._getComplexFormat()+"\t%s\n") % (i,root[k_INDEX].real,root[k_INDEX].imag,i,root[E_INDEX].real,root[E_INDEX].imag,endStr)
         file.write(writeStr)     
 
 #######################################################
@@ -243,23 +243,26 @@ class PoleFinder:
                     cmpRootSet = self.allRoots[k]
                     smallestAbsCdiff = None
                     infoStr2 = ""
-                    for j in range(len(cmpRootSet)):
-                        cmpRoot2 = cmpRootSet[j]
-                        cdiff = self.ratCmp.getComplexDiff(cmpRoot, cmpRoot2)
-                        absCdiff = num.absDiff(cmpRoot, cmpRoot2) 
-                        if self.ratCmp.checkComplexDiff(cdiff, self.distThreshold):
-                            if smallestAbsCdiff is None or absCdiff < smallestAbsCdiff:
-                                infoStr2 = " N=%d[%d]" % (self.allNs[k], j)
-                                smallestAbsCdiff = absCdiff
-                                smallestCmpRoot2 = cmpRoot2
-                                if firstStep:
-                                    poleLastRootIndex = j
-                                    poleLastSmallestCmpRoot = smallestCmpRoot2
-                        if j==len(cmpRootSet)-1:
-                            if smallestAbsCdiff is None:
-                                isPole = False
-                            elif repeatPole or (firstStep and poleLastRootIndex in lastPoleRootIndices):
-                                repeatPole = True
+                    if len(cmpRootSet) > 0:
+                        for j in range(len(cmpRootSet)):
+                            cmpRoot2 = cmpRootSet[j]
+                            cdiff = self.ratCmp.getComplexDiff(cmpRoot[k_INDEX], cmpRoot2[k_INDEX])
+                            absCdiff = num.absDiff(cmpRoot[k_INDEX], cmpRoot2[k_INDEX]) 
+                            if self.ratCmp.checkComplexDiff(cdiff, self.distThreshold):
+                                if smallestAbsCdiff is None or absCdiff < smallestAbsCdiff:
+                                    infoStr2 = " N=%d[%d]" % (self.allNs[k], j)
+                                    smallestAbsCdiff = absCdiff
+                                    smallestCmpRoot2 = cmpRoot2
+                                    if firstStep:
+                                        poleLastRootIndex = j
+                                        poleLastSmallestCmpRoot = smallestCmpRoot2
+                            if j==len(cmpRootSet)-1:
+                                if smallestAbsCdiff is None:
+                                    isPole = False
+                                elif repeatPole or (firstStep and poleLastRootIndex in lastPoleRootIndices):
+                                    repeatPole = True
+                    else:
+                        isPole = False
                     firstStep = False
                     if not isPole:
                         break
@@ -317,7 +320,7 @@ class PoleFinder:
                 else:
                     k = allocationDetails[j][0]
                     origPole = allocationDetails[j][1]
-                    if self._isLatestPoleCloser(newPole[1], self.allPoles[k], origPole): 
+                    if self._isLatestPoleCloser(newPole[1][k_INDEX], self.allPoles[k][k_INDEX], origPole[k_INDEX]): 
                         #Swap them
                         self._addNewPole(self.allPoles[k], self.allPolesInfoStrs[k])
                         self._updatePole(newPole[1], newPolesInfoStr, k)
@@ -332,7 +335,6 @@ class PoleFinder:
         for i in range(len(self.allPoles)):
             poles += 1
             endStr = ""
-            enePole = self._calEnergy(self.allPoles[i])
             if self.newIndex!=-1 and i>=self.newIndex:
                 endStr = "NEW "
                 newPoles += 1
@@ -344,7 +346,7 @@ class PoleFinder:
                     lostPoles += 1
                     break
             
-            writeStr = ("Pole_k[%d]="+self._getComplexFormat()+"\tPole_E[%d]="+self._getComplexFormat()+"    \t%s%s\n") % (i,self.allPoles[i].real,self.allPoles[i].imag,i,enePole.real,enePole.imag,endStr,self.allPolesInfoStrs[i])
+            writeStr = ("Pole_k[%d]="+self._getComplexFormat()+"\tPole_E[%d]="+self._getComplexFormat()+"    \t%s%s\n") % (i,self.allPoles[i][k_INDEX].real,self.allPoles[i][k_INDEX].imag,i,self.allPoles[i][E_INDEX].real,self.allPoles[i][E_INDEX].imag,endStr,self.allPolesInfoStrs[i])
             self.file_poles.write(writeStr)
           
         self.file_poles.write(COMPLETE_STR)
@@ -366,13 +368,10 @@ class PoleFinder:
         self.allPoles[k] = newPole
         self.allPolesInfoStrs[k] = newPolesInfoStr
         
-    def _isLatestPoleCloser(self, newPole, oldPole, origPole):
-        newDiff = self.ratCmp.getComplexDiff(newPole, origPole)
-        oldDiff = self.ratCmp.getComplexDiff(oldPole, origPole)
+    def _isLatestPoleCloser(self, newkPole, oldkPole, origkPole):
+        newDiff = self.ratCmp.getComplexDiff(newkPole, origkPole)
+        oldDiff = self.ratCmp.getComplexDiff(oldkPole, origkPole)
         return abs(newDiff) < abs(oldDiff)
-    
-    def _calEnergy(self, k, primType=False):
-        return self.kCal.e(k, primType)
 
     def _getClosestIndex(self, roots):
         #This is when we know the position of a pole and want to mark the closest root to this value in the output file.
@@ -380,8 +379,7 @@ class PoleFinder:
         closestDiff = None
         if self.cmpValue is not None:
             for j in range(len(roots)):
-                eneRoot = self._calEnergy(roots[j])
-                diff = abs(self.cmpValue-eneRoot)
+                diff = abs(self.cmpValue-roots[j][E_INDEX])
                 if j==0 or diff<closestDiff:
                     closestDiff = diff
                     closestIndex = j

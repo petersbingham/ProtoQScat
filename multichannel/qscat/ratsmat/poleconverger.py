@@ -149,7 +149,7 @@ class PoleConverger:
             poleSets = sorted(poleSets, key=self._getFinalImag)
             self.poleSets = sorted(poleSets, key=self._getFinalImag, cmp=self._poleCmp)  #Do two sorts since we want to both group by pole/antipole and then ensure that the pole comes first.
             self._writePoleSets(poleSets)
-        except Exception as e:
+        except InternalException as e:
             self._writeErrorToFile(str(e))
     
     def _createPoleSets(self):

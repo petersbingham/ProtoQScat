@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from auxsolvers import *
+from globalSettings import *
 
 TYPE_S = 0
 TYPE_FIN = 1
@@ -14,7 +15,7 @@ ALWAYS_CALCULATE = False
 
 PYTYPE_COEFF_SOLVE_METHOD = "numpy_solve"      #"numpy_solve""numpy_lstsq""numpy_sparse_bicg""numpy_sparse_bicgstab""numpy_sparse_lgmres""numpy_sparse_minres""numpy_sparse_qmr""numpy_qr"
 
-EXPANDEDDET_ROOTS_FINDTYPE = "delves"    #"delves""numpy_roots""sympy_nroots"
+EXPANDEDDET_ROOTS_FINDTYPE = "sympy_nroots"    #"delves""numpy_roots""sympy_nroots"
 EXPANDEDDET_ROOTS_CLEANWIDTH = 10.0**-3        #Set to None to turn off
 
 SINGLEROOT_FINDTYPE = "muller"                 #"muller""secant"
@@ -90,7 +91,7 @@ class RatSMat(sm.mat):
                 self.coeffSolve.printCalStr(True)
                 self._readCoefficients()
                 read = True
-            except Exception as e:
+            except InternalException as e:
                 print "Error reading coefficients will attempt to calculate"
         
         if not read:
@@ -161,11 +162,10 @@ class RatSMat(sm.mat):
                 break
         return root
 
-
     # This returns all of the roots.
-    def findRoots(self, inEne=True):
+    def findRoots(self):
         if _isElasticRootMethod():
-            return self._findElasticRoots(inEne, self.rootSolver.getRoots)
+            return self._findElasticRoots(self.rootSolver.getRoots)
         else:
             self._setType(TYPE_FIN)
             return self._findDelvesRoots(inEne)
@@ -564,7 +564,7 @@ class RatSMat(sm.mat):
 
 #### Elastic Wavenumber Calculation ####
 
-    def _findElasticRoots(self, inEne, fun, **args):
+    def _findElasticRoots(self, fun, **args):
         if self.resultFileHandler:
             self.resultFileHandler.startLogAction("_findElasticRoots")
         if self.hasCoeffs:
@@ -588,11 +588,9 @@ class RatSMat(sm.mat):
                         #matLst[len(matLst)-1].append(val) #v1
                 mat = sy_matrix(matLst)
                 roots = fun(mat, k, **args)
-                if inEne:
-                    mappedRoots = map(lambda val: self.kCal.e(val,True), roots)
-                else:
-                    mappedRoots = map(lambda val: complex(val), roots)
-                allRoots.extend(mappedRoots)
+                kRoots = map(lambda val: complex(val), roots)
+                eRoots = map(lambda val: self.kCal.e(val,True), roots)
+                allRoots.extend(zip(kRoots,eRoots))
         else:
             raise sm.MatException("Calculation Error")
         if self.resultFileHandler:

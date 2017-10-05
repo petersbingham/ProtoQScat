@@ -7,7 +7,7 @@ try:
     kmat = RatSMatWrap(FILENAME,args.subN_,args.subStart_,args.subEnd_)
     roots = kmat.findRoots()
     for root in roots:
-        print root
+        print root[E_INDEX]
 except (sm.MatException) as inst:
     print str(inst)
     sys.exit()

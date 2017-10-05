@@ -8,7 +8,18 @@ def getArgDesc(func, args):
     else:
         d = {}
     d.update(args)
-    return str(d).replace(':', '').replace('\'', '').replace('{', '(').replace('}', ')')
+    argStr = "("
+    first = True
+    for arg in a.args:
+        if arg in d:
+            if not first:
+                argStr += ", "
+            else:
+                first = False
+            argStr += arg + " " + str(d[arg])
+    argStr += ")"
+    return argStr
+    #return str(d).replace(':', '').replace('\'', '').replace('{', '(').replace('}', ')')
 
 NOTABULATEFORMAT = "noformat"  #tabulate automatically formats if it look like a string
 def getFormattedHTMLTable(contents, headers, floatFmtFigs=None, numalign=None, stralign=None, border=False):

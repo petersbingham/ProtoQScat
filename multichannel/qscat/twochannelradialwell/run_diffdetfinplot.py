@@ -16,9 +16,11 @@ try:
     matSeq = sm.matSequence() 
     anaSmat, ratSmat = getSmats(args, kCal, kCal)
     
-    vals = ratSmat.getDiffFinDetRange(args.startE_, args.endE_, args.plotComplex_, args.steps_)
+    vals = ratSmat.getFinDetRange(args.startE_, args.endE_, args.plotComplex_, args.steps_)
+    dvals = ratSmat.getDiffFinDetRange(args.startE_, args.endE_, args.plotComplex_, args.steps_)
     
-    sp.plotSingle("Two Channel Radial Well Fit : diffdet(Fin)", vals[0], [vals[1],vals[2]], 'Total Energy (hartrees)', 'diffdet(Fin)', ['real','imag'])
+    sp.plotSingle("Two Channel Radial Well Fit : real Fin", vals[0], [vals[1],dvals[1]], 'Total Energy (hartrees)', 'det(Fin)', ['function','differential'])
+    sp.plotSingle("Two Channel Radial Well Fit : imag Fin", vals[0], [vals[2],dvals[2]], 'Total Energy (hartrees)', 'det(Fin)', ['function','differential'])
 
 except (DCException, sm.MatException) as inst:
     print str(inst)
