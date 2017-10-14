@@ -23,6 +23,7 @@ class PoleFinder:
         self.distThreshold = distThreshold
         self.zeroValue = 10**(-zeroValExp)
         self.ratCmp = num.RationalCompare(self.zeroValue)
+        self.lastRoots = []
         self.allPoles = []
         self.allPolesInfoStrs = []
         self.allRoots = []
@@ -183,7 +184,8 @@ class PoleFinder:
         file = open(self.resultFileHandler.getRootFilePath(), 'w')
         try:
             ratSmat.doCalc()
-            roots = ratSmat.findRoots()
+            roots = ratSmat.findRoots(self.lastRoots)
+            self.lastRoots = roots
             self._printInfoStr("Calculated", N, roots)
             self._recordRoots(file, descStr, roots)     
             file.close()

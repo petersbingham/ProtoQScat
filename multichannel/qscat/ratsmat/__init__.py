@@ -7,7 +7,7 @@ TYPE_S = 0
 TYPE_FIN = 1
 COEFFDIR = os.path.dirname(os.path.realpath(__file__)) + "/CoefficientFiles/"
 
-##########################################################
+########################################################## 
 ################### Configuration Here ###################
 ##########################################################
 
@@ -15,7 +15,7 @@ ALWAYS_CALCULATE = False
 
 PYTYPE_COEFF_SOLVE_METHOD = "numpy_solve"      #"numpy_solve""numpy_lstsq""numpy_sparse_bicg""numpy_sparse_bicgstab""numpy_sparse_lgmres""numpy_sparse_minres""numpy_sparse_qmr""numpy_qr"
 
-EXPANDEDDET_ROOTS_FINDTYPE = "sympy_nroots"    #"delves""numpy_roots""sympy_nroots"
+EXPANDEDDET_ROOTS_FINDTYPE = "delves"          #"delves""numpy_roots""sympy_nroots"
 EXPANDEDDET_ROOTS_CLEANWIDTH = 10.0**-3        #Set to None to turn off
 
 SINGLEROOT_FINDTYPE = "muller"                 #"muller""secant"
@@ -27,15 +27,19 @@ DISPLAY_PRECISION = 8
 SYMPY_NROOTS_N = DPS
 SYMPY_NROOTS_MAXSTEPS = 5000
 
-DELVES_X_CENT = 0.15
+DELVES_X_CENT = 0.20
 DELVES_Y_CENT = 0.0
-DELVES_WIDTH = 0.14
+DELVES_WIDTH = 0.19
 DELVES_HEIGHT = 0.3
-DELVES_N = 10
+DELVES_N = 1000
 DELVES_OUTLIER_COEFF = 100.
-DELVES_MAX_STEPS = 5
+DELVES_MAX_STEPS = 500
+DELVES_MULLER_OFFSET = 1e-6
 DELVES_KNOWN_ROOTS = []
-DELVES_VERBOSE = False
+DELVES_VERBOSE = True
+GIL_MODE = GIL_MODE_REFLECT_POLE
+GIL_DIST = 1e-10
+
 
 ##########################################################
 ##########################################################
@@ -60,7 +64,7 @@ class RatSMat(sm.mat):
                 raise sm.MatException("Selected root finding method not applicable to inelastic scattering data.")
             self.rootSolver = SymDetRoots(self.suppressCmdOut, EXPANDEDDET_ROOTS_FINDTYPE, SYMPY_NROOTS_N, SYMPY_NROOTS_MAXSTEPS)
         else:
-            self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_X_CENT, DELVES_Y_CENT, DELVES_WIDTH, DELVES_HEIGHT, DELVES_N, DELVES_OUTLIER_COEFF, DELVES_MAX_STEPS, DELVES_KNOWN_ROOTS, DELVES_VERBOSE)
+            self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_X_CENT, DELVES_Y_CENT, DELVES_WIDTH, DELVES_HEIGHT, DELVES_N, DELVES_OUTLIER_COEFF, DELVES_MAX_STEPS, DELVES_MULLER_OFFSET, DELVES_KNOWN_ROOTS, DELVES_VERBOSE, GIL_MODE, GIL_DIST)
             
         self.rootCleaner = RootClean(self.suppressCmdOut, EXPANDEDDET_ROOTS_CLEANWIDTH)
 
@@ -140,7 +144,7 @@ class RatSMat(sm.mat):
     def findERoot(self, startingEne, multipler=1.0):
         self._setType(TYPE_FIN)
         try:
-            return self._findERootAttempt((startingEne,startingEne+0.01,startingEne+0.02), multipler, SINGLEROOT_FINDTYPE)
+            return self._findERootAttempt((startingEne,startingEne+0.0001,startingEne+0.0002), multipler, SINGLEROOT_FINDTYPE)
         except ValueError:
             return None
     # This attempts to find a root using a specified a starting value and another at its conjugate.
@@ -163,12 +167,12 @@ class RatSMat(sm.mat):
         return root
 
     # This returns all of the roots.
-    def findRoots(self):
+    def findRoots(self, lastRoots=None):
         if _isElasticRootMethod():
             return self._findElasticRoots(self.rootSolver.getRoots)
         else:
             self._setType(TYPE_FIN)
-            return self._findDelvesRoots(inEne)
+            return self._findDelvesRoots(lastRoots)
     # This cleans the roots.
     def cleanRoots(self, roots):
         #Originally thought that bad roots around start of data set but moved data set away from zero and bad roots did not follow.
@@ -545,13 +549,16 @@ class RatSMat(sm.mat):
         #print str(e) + "\n" + str(val) + "\n"
         return val    
 
-    def _findDelvesRoots(self, inEne):
+    def _findDelvesRoots(self, lastRoots):
         if self.resultFileHandler:
             self.resultFileHandler.startLogAction("_findDelvesRoots")
         if self.hasCoeffs:
             allRoots = []
             for eKey in self.alphas:
-                allRoots.extend(self.rootSolver.getRoots(self._getDet, self._getDiffDet))
+                roots = self.rootSolver.getRoots(self._getDet, self._getDiffDet, lastRoots)
+                eRoots = map(lambda val: complex(val), roots)
+                kRoots = map(lambda val: self.kCal.fk(val,True), roots)
+                allRoots.extend(zip(kRoots,eRoots))
         else:
             raise sm.MatException("Calculation Error")
         if self.resultFileHandler:

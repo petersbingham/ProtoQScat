@@ -43,7 +43,7 @@ class CoeffSolve(AuxHelper):
         if self.qsmode == MODE_MPMATH:
             args = {}
             if act==0:
-                self.typeStr = "mpmath_qr_solve_dps"+getArgDesc(mpmath.qr_solve, args)+" DPS"+str(DPS)
+                self.typeStr = "mpmath_qr_solve_dps"+getArgDesc(mpmath.qr_solve, args)+", DPS "+str(DPS)
                 self.matrixType = 1
                 self.indexType = 1
             else:

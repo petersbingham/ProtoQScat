@@ -29,6 +29,20 @@ else:
 
 ############### BASIC TYPES ###############
 
+# np.percentile need these overrides.
+class QSmpc(mpmath.mpc):
+    def __lt__(self, other):
+        return self.real < other.real
+        
+    def __le__(self, other):
+        return self.real <= other.real
+        
+    def __gt__(self, other):
+        return self.real > other.real
+    
+    def __ge__(self, other):
+        return self.real >= other.real
+
 def QSfloat(val):
     if QSMODE == MODE_NORM:
         return float(val)
@@ -76,35 +90,53 @@ def QSTompmath(val):
     
 ############### BASIC OPERATIONS ###############
 
+def QSlt(val1, val2):
+    return val1.real < val2.real
+    
+def QSle(val1, val2):
+    return val1.real <= val2.real
+
+def QSgt(val1, val2):
+    return val1.real > val2.real
+    
+def QSge(val1, val2):
+    return val1.real >= val2.real
+
+def QSpercentile(a, q, axis=None, out=None, overwrite_input=False, interpolation='linear', keepdims=False):
+    if QSMODE == MODE_NORM:
+        return np.percentile(a, q, axis, out, overwrite_input, interpolation, keepdims)
+    else:
+        return np.percentile(map(lambda v: QSmpc(v), a), q, axis, out, overwrite_input, interpolation, keepdims)
+
 def QSpow(x, y):
-        if QSMODE == MODE_NORM:
-            return pow(x, y)
-        else:
-            return mpmath.power(x, y)
+    if QSMODE == MODE_NORM:
+        return pow(x, y)
+    else:
+        return mpmath.power(x, y)
 
 def QSexp(x):
-        if QSMODE == MODE_NORM:
-            return cmath.exp(x)
-        else:
-            return mpmath.exp(x)
+    if QSMODE == MODE_NORM:
+        return cmath.exp(x)
+    else:
+        return mpmath.exp(x)
 
 def QSsqrt(x):
-        if QSMODE == MODE_NORM:
-            return cmath.sqrt(x)
-        else:
-            return mpmath.sqrt(x)
+    if QSMODE == MODE_NORM:
+        return cmath.sqrt(x)
+    else:
+        return mpmath.sqrt(x)
 
 def QStan(x):
-        if QSMODE == MODE_NORM:
-            return cmath.tan(x)
-        else:
-            return mpmath.tan(x)
+    if QSMODE == MODE_NORM:
+        return cmath.tan(x)
+    else:
+        return mpmath.tan(x)
 
 def QSpolar(x):
-        if QSMODE == MODE_NORM:
-            return cmath.polar(x)
-        else:
-            return mpmath.polar(x)
+    if QSMODE == MODE_NORM:
+        return cmath.polar(x)
+    else:
+        return mpmath.polar(x)
     
 ############### MATRIX TYPES ###############
     
