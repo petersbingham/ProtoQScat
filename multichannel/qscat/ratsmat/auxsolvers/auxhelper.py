@@ -14,12 +14,12 @@ sys.path.insert(0,base+'/../../../../utilities')
 sys.path.insert(0,base+'/..')
 
 from general import *
-from general.qstype import *
+from general.multi_type import *
 import general.numerical as num
 import scattering.matrices as sm
 
 def canCacheCoefficients():
-    if QSMODE == MODE_NORM:
+    if MTMODE == MODE_NORM:
         npVer = [int(val) for val in np.__version__.split('.')]
         if npVer[0]>1 or (npVer[0]==1 and npVer[1]>6) or (npVer[0]==1 and npVer[1]==6 and npVer[2]>1): #saveTxt not supported prior.
             return True

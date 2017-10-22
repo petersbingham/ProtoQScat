@@ -9,7 +9,7 @@ sys.path.insert(0,base+'../..')
 
 if __name__ != '__main__': #Can test without these imports
     import scattering.matrices as sm
-    from general.qstype import *
+    from general.multi_type import *
     from ratsmat.resultfilehandler import *
 
 NUMFIELDCHARS=20
@@ -38,7 +38,7 @@ class RfortMatReader:
                     lineI = 0
                     self.cElement = 1
                     ene = self._num(nums[3])
-                    self.kmats[ene] = QSsqZeros(self.numChannels)
+                    self.kmats[ene] = MTsqZeros(self.numChannels)
                 else:
                     if lineI < numCompleteLinesPerMat:
                         self._checkLineLength(line, linNum, 4)

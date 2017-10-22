@@ -4,8 +4,8 @@ from analytical.runargsrange import *
 rtArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Range Test", parents=[tcp_range])
 args = rtArgs.parse_args()
 
-if QSMODE == MODE_MPMATH:
-    print "Not supported for mpmath. Change mode in QSType."
+if MTMODE == MODE_MPMATH:
+    print "Not supported for mpmath. Change mode in MTType."
 else:
     try:
         kCal = sm.kCalculator([args.t1_,args.t2_], massMult=MASSMULT)

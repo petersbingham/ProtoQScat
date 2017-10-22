@@ -27,8 +27,8 @@ class T_to_XSmol(T_to_XS):
         return XS * conv.BOHRSQ_to_ANGSQ
 
 def getTotalXS(T_to_XS):
-    XS = QSsumElements(T_to_XS.getMatrix())
-    return QSmatrix([[XS]])
+    XS = MTsumElements(T_to_XS.getMatrix())
+    return MTmatrix([[XS]])
 
 class RatSMatWrap:
     def __init__(self, fileName, N=None, startIndex=None, endIndex=None, kfitSigns=None, ksigns=None, suppressCmdOut=False):
@@ -71,7 +71,7 @@ class RatSMatWrap:
     
     def getMatrix(self):
         if self.ene is None:
-            return QSidentity(NUMCHANNELS)
+            return MTidentity(NUMCHANNELS)
         else:
             return self._getSfromKmatrix(self.ene)
     
@@ -114,8 +114,8 @@ class RatSMatWrap:
         for ene in eneRange:
             for i in range(len(resDatas)):
                 if inFitRange(resDatas[i], ene):
-                    ePhaseFitPointsLst[i][ene] = QSmatrix([[bretWig(fitCoeffs[i][0], fitCoeffs[i][1], ene)]])
-                    #ePhaseFitPointsLst[i][ene] = QSmatrix([[resonant(resDatas[i], ene)]]) #resonant part only
+                    ePhaseFitPointsLst[i][ene] = MTmatrix([[bretWig(fitCoeffs[i][0], fitCoeffs[i][1], ene)]])
+                    #ePhaseFitPointsLst[i][ene] = MTmatrix([[resonant(resDatas[i], ene)]]) #resonant part only
         
         return (ratEPhaseMats, ePhaseFitPointsLst)
     

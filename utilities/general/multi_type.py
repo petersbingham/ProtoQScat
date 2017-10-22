@@ -9,28 +9,28 @@ MODE_MPMATH = 1
 ##########################################################
 ################### Configuration Here ###################
 
-QSMODE = MODE_MPMATH
+MTMODE = MODE_MPMATH
 DPS_MPMATH = 100
 DPS_PYTHONTYPES = 25
 
 ##########################################################
 ##########################################################
 
-if QSMODE == MODE_NORM:
+if MTMODE == MODE_NORM:
     DPS = DPS_PYTHONTYPES
 else:
     DPS = DPS_MPMATH
 mpmath.mp.dps = DPS
 
-if QSMODE == MODE_NORM:
-    QSPI = cmath.pi
+if MTMODE == MODE_NORM:
+    MTPI = cmath.pi
 else:
-    QSPI = mpmath.pi 
+    MTPI = mpmath.pi 
 
 ############### BASIC TYPES ###############
 
 # np.percentile need these overrides.
-class QSmpc(mpmath.mpc):
+class MTmpc(mpmath.mpc):
     def __lt__(self, other):
         return self.real < other.real
         
@@ -43,14 +43,14 @@ class QSmpc(mpmath.mpc):
     def __ge__(self, other):
         return self.real >= other.real
 
-def QSfloat(val):
-    if QSMODE == MODE_NORM:
+def MTfloat(val):
+    if MTMODE == MODE_NORM:
         return float(val)
     else:
         return mpmath.mpf(val)
     
-def QScomplex(val):
-    if QSMODE == MODE_NORM:
+def MTcomplex(val):
+    if MTMODE == MODE_NORM:
         return complex(val)
     else:
         if type(val) is str or type(val) is unicode:
@@ -76,106 +76,106 @@ def QScomplex(val):
         else:
             return mpmath.mpc(val)
 
-def QSToSympy(val):
-    if QSMODE == MODE_NORM:
+def MTToSympy(val):
+    if MTMODE == MODE_NORM:
         return val
     else:
         return sy.Float(str(val.real),DPS) + sy.Float(str(val.imag),DPS)*sy.I
 
-def QSTompmath(val):
-    if QSMODE == MODE_NORM:
+def MTTompmath(val):
+    if MTMODE == MODE_NORM:
         pass
     else:
         return mpmath.mpc(real=sy.re(val),imag=sy.im(val))
     
 ############### BASIC OPERATIONS ###############
 
-def QSlt(val1, val2):
+def MTlt(val1, val2):
     return val1.real < val2.real
     
-def QSle(val1, val2):
+def MTle(val1, val2):
     return val1.real <= val2.real
 
-def QSgt(val1, val2):
+def MTgt(val1, val2):
     return val1.real > val2.real
     
-def QSge(val1, val2):
+def MTge(val1, val2):
     return val1.real >= val2.real
 
-def QSpercentile(a, q, axis=None, out=None, overwrite_input=False, interpolation='linear', keepdims=False):
-    if QSMODE == MODE_NORM:
+def MTpercentile(a, q, axis=None, out=None, overwrite_input=False, interpolation='linear', keepdims=False):
+    if MTMODE == MODE_NORM:
         return np.percentile(a, q, axis, out, overwrite_input, interpolation, keepdims)
     else:
-        return np.percentile(map(lambda v: QSmpc(v), a), q, axis, out, overwrite_input, interpolation, keepdims)
+        return np.percentile(map(lambda v: MTmpc(v), a), q, axis, out, overwrite_input, interpolation, keepdims)
 
-def QSpow(x, y):
-    if QSMODE == MODE_NORM:
+def MTpow(x, y):
+    if MTMODE == MODE_NORM:
         return pow(x, y)
     else:
         return mpmath.power(x, y)
 
-def QSexp(x):
-    if QSMODE == MODE_NORM:
+def MTexp(x):
+    if MTMODE == MODE_NORM:
         return cmath.exp(x)
     else:
         return mpmath.exp(x)
 
-def QSsqrt(x):
-    if QSMODE == MODE_NORM:
+def MTsqrt(x):
+    if MTMODE == MODE_NORM:
         return cmath.sqrt(x)
     else:
         return mpmath.sqrt(x)
 
-def QStan(x):
-    if QSMODE == MODE_NORM:
+def MTtan(x):
+    if MTMODE == MODE_NORM:
         return cmath.tan(x)
     else:
         return mpmath.tan(x)
 
-def QSpolar(x):
-    if QSMODE == MODE_NORM:
+def MTpolar(x):
+    if MTMODE == MODE_NORM:
         return cmath.polar(x)
     else:
         return mpmath.polar(x)
     
 ############### MATRIX TYPES ###############
     
-def QSmatrix(val):
-    if QSMODE == MODE_NORM:
+def MTmatrix(val):
+    if MTMODE == MODE_NORM:
         return np.matrix(val, dtype=np.complex128)
     else:
         return mpmath.matrix(val)
     
-def QSsqZeros(sz):
-    if QSMODE == MODE_NORM:
+def MTsqZeros(sz):
+    if MTMODE == MODE_NORM:
         return np.matrix(np.zeros((sz, sz), dtype=np.complex128))
     else:
         return mpmath.zeros(sz)
     
-def QSidentity(sz):
-    if QSMODE == MODE_NORM:
+def MTidentity(sz):
+    if MTMODE == MODE_NORM:
         return np.matrix(np.identity(sz, dtype=np.complex128))
     else:
         return mpmath.eye(sz)
 
 ############# MATRIX CHARACTERISTICS #############
     
-def QSshape(mat):
-    if QSMODE == MODE_NORM:
+def MTshape(mat):
+    if MTMODE == MODE_NORM:
         return mat.shape
     else:
         return (mat.rows, mat.cols)
 
-def QSsize(mat):
-    if QSMODE == MODE_NORM:
+def MTsize(mat):
+    if MTMODE == MODE_NORM:
         return mat.size
     else:
         return mat.rows*mat.cols
 
 ############### MATRIX OPERATIONS ###############
     
-def QSdiagonalise(mat):
-    if QSMODE == MODE_NORM:
+def MTdiagonalise(mat):
+    if MTMODE == MODE_NORM:
         w, v = np.linalg.eig(mat)
         P = np.transpose(np.matrix(v, dtype=np.complex128))
         return np.dot(P, np.dot(mat, np.linalg.inv(P)))
@@ -184,20 +184,20 @@ def QSdiagonalise(mat):
         P = mpmath.matrix(v).T
         return P * mat * P**-1
 
-def QSinvert(mat):
-    if QSMODE == MODE_NORM:
+def MTinvert(mat):
+    if MTMODE == MODE_NORM:
         return np.linalg.inv(mat)
     else:
         return mpmath.inverse(mat) 
 
-def QSdot(matA, matB):
-    if QSMODE == MODE_NORM:
+def MTdot(matA, matB):
+    if MTMODE == MODE_NORM:
         return np.dot(matA, matB) 
     else:
         return matA * matB
     
-def QSgetRow(mat, m):
-    if QSMODE == MODE_NORM:
+def MTgetRow(mat, m):
+    if MTMODE == MODE_NORM:
         return mat[m].tolist()[0]
     else:
         row = []
@@ -205,8 +205,8 @@ def QSgetRow(mat, m):
             row.append(mat[m,n])
         return row
 
-def QScopyRow(src_mat, dest_mat, m):
-    if QSMODE == MODE_NORM:
+def MTcopyRow(src_mat, dest_mat, m):
+    if MTMODE == MODE_NORM:
         pass
     else:
         newMat = dest_mat.copy()
@@ -214,14 +214,14 @@ def QScopyRow(src_mat, dest_mat, m):
             newMat[m,n] = src_mat[m,n]
         return newMat
 
-def QSdet(mat):
-    if QSMODE == MODE_NORM:
+def MTdet(mat):
+    if MTMODE == MODE_NORM:
         return np.linalg.det(mat)
     else:
         return mpmath.det(mat)
 
-def QSsumElements(mat):
-    if QSMODE == MODE_NORM:
+def MTsumElements(mat):
+    if MTMODE == MODE_NORM:
         XS = 0.0
         for x in np.nditer(mat, flags=['refs_ok']):
             XS += x
@@ -232,8 +232,8 @@ def QSsumElements(mat):
                 XS += mat[i,j]
     return XS
    
-def QStrace(mat):
-    if QSMODE == MODE_NORM:
+def MTtrace(mat):
+    if MTMODE == MODE_NORM:
         return np.trace(mat)
     else:
         t = mpmath.mpc(0.0)
@@ -241,8 +241,8 @@ def QStrace(mat):
             t += mat[i,i]
         return t
     
-def QSatanElements(mat):
-    if QSMODE == MODE_NORM:
+def MTatanElements(mat):
+    if MTMODE == MODE_NORM:
         return np.arctan(mat)
     else:
         at = mpmath.matrix(mat.rows, mat.cols)
@@ -262,11 +262,11 @@ def _symToMpmathMatrix(mat):
     mpMat = mpmath.matrix(mat.shape[0])
     for r in range(mat.shape[0]):
         for c in range(mat.shape[0]):
-            mpMat[r,c] = QSTompmath(mat[r,c])
+            mpMat[r,c] = MTTompmath(mat[r,c])
     return mpMat
 
-def QSadjugate(mat):
-    if QSMODE == MODE_NORM:
+def MTadjugate(mat):
+    if MTMODE == MODE_NORM:
         pass
     else:
         symMat = _mpmathToSymMatrix(mat)
@@ -276,7 +276,7 @@ def QSadjugate(mat):
 ############### OTHER ###############
 
 def formattedFloatString(val, dps):
-    if QSMODE == MODE_NORM:
+    if MTMODE == MODE_NORM:
         return ("{:1."+str(dps)+"f}").format(val)
     else:
         return mpmath.nstr(val, mpIntDigits(val)+dps)

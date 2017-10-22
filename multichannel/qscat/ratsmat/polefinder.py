@@ -5,7 +5,7 @@ sys.path.append("../utilities")
 import general.numerical as num
 from ratsmat import *
 from decimator import *
-from general.qstype import *
+from general.multi_type import *
 from globalSettings import *
 
 ZEROVALEXP = 7
@@ -393,7 +393,7 @@ class PoleFinder:
         file.write("@<**********************************************************************************************>@\n")
         
     def _getComplexFormat(self):
-        if QSMODE == MODE_NORM:
+        if MTMODE == MODE_NORM:
             return "%.14f%+.14fi"
         else:
             return "%."+str(DPS)+"f%+."+str(DPS)+"fi"   

@@ -12,8 +12,8 @@ args = args_ephasefit.parse_args()
 
 FIT_CYCLE = ['red', 'blue', 'purple', 'orange', 'cyan']
 
-if QSMODE == MODE_MPMATH:
-    print "Not supported for mpmath. Change mode in QSType."
+if MTMODE == MODE_MPMATH:
+    print "Not supported for mpmath. Change mode in MTType."
 else:
     try:
         kmat = RatSMatWrap(FILENAME)

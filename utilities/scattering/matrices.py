@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import conversions as conv
-from general.qstype import *
+from general.multi_type import *
 
 def decimate(mats, startIndex, endIndex, N):
     step = int((endIndex-startIndex) / (N-1))
@@ -39,9 +39,9 @@ def getSfromKmatrices(kmats, numChannels):
     return smats
 
 def getSfromKmatrix(kmats, numChannels, ene):
-    num = QSidentity(numChannels) + 1.0j*kmats[ene]
-    denum = QSidentity(numChannels) - 1.0j*kmats[ene]
-    S = QSdot(num, QSinvert(denum))
+    num = MTidentity(numChannels) + 1.0j*kmats[ene]
+    denum = MTidentity(numChannels) - 1.0j*kmats[ene]
+    S = MTdot(num, MTinvert(denum))
     return S
 
 REDUCED_MASS = 1.0     
@@ -74,16 +74,16 @@ class kCalculator:
         if primType:
             return complex(ene)
         else:
-            return QScomplex(ene)
+            return MTcomplex(ene)
     def fk(self, ene, primType=False): #free k
-        k = QSsqrt(self.getMult()*ene)
+        k = MTsqrt(self.getMult()*ene)
         if primType:
             return complex(k)
         else:
-            return QScomplex(k)
+            return MTcomplex(k)
     def kl(self, ch, ene, add=0.0):
         k = self.k(ch, ene)
-        return QSpow(k, self.ls[ch]+add)
+        return MTpow(k, self.ls[ch]+add)
     def k(self, ch, ene):
         if self.ktype == K_POS:
             return self.kpos(ch, ene)
@@ -96,7 +96,7 @@ class kCalculator:
     def l(self, ch):
         return self.ls[ch]
     def kpos(self, ch, ene):
-        return QSsqrt(self._getValue(ch, ene))
+        return MTsqrt(self._getValue(ch, ene))
     def ksign(self, ch, ene):
         if self.invertChannel:
             ch = len(self.thresholds)-1 - ch
@@ -106,8 +106,8 @@ class kCalculator:
         return mult * self.kpos(ch, ene)
     def krot(self, ch, ene):
         k = self.kpos(ch, ene)
-        absolute, argument = QSpolar(k) 
-        return absolute * QSexp(1j*(argument+self.getPhase(ch, ene)))
+        absolute, argument = MTpolar(k) 
+        return absolute * MTexp(1j*(argument+self.getPhase(ch, ene)))
     def kcomp(self, ch, ene):
         k = self.kpos(ch, ene)
         if ene.real <= self.thresholds[ch]: #We want to be on the physical here
@@ -127,7 +127,7 @@ class kCalculator:
         if ene.real <= self.thresholds[ch]:
             return 0.0
         else:
-            return QSPI
+            return MTPI
     def getMult(self):
         return self.massMult*REDUCED_MASS
     def isElastic(self):
@@ -160,7 +160,7 @@ class matSequence:
         self.colourCycle = colourCycle
     
     def __setitem__(self, key, item):
-        self.size = QSsize(item)
+        self.size = MTsize(item)
         self.items[key] = item
     
     def __getitem__(self, key):
@@ -248,7 +248,7 @@ class matSequence:
                 else:
                     ys[i] = items[x][m,n].imag
             elif pt==matSequence.PLOT_TYPE_TRACE:
-                trace = QStrace(items[x])
+                trace = MTtrace(items[x])
                 if not imag:
                     ys[i] = trace.real
                 else:
@@ -312,7 +312,7 @@ class matSequence:
     
     def _getSize(self):
         key = random.choice(self.items.keys())
-        return QSshape(self.items[key])[0] 
+        return MTshape(self.items[key])[0] 
     
     def _convert(self):
         return self.items
@@ -521,9 +521,9 @@ class mat:
         for m in range(self.size):
             rlist = []
             for n in range(self.size):
-                rlist.append(QScomplex(self[m][n]))
+                rlist.append(MTcomplex(self[m][n]))
             mlist.append(rlist)
-        return QSmatrix(mlist)
+        return MTmatrix(mlist)
     
     def __str__(self):
         isImag = self._isImag()
@@ -551,13 +551,13 @@ class mat:
     def _isImag(self):
         for m in range(0,self.size):
             for n in range(0,self.size):
-                if abs(float(QScomplex(self[m][n]).imag)) > self.min:
+                if abs(float(MTcomplex(self[m][n]).imag)) > self.min:
                     return True
         return False
     
     def _getFormattedStr(self, value, isImag):
         if isImag:
-            return formattedComplexString(QScomplex(value), self.precision)
+            return formattedComplexString(MTcomplex(value), self.precision)
         else:
-            return formattedFloatString(QScomplex(value).real, self.precision)
+            return formattedFloatString(MTcomplex(value).real, self.precision)
     
