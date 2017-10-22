@@ -38,7 +38,7 @@ class RfortMatReader:
                     lineI = 0
                     self.cElement = 1
                     ene = self._num(nums[3])
-                    self.kmats[ene] = MTsqZeros(self.numChannels)
+                    self.kmats[ene] = tw.sqZeros(self.numChannels)
                 else:
                     if lineI < numCompleteLinesPerMat:
                         self._checkLineLength(line, linNum, 4)

@@ -57,7 +57,7 @@ class EPhaseFitter:
     def _doFits2(self, startCoeffs, eRange, lockBretWig):
         self.lockingBretWig = lockBretWig
         eRange = np.array(eRange)
-        epRange = np.array([MTtrace(self.ratEPhaseMats[ene]) for ene in eRange])
+        epRange = np.array([tw.trace(self.ratEPhaseMats[ene]) for ene in eRange])
         args=(eRange, epRange)
         if self.lockingBretWig:
             coeff = self._leastsq(startCoeffs, args) #Faster method but does not perform well if floating Bret-Wigner parameters.

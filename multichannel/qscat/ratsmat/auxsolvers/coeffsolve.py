@@ -16,8 +16,8 @@ class CoeffSolve(AuxHelper):
     
     def initialiseMatrices(self):
         if self.matrixType==0 or self.matrixType==1:
-            self.sysMat = MTmatrix(self._getSysMatInit())
-            self.resVec = MTmatrix(self._getResVecInit())
+            self.sysMat = tw.matrix(self._getSysMatInit())
+            self.resVec = tw.matrix(self._getResVecInit())
         else:
             self.sysMat = sy_matrix(self._getSysMatInit())       
             self.resVec = sy_matrix(self._getResVecInit()) 

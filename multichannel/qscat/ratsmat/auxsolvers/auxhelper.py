@@ -19,7 +19,7 @@ import general.numerical as num
 import scattering.matrices as sm
 
 def canCacheCoefficients():
-    if MTMODE == MODE_NORM:
+    if tw.MODE == MODE_NORM:
         npVer = [int(val) for val in np.__version__.split('.')]
         if npVer[0]>1 or (npVer[0]==1 and npVer[1]>6) or (npVer[0]==1 and npVer[1]==6 and npVer[2]>1): #saveTxt not supported prior.
             return True

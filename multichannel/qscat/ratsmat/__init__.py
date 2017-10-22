@@ -57,7 +57,7 @@ class RatSMat(sm.mat):
         self.hasCoeffs = False
         self.ene = None
         
-        self.coeffSolve = CoeffSolve(self.suppressCmdOut, MTMODE, PYTYPE_COEFF_SOLVE_METHOD)
+        self.coeffSolve = CoeffSolve(self.suppressCmdOut, tw.MODE, PYTYPE_COEFF_SOLVE_METHOD)
         
         if _isElasticRootMethod():
             if not self.kCal.isElastic():
@@ -117,15 +117,15 @@ class RatSMat(sm.mat):
         if self.type != TYPE_FIN:
             raise sm.MatException("Wrong type set")
         else:
-            return MTdet(self.selMat)
+            return tw.det(self.selMat)
     def getDiffFinDet(self):
         if self.type != TYPE_FIN:
             raise sm.MatException("Wrong type set")
         else:
-            #return MTtrace( MTdot(MTadjugate(self.selMat), self.selDiffMat))
+            #return tw.trace( tw.dot(tw.adjugate(self.selMat), self.selDiffMat))
             det = 0.
-            for m in range(MTshape(self.selMat)[0]):
-                det += MTdet(MTcopyRow(self.selDiffMat, self.selMat, m))
+            for m in range(tw.shape(self.selMat)[0]):
+                det += tw.det(tw.copyRow(self.selDiffMat, self.selMat, m))
             return det
         
     # This returns values of the determinants across a specified range.
@@ -199,11 +199,11 @@ class RatSMat(sm.mat):
         self._datPrint()
 
     def _initData2(self):
-        matShape = MTshape(self.sMatData.itervalues().next())    
+        matShape = tw.shape(self.sMatData.itervalues().next())    
         if matShape[0]>=1 and matShape[0]==matShape[1]:
             self.numChannels = matShape[0]
             for ene in self.sMatData:
-                matShape = MTshape(self.sMatData[ene])
+                matShape = tw.shape(self.sMatData[ene])
                 if matShape[0]!=self.numChannels or matShape[0]!=matShape[1]:
                     raise sm.MatException("Bad Input: Inconsistent matrices")
             self.coeffSolve.setValues(self.numPolyTerms, self.fitSize, self.numChannels)
@@ -231,13 +231,13 @@ class RatSMat(sm.mat):
             sz = self.enes[fit*self.fitSize]
             self.alphas[sz] = self._initialiseCoefficients()
             self.betas[sz] = self._initialiseCoefficients()
-        self.selMat = MTmatrix(self._getZeroListMats())
-        self.selDiffMat = MTmatrix(self._getZeroListMats())
+        self.selMat = tw.matrix(self._getZeroListMats())
+        self.selDiffMat = tw.matrix(self._getZeroListMats())
 
     def _initialiseCoefficients(self):
         coeffs = []
         for i in range(0, self.numCoeffs):
-            mat = MTmatrix(self._getZeroListMats())
+            mat = tw.matrix(self._getZeroListMats())
             coeffs.append(mat)
         return coeffs
 
@@ -273,7 +273,7 @@ class RatSMat(sm.mat):
 
     def _readCoefficientsForFit(self, fit, ci, typeString):
         fileName = self.resultFileHandler.getCoeffFileName(fit, ci, typeString)
-        if MTMODE == MODE_NORM:
+        if tw.MODE == MODE_NORM:
             return np.asmatrix(np.loadtxt(fileName, dtype=np.complex128, delimiter=","))
         else:
             f = open( fileName, "r" )
@@ -298,7 +298,7 @@ class RatSMat(sm.mat):
     def _writeCoefficientsForFit(self, fit, ci, typeString, matRef):
         fileName = self.resultFileHandler.getCoeffFileName(fit, ci, typeString)
         mat = matRef[self.enes[fit*self.fitSize]][ci]
-        if MTMODE == MODE_NORM:
+        if tw.MODE == MODE_NORM:
             np.savetxt(fileName, mat, delimiter=",")
             self._fixFile(fileName)
         else:
@@ -362,16 +362,16 @@ class RatSMat(sm.mat):
         return self.numPolyTerms*self.numChannels + m*self.numPolyTerms + ti
 
     def _primaryAlpha(self, m, n, ene, exp):
-        return self.kCal.kl(n,ene,1.0) / self.kCal.kl(m,ene,1.0) * (self.sMatData[ene][m,m]-1.0) * MTpow(ene,exp)
+        return self.kCal.kl(n,ene,1.0) / self.kCal.kl(m,ene,1.0) * (self.sMatData[ene][m,m]-1.0) * tw.pow(ene,exp)
 
     def _primaryBeta(self, m, n, ene, exp):
-        return -1.0j * self.kCal.kl(m,ene,0.0) * self.kCal.kl(n,ene,1.0) * (self.sMatData[ene][m,m]+1.0) * MTpow(ene,exp)
+        return -1.0j * self.kCal.kl(m,ene,0.0) * self.kCal.kl(n,ene,1.0) * (self.sMatData[ene][m,m]+1.0) * tw.pow(ene,exp)
 
     def _secondaryAlpha(self, m, n, j, ene, exp):
-        return self.kCal.kl(n,ene,1.0) / self.kCal.kl(j,ene,1.0) * self.sMatData[ene][m,j] * MTpow(ene,exp)
+        return self.kCal.kl(n,ene,1.0) / self.kCal.kl(j,ene,1.0) * self.sMatData[ene][m,j] * tw.pow(ene,exp)
 
     def _secondaryBeta(self, m, n, j, ene, exp):
-        return -1.0j * self.kCal.kl(j,ene,0.0) * self.kCal.kl(n,ene,1.0) * self.sMatData[ene][m,j] * MTpow(ene,exp)
+        return -1.0j * self.kCal.kl(j,ene,0.0) * self.kCal.kl(n,ene,1.0) * self.sMatData[ene][m,j] * tw.pow(ene,exp)
 
     def _result(self, m, n, ene):
         num = 0.0
@@ -388,8 +388,8 @@ class RatSMat(sm.mat):
                     if m==n:
                         self.alphas[eneKey][ci][m,n] = 1.0
                 else:
-                    self.alphas[eneKey][ci][m,n] = MTcomplex(self.coeffSolve.getValue(self._alphaIndex(m,ti)))
-                    self.betas[eneKey][ci][m,n] = MTcomplex(self.coeffSolve.getValue(self._betaIndex(m,ti)))
+                    self.alphas[eneKey][ci][m,n] = tw.complex(self.coeffSolve.getValue(self._alphaIndex(m,ti)))
+                    self.betas[eneKey][ci][m,n] = tw.complex(self.coeffSolve.getValue(self._betaIndex(m,ti)))
 
 
 ########################################################################
@@ -402,9 +402,9 @@ class RatSMat(sm.mat):
         #if self.resultFileHandler:
         #    self.resultFileHandler.startLogAction("_calculate")
         if self.hasCoeffs:
-            Fin = MTmatrix(self._getZeroListMats())
-            FinDiff = MTmatrix(self._getZeroListMats())
-            Fout = MTmatrix(self._getZeroListMats())
+            Fin = tw.matrix(self._getZeroListMats())
+            FinDiff = tw.matrix(self._getZeroListMats())
+            Fout = tw.matrix(self._getZeroListMats())
             alphas = self._getAlphaSet()
             betas = self._getBetaSet()
             for m in range(self.numChannels):
@@ -417,7 +417,7 @@ class RatSMat(sm.mat):
                     k2_mult = 1.0j*self.kCal.kl(m,self.ene,0.0)*self.kCal.kl(n,self.ene,1.0)
                     for ci in range(self.numCoeffs):
                         exp = ci
-                        pow = MTpow(self.ene, exp)
+                        pow = tw.pow(self.ene, exp)
                         a = k1_mult * alphas[ci][m,n] * pow
                         b = k2_mult * betas[ci][m,n] * pow
 
@@ -438,7 +438,7 @@ class RatSMat(sm.mat):
                 self.selMat = Fin
                 self.selDiffMat = FinDiff
             else:
-                self.selMat = Fout * MTinvert(Fin)  #S-matrix
+                self.selMat = Fout * tw.invert(Fin)  #S-matrix
         else:
             raise sm.MatException("Calculation Error")
         #if self.resultFileHandler:
@@ -449,8 +449,8 @@ class RatSMat(sm.mat):
         lm = self.kCal.l(m)
         lnp1 = self.kCal.l(n)+1.0
         lmp1 = self.kCal.l(m)+1.0
-        knsq = 2.0*MTpow(self.kCal.k(n,self.ene),2.0)
-        kmsq = 2.0*MTpow(self.kCal.k(m,self.ene),2.0)
+        knsq = 2.0*tw.pow(self.kCal.k(n,self.ene),2.0)
+        kmsq = 2.0*tw.pow(self.kCal.k(m,self.ene),2.0)
         muOverE = exp / self.ene
         
         t1_fact = C*lnp1/knsq - C*lmp1/kmsq + muOverE
@@ -458,8 +458,8 @@ class RatSMat(sm.mat):
         return t1_fact, t2_fact
       
     def _gett2Diff(self, n, m, exp):
-        a = self.kCal.l(m) / (2*MTpow(self.kCal.k(m,self.ene),2.0))
-        b = (self.kCal.l(n)+1.0) / (2*MTpow(self.kCal.k(n,self.ene),2.0))
+        a = self.kCal.l(m) / (2*tw.pow(self.kCal.k(m,self.ene),2.0))
+        b = (self.kCal.l(n)+1.0) / (2*tw.pow(self.kCal.k(n,self.ene),2.0))
         c = exp / self.ene
       
     def _getAlphaSet(self):
@@ -499,7 +499,7 @@ class RatSMat(sm.mat):
     
     def _getRow(self, m):    
         if self.hasCoeffs:
-            return MTgetRow(self.selMat, m)
+            return tw.getRow(self.selMat, m)
         else:
             raise sm.MatException("Calculation Error")
 
@@ -529,8 +529,8 @@ class RatSMat(sm.mat):
     
     # Muller
     def _getModifier(self, i, j):
-        mod1 = MTpow(10,float(i))
-        mod2 = MTpow(10,float(i-1))
+        mod1 = tw.pow(10,float(i))
+        mod2 = tw.pow(10,float(i-1))
         return mod1 + j*mod2
     def _findERootAttempt(self, startingEne, multipler, type):
         try:

@@ -18,13 +18,13 @@ class TranMat(sm.mat):
         if isinstance(self.sourceMat, TranMat):
             return self.sourceMat.getShape()
         else:
-            return MTshape(self.sourceMat.getMatrix())
+            return tw.shape(self.sourceMat.getMatrix())
     
     def getMatrix(self):
         return self.tranMat
       
     def _getRow(self, m):
-        return MTgetRow(self.tranMat, m)
+        return tw.getRow(self.tranMat, m)
 
 class S_to_T(TranMat):
     def setEnergy(self, ene):
@@ -32,7 +32,7 @@ class S_to_T(TranMat):
         self._calculate()
       
     def _calculate(self):
-        self.tranMat = self.sourceMat.getMatrix() - MTidentity(self.sourceMat.numChannels)
+        self.tranMat = self.sourceMat.getMatrix() - tw.identity(self.sourceMat.numChannels)
     
 class S_to_UniOp(TranMat):
     def setEnergy(self, ene):
@@ -50,10 +50,10 @@ class S_to_EPhase(TranMat):
         self._calculate()
       
     def _calculate(self):
-        num = MTidentity(self.sourceMat.numChannels) - self.sourceMat.getMatrix()
-        denum = MTidentity(self.sourceMat.numChannels) + self.sourceMat.getMatrix()
-        K = 1.0j*MTdot(num, MTinvert(denum))
-        self.tranMat = MTatanElements(MTdiagonalise(K))
+        num = tw.identity(self.sourceMat.numChannels) - self.sourceMat.getMatrix()
+        denum = tw.identity(self.sourceMat.numChannels) + self.sourceMat.getMatrix()
+        K = 1.0j*tw.dot(num, tw.invert(denum))
+        self.tranMat = tw.atanElements(tw.diagonalise(K))
  
 class T_to_XS(TranMat):
     def __init__(self, tMat, kCal):
@@ -65,7 +65,7 @@ class T_to_XS(TranMat):
         self._calculate()
       
     def _calculate(self):
-        self.tranMat = MTsqZeros(self.sourceMat.sourceMat.numChannels)
+        self.tranMat = tw.sqZeros(self.sourceMat.sourceMat.numChannels)
         for m in range(self.size):
             for n in range(self.size):
                 self.tranMat[m,n] = self._getElement(m,n)

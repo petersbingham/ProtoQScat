@@ -322,7 +322,7 @@ def get_max(y):
     in the numerically safe function new_f_frac_safe.
 
     '''
-    q75, q50, q25 = MTpercentile(y, [75 , 50, 25])
+    q75, q50, q25 = tw.percentile(y, [75 , 50, 25])
     IQR = q75-q25
     return q50+IQR
 
@@ -416,7 +416,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     I0 = integrate.trapz(y_smooth, c)  ##approx number of roots not subtracted
 
     ## If there's only a few roots, find them.
-    if MTlt(I0,10):
+    if tw.lt(I0,10):
         num_roots_interior = int(round(abs(I0)))
         if num_roots_interior == 0:
             return ret, inside_boundary(subtracted_roots,x_cent,y_cent,width,height)
@@ -440,7 +440,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
         combined_roots = purge(roots_near_boundary)
     ## if some interior roots are missed or if there were many roots,
     ## subdivide the rectangle and search recursively.
-    if MTge(I0,10) or len(combined_roots) < num_roots_interior and max_steps != 0:
+    if tw.ge(I0,10) or len(combined_roots) < num_roots_interior and max_steps != 0:
         x_list = [x_cent - width / 2.,x_cent - width / 2.,
                   x_cent + width / 2.,x_cent + width / 2.]
         y_list = [y_cent - height / 2.,y_cent + height / 2.,

@@ -88,7 +88,7 @@ class Mats:
             self.K = K
             self.V = V
         def _getRow(self, i):
-            return [MTpow(self.K[i][0],2)-self.V[i][0], MTpow(self.K[i][1],2)-self.V[i][1]]
+            return [tw.pow(self.K[i][0],2)-self.V[i][0], tw.pow(self.K[i][1],2)-self.V[i][1]]
         
     class aSqMat(sm.mat):
         def __init__(self, A):
@@ -213,7 +213,7 @@ class Smat(sm.mat):
         return self._cast_result(ret)
 
     def _S_12(self):
-        ret = 2.0 * (self._zeta_1()-self._zeta_2()) * MTsqrt(self._alp_1()*self._alp_2()*self._rho_1()*self._rho_2()) / self._denum() * self._exp(self._rho_1() + self._rho_2())
+        ret = 2.0 * (self._zeta_1()-self._zeta_2()) * tw.sqrt(self._alp_1()*self._alp_2()*self._rho_1()*self._rho_2()) / self._denum() * self._exp(self._rho_1() + self._rho_2())
         return self._cast_result(ret)
 
     def _S_21(self):
@@ -237,7 +237,7 @@ class Smat(sm.mat):
         return value
     
     def _exp(self, rho):
-        return MTexp(-1.0j*rho)
+        return tw.exp(-1.0j*rho)
     
 #######
     
@@ -248,33 +248,33 @@ class Smat(sm.mat):
         return self._rho_alp(1)
     
     def _alp_1(self):
-        cal1 = MTpow(self._e_n(0), 2) - MTpow(self._R_alp(0), 2)
-        cal2 = MTpow(self._R_alp(1), 2) - MTpow(self._e_n(1), 2)
+        cal1 = tw.pow(self._e_n(0), 2) - tw.pow(self._R_alp(0), 2)
+        cal2 = tw.pow(self._R_alp(1), 2) - tw.pow(self._e_n(1), 2)
         if EQUIVALENT_TESTS:
             if not gu.complexCompare(cal1, cal2):
                 raise DCException("_alp_1: " + str(cal1) + "   " + str(cal2))
         return cal1
       
     def _alp_2(self):
-        cal1 = MTpow(self._e_n(1), 2) - MTpow(self._R_alp(0), 2)
-        cal2 = MTpow(self._R_alp(1), 2) - MTpow(self._e_n(0), 2)
+        cal1 = tw.pow(self._e_n(1), 2) - tw.pow(self._R_alp(0), 2)
+        cal2 = tw.pow(self._R_alp(1), 2) - tw.pow(self._e_n(0), 2)
         if EQUIVALENT_TESTS:
             if not gu.complexCompare(cal1, cal2):
                 raise DCException("_alp_2: " + str(cal1) + "   " + str(cal2))
         return cal1
       
     def _zeta_1(self):
-        return self._e_n(0) / MTtan(self._e_n(0))
+        return self._e_n(0) / tw.tan(self._e_n(0))
       
     def _zeta_2(self):
-        return self._e_n(1) / MTtan(self._e_n(1))
+        return self._e_n(1) / tw.tan(self._e_n(1))
       
 #######
     
     def _e_n(self, n):
         if LIN_ALGEBRA:
             cal1 = self.mats.a[n][n] * self.r0
-        cal2 = MTsqrt(self._e_n_Sq_alt(n))
+        cal2 = tw.sqrt(self._e_n_Sq_alt(n))
         if EQUIVALENT_TESTS:
             if not gu.complexCompare(cal1, cal2):
                 raise DCException("_e_n: " + str(cal1) + "   " + str(cal2))
@@ -284,8 +284,8 @@ class Smat(sm.mat):
             return cal2
     
     def _e_n_Sq_alt(self, n):
-        first = (MTpow(self._R_alp(0),2.0)+MTpow(self._R_alp(1),2.0)) / 2.0
-        second = MTsqrt(  MTpow(MTpow(self._R_alp(0),2.0)-MTpow(self._R_alp(1),2.0),2.0) + 4.0*MTpow(self.mats.V[0][1],2.0)*MTpow(self.r0,4.0)   ) / 2.0
+        first = (tw.pow(self._R_alp(0),2.0)+tw.pow(self._R_alp(1),2.0)) / 2.0
+        second = tw.sqrt(  tw.pow(tw.pow(self._R_alp(0),2.0)-tw.pow(self._R_alp(1),2.0),2.0) + 4.0*tw.pow(self.mats.V[0][1],2.0)*tw.pow(self.r0,4.0)   ) / 2.0
         if n==0:
             return first+second
         else:
@@ -295,8 +295,8 @@ class Smat(sm.mat):
         return self.mats.K.k(ch) * self.r0
       
     def _R_alp(self, ch):
-        cal1 = MTsqrt( self.mats.A[ch][ch] ) * self.r0
-        cal2 = MTsqrt( MTpow(self._rho_alp(ch),2) - self.mats.V[ch][ch]*MTpow(self.r0,2.0) )
+        cal1 = tw.sqrt( self.mats.A[ch][ch] ) * self.r0
+        cal2 = tw.sqrt( tw.pow(self._rho_alp(ch),2) - self.mats.V[ch][ch]*tw.pow(self.r0,2.0) )
         if EQUIVALENT_TESTS:
             if not gu.complexCompare(cal1, cal2):
                 raise DCException("_R_alp: " + str(cal1) + "   " + str(cal2))

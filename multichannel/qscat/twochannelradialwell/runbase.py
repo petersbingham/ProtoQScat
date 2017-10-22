@@ -32,7 +32,7 @@ def getAnaSmat(args, anakCal, resultsType=RESULTS_TYPE_DEFAULT):
     return Smat(args.r0_, mats, resultsType)
 
 def getDiscreteAnaSmats(args, anaSmat=None):
-    dEne = (args.eneEnd_-args.eneStart_) / MTfloat(args.eneSteps_)
+    dEne = (args.eneEnd_-args.eneStart_) / tw.float(args.eneSteps_)
     ene = args.eneStart_ + args.eneComplex_*1.0j
     sMats = {}
     for i in range(0,args.eneSteps_+1,1):
@@ -61,7 +61,7 @@ def getDecimatedRatSmat(args, smats, anakCal, fitkCal, N, anaSmat=None, suppress
         popSmat(anaSmat, newSMats, smats)
     return RatSMat(newSMats, fitkCal, resultFileHandler=resultFileHandler, suppressCmdOut=suppressCmdOut)
 
-def getPolyRoots(args, anakCal, fitkCal, mode, Nmax=DEFAULT_N_MAX, overrideMode=MTMODE, resultsType=RESULTS_TYPE_DEFAULT, cmpValue=None):
+def getPolyRoots(args, anakCal, fitkCal, mode, Nmax=DEFAULT_N_MAX, overrideMode=tw.MODE, resultsType=RESULTS_TYPE_DEFAULT, cmpValue=None):
     anaSmat = getAnaSmat(args, anakCal, resultsType)
     smats = getDiscreteAnaSmats(args)
     resultFileHandler = _getFileHandler(args, anakCal, fitkCal, resultsType)
