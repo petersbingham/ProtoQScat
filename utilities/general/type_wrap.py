@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+@author: pbingham
+@title: type_wrap.py
+@desc: multiple type support. Forked from: https://github.com/petersbingham/ProtoQScat
+"""
+from six.moves import builtins
 import cmath
 import mpmath
 import numpy as np
@@ -9,28 +16,28 @@ MODE_MPMATH = 1
 ##########################################################
 ################### Configuration Here ###################
 
-MTMODE = MODE_MPMATH
+MODE = MODE_NORM
 DPS_MPMATH = 100
 DPS_PYTHONTYPES = 25
 
 ##########################################################
 ##########################################################
 
-if MTMODE == MODE_NORM:
+if MODE == MODE_NORM:
     DPS = DPS_PYTHONTYPES
 else:
     DPS = DPS_MPMATH
 mpmath.mp.dps = DPS
 
-if MTMODE == MODE_NORM:
-    MTPI = cmath.pi
+if MODE == MODE_NORM:
+    pi = cmath.pi
 else:
-    MTPI = mpmath.pi 
+    pi = mpmath.pi 
 
 ############### BASIC TYPES ###############
 
 # np.percentile need these overrides.
-class MTmpc(mpmath.mpc):
+class mpc(mpmath.mpc):
     def __lt__(self, other):
         return self.real < other.real
         
@@ -43,15 +50,15 @@ class MTmpc(mpmath.mpc):
     def __ge__(self, other):
         return self.real >= other.real
 
-def MTfloat(val):
-    if MTMODE == MODE_NORM:
-        return float(val)
+def float(val):
+    if MODE == MODE_NORM:
+        return builtins.float(val)
     else:
         return mpmath.mpf(val)
     
-def MTcomplex(val):
-    if MTMODE == MODE_NORM:
-        return complex(val)
+def complex(val):
+    if MODE == MODE_NORM:
+        return builtins.complex(val)
     else:
         if type(val) is str or type(val) is unicode:
             if 'nan' in val:
@@ -76,106 +83,102 @@ def MTcomplex(val):
         else:
             return mpmath.mpc(val)
 
-def MTToSympy(val):
-    if MTMODE == MODE_NORM:
+def toSympy(val):
+    if MODE == MODE_NORM:
         return val
     else:
         return sy.Float(str(val.real),DPS) + sy.Float(str(val.imag),DPS)*sy.I
 
-def MTTompmath(val):
-    if MTMODE == MODE_NORM:
+def tompmath(val):
+    if MODE == MODE_NORM:
         return mpmath.mpc(val.real,val.imag)
     else:
         return mpmath.mpc(real=sy.re(val),imag=sy.im(val))
     
 ############### BASIC OPERATIONS ###############
-
-def MTlt(val1, val2):
-    return val1.real < val2.real
-    
-def MTle(val1, val2):
-    return val1.real <= val2.real
-
-def MTgt(val1, val2):
-    return val1.real > val2.real
-    
-def MTge(val1, val2):
-    return val1.real >= val2.real
-
-def MTpercentile(a, q, axis=None, out=None, overwrite_input=False, interpolation='linear', keepdims=False):
-    if MTMODE == MODE_NORM:
+def percentile(a, q, axis=None, out=None, overwrite_input=False, interpolation='linear', keepdims=False):
+    # Currently don't support percentile for mp types. Just convert the type.
+    if MODE == MODE_NORM:
         return np.percentile(a, q, axis, out, overwrite_input, interpolation, keepdims)
     else:
-        return np.percentile(map(lambda v: MTmpc(v), a), q, axis, out, overwrite_input, interpolation, keepdims)
+        return np.percentile(map(lambda v: mpc(v), a), q, axis, out, overwrite_input, interpolation, keepdims)
 
-def MTpow(x, y):
-    if MTMODE == MODE_NORM:
+def pow(x, y):
+    if MODE == MODE_NORM:
         return pow(x, y)
     else:
         return mpmath.power(x, y)
 
-def MTexp(x):
-    if MTMODE == MODE_NORM:
+def exp(x):
+    if MODE == MODE_NORM:
         return cmath.exp(x)
     else:
         return mpmath.exp(x)
 
-def MTsqrt(x):
-    if MTMODE == MODE_NORM:
+def sqrt(x):
+    if MODE == MODE_NORM:
         return cmath.sqrt(x)
     else:
         return mpmath.sqrt(x)
 
-def MTtan(x):
-    if MTMODE == MODE_NORM:
+def tan(x):
+    if MODE == MODE_NORM:
         return cmath.tan(x)
     else:
         return mpmath.tan(x)
 
-def MTpolar(x):
-    if MTMODE == MODE_NORM:
+def polar(x):
+    if MODE == MODE_NORM:
         return cmath.polar(x)
     else:
         return mpmath.polar(x)
-    
+
+def roots(coeff):
+    # Currently don't support roots for mp types. Just convert the type.
+    if MODE == MODE_NORM:
+        return np.roots(coeff)
+    else:
+        mappedCoeff = map(lambda val: builtins.complex(val), coeff)
+        return np.roots(mappedCoeff)
+
 ############### MATRIX TYPES ###############
     
-def MTmatrix(val):
-    if MTMODE == MODE_NORM:
+def matrix(val):
+    if MODE == MODE_NORM:
         return np.matrix(val, dtype=np.complex128)
     else:
         return mpmath.matrix(val)
     
-def MTsqZeros(sz):
-    if MTMODE == MODE_NORM:
+def sqZeros(sz):
+    if MODE == MODE_NORM:
         return np.matrix(np.zeros((sz, sz), dtype=np.complex128))
     else:
         return mpmath.zeros(sz)
     
-def MTidentity(sz):
-    if MTMODE == MODE_NORM:
+def identity(sz):
+    if MODE == MODE_NORM:
         return np.matrix(np.identity(sz, dtype=np.complex128))
     else:
         return mpmath.eye(sz)
 
 ############# MATRIX CHARACTERISTICS #############
     
-def MTshape(mat):
-    if MTMODE == MODE_NORM:
+def shape(mat):
+    if MODE == MODE_NORM:
         return mat.shape
     else:
         return (mat.rows, mat.cols)
 
-def MTsize(mat):
-    if MTMODE == MODE_NORM:
+def size(mat):
+    if MODE == MODE_NORM:
         return mat.size
     else:
         return mat.rows*mat.cols
 
 ############### MATRIX OPERATIONS ###############
     
-def MTdiagonalise(mat):
-    if MTMODE == MODE_NORM:
+def diagonalise(mat):
+    if MODE == MODE_NORM:
         w, v = np.linalg.eig(mat)
         P = np.transpose(np.matrix(v, dtype=np.complex128))
         return np.dot(P, np.dot(mat, np.linalg.inv(P)))
@@ -184,20 +187,20 @@ def MTdiagonalise(mat):
         P = mpmath.matrix(v).T
         return P * mat * P**-1
 
-def MTinvert(mat):
-    if MTMODE == MODE_NORM:
+def invert(mat):
+    if MODE == MODE_NORM:
         return np.linalg.inv(mat)
     else:
         return mpmath.inverse(mat) 
 
-def MTdot(matA, matB):
-    if MTMODE == MODE_NORM:
+def dot(matA, matB):
+    if MODE == MODE_NORM:
         return np.dot(matA, matB) 
     else:
         return matA * matB
     
-def MTgetRow(mat, m):
-    if MTMODE == MODE_NORM:
+def getRow(mat, m):
+    if MODE == MODE_NORM:
         return mat[m].tolist()[0]
     else:
         row = []
@@ -205,9 +208,9 @@ def MTgetRow(mat, m):
             row.append(mat[m,n])
         return row
 
-def MTcopyRow(src_mat, dest_mat, m):
+def copyRow(src_mat, dest_mat, m):
     newMat = dest_mat.copy()
-    if MTMODE == MODE_NORM:
+    if MODE == MODE_NORM:
         for n in range(newMat.shape[1]):
             newMat[m,n] = src_mat[m,n]
     else:
@@ -215,14 +218,14 @@ def MTcopyRow(src_mat, dest_mat, m):
             newMat[m,n] = src_mat[m,n]
     return newMat
 
-def MTdet(mat):
-    if MTMODE == MODE_NORM:
+def det(mat):
+    if MODE == MODE_NORM:
         return np.linalg.det(mat)
     else:
         return mpmath.det(mat)
 
-def MTsumElements(mat):
-    if MTMODE == MODE_NORM:
+def sumElements(mat):
+    if MODE == MODE_NORM:
         XS = 0.0
         for x in np.nditer(mat, flags=['refs_ok']):
             XS += x
@@ -233,8 +236,8 @@ def MTsumElements(mat):
                 XS += mat[i,j]
     return XS
    
-def MTtrace(mat):
-    if MTMODE == MODE_NORM:
+def trace(mat):
+    if MODE == MODE_NORM:
         return np.trace(mat)
     else:
         t = mpmath.mpc(0.0)
@@ -242,8 +245,8 @@ def MTtrace(mat):
             t += mat[i,i]
         return t
     
-def MTatanElements(mat):
-    if MTMODE == MODE_NORM:
+def atanElements(mat):
+    if MODE == MODE_NORM:
         return np.arctan(mat)
     else:
         at = mpmath.matrix(mat.rows, mat.cols)
@@ -253,7 +256,7 @@ def MTatanElements(mat):
         return at
 
 def _toSymMatrix(mat):
-    if MTMODE == MODE_NORM:
+    if MODE == MODE_NORM:
         return sy.Matrix(mat)
     else:
         symMat = sy.zeros(mat.rows, mat.cols)
@@ -262,22 +265,22 @@ def _toSymMatrix(mat):
                 symMat[r,c] = mat[r,c]
         return symMat
 
-def _fromSympyToMpmathMatrix(mat):
+def _fromSympytompmathMatrix(mat):
     mpMat = mpmath.matrix(mat.shape[0])
     for r in range(mat.shape[0]):
         for c in range(mat.shape[0]):
-            mpMat[r,c] = MTTompmath(mat[r,c])
+            mpMat[r,c] = tompmath(mat[r,c])
     return mpMat
 
-def MTadjugate(mat):
+def adjugate(mat):
     symMat = _toSymMatrix(mat)
-    return _fromSympyToMpmathMatrix(symMat.adjugate())
+    return _fromSympytompmathMatrix(symMat.adjugate())
     
     
 ############### OTHER ###############
 
 def formattedFloatString(val, dps):
-    if MTMODE == MODE_NORM:
+    if MODE == MODE_NORM:
         return ("{:1."+str(dps)+"f}").format(val)
     else:
         return mpmath.nstr(val, mpIntDigits(val)+dps)

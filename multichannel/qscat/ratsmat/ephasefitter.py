@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import scipy as sp
-from general.multi_type import *
+import general.type_wrap as tw
 import time
  
 RANGE_FCT = 1.0 

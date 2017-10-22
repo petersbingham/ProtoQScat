@@ -10,7 +10,7 @@ sys.path.insert(0,base+'/../../../../utilities')
 import scattering.matrices as sm
 import general.numerical as num
 import general.simpplot3d as plot3D
-from general.multi_type import *
+import general.type_wrap as tw
 
 EQUIVALENT_TESTS = False
 LIN_ALGEBRA = False

@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import conversions as conv
-from general.multi_type import *
+import general.type_wrap as tw
 
 def decimate(mats, startIndex, endIndex, N):
     step = int((endIndex-startIndex) / (N-1))

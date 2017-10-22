@@ -33,7 +33,7 @@ import cmath as cm
 from gilfunctions import limit
 
 #Following headers have been added during development of ProtoQScat:
-from general.multi_type import *
+import general.type_wrap as tw
 
 def Muller(x1,x2,x3,f,tol = 1e-12,N=400,verbose=False):
     '''

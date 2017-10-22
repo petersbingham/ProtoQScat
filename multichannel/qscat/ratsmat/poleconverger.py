@@ -8,7 +8,7 @@ from general.file import *
 from globalSettings import *
 import general.numerical as num
 import polefinder
-import general.multi_type as MTType
+import general.type_wrap as tw
 
 POLE_STATUS_NEW = "NEW"
 POLE_STATUS_LOST = "LOST"
@@ -57,9 +57,9 @@ def formatRoot(num):
     else:
         if type(num) is str or type(num) is unicode:
             return num
-        elif type(num) is MTType.mpmath.mpf:
-            n = DISPLAY_DIFFPRECISION+MTType.mpIntDigits(num)
-            return MTType.mpmath.nstr(num, n=n)
+        elif type(num) is tw.mpmath.mpf:
+            n = DISPLAY_DIFFPRECISION+tw.mpIntDigits(num)
+            return tw.mpmath.nstr(num, n=n)
         else:
             return ('{:.'+str(DISPLAY_DIFFPRECISION)+'f}').format(num)
 
@@ -68,9 +68,9 @@ class PoleConverger:
         self.setNmin = Nmin
         self.setNmax = Nmax
         if "COEFFS-mpmath" in resultFileHandler.getCoeffFilePath():
-            MTType.MTMODE = MTType.MODE_MPMATH
+            tw.MODE = tw.MODE_MPMATH
         else:
-            MTType.MTMODE = MTType.MODE_NORM
+            tw.MODE = tw.MODE_NORM
         self.poleSets = None
         fileBase = resultFileHandler.getRootDir()
         self.allRoots = self._parseFiles(fileBase, Roots, Root, False)
@@ -135,11 +135,11 @@ class PoleConverger:
                     Estr = line[line.rfind(']=')+2:line.rfind('i'+post)]+'j' 
                     #print kstr + "\t" + Estr  
                     if typeClass==Root:
-                        type = Root(MTType.MTcomplex(kstr), MTType.MTcomplex(Estr))
+                        type = Root(tw.complex(kstr), tw.complex(Estr))
                     else:
                         convRootsStrs = line[line.find("with")+5:].split(" ")
                         convRoots = map(lambda x: map(lambda y: int(y), x[2:-1].replace("]","").split("[")), convRootsStrs)
-                        type = Pole(MTType.MTcomplex(kstr), MTType.MTcomplex(Estr), POLE_STATUS_NEW in line, POLE_STATUS_LOST in line, convRoots)
+                        type = Pole(tw.complex(kstr), tw.complex(Estr), POLE_STATUS_NEW in line, POLE_STATUS_LOST in line, convRoots)
                     container.append(type) 
                 first = False      
                 

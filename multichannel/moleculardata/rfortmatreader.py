@@ -9,7 +9,7 @@ sys.path.insert(0,base+'../..')
 
 if __name__ != '__main__': #Can test without these imports
     import scattering.matrices as sm
-    from general.multi_type import *
+    import general.type_wrap as tw
     from ratsmat.resultfilehandler import *
 
 NUMFIELDCHARS=20

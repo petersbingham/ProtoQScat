@@ -1,7 +1,7 @@
 import cmath
 import matrices as sm
 import general.numerical as num
-from general.multi_type import *
+import general.type_wrap as tw
 
 class TranMat(sm.mat):
     def __init__(self, sourceMat): 

@@ -1,5 +1,5 @@
 from doublechannel import *
-from general.multi_type import *
+import general.type_wrap as tw
 import argparse
 
 parentArgs = argparse.ArgumentParser(add_help=False)

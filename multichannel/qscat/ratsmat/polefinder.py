@@ -5,7 +5,7 @@ sys.path.append("../utilities")
 import general.numerical as num
 from ratsmat import *
 from decimator import *
-from general.multi_type import *
+import general.type_wrap as tw
 from globalSettings import *
 
 ZEROVALEXP = 7
