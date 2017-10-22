@@ -127,7 +127,7 @@ class kCalculator:
         if ene.real <= self.thresholds[ch]:
             return 0.0
         else:
-            return tw.PI
+            return tw.pi
     def getMult(self):
         return self.massMult*REDUCED_MASS
     def isElastic(self):
