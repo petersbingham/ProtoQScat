@@ -84,7 +84,7 @@ def MTToSympy(val):
 
 def MTTompmath(val):
     if MTMODE == MODE_NORM:
-        pass
+        return mpmath.mpc(val.real,val.imag)
     else:
         return mpmath.mpc(real=sy.re(val),imag=sy.im(val))
     
@@ -206,13 +206,14 @@ def MTgetRow(mat, m):
         return row
 
 def MTcopyRow(src_mat, dest_mat, m):
+    newMat = dest_mat.copy()
     if MTMODE == MODE_NORM:
-        pass
+        for n in range(newMat.shape[1]):
+            newMat[m,n] = src_mat[m,n]
     else:
-        newMat = dest_mat.copy()
         for n in range(newMat.cols):
             newMat[m,n] = src_mat[m,n]
-        return newMat
+    return newMat
 
 def MTdet(mat):
     if MTMODE == MODE_NORM:
@@ -251,14 +252,17 @@ def MTatanElements(mat):
                 at[i,j] = mpmath.atan(mat[i,j])
         return at
 
-def _mpmathToSymMatrix(mat):
-    symMat = sy.zeros(mat.rows, mat.cols)
-    for r in range(mat.rows):
-        for c in range(mat.cols):
-            symMat[r,c] = mat[r,c]
-    return symMat
+def _toSymMatrix(mat):
+    if MTMODE == MODE_NORM:
+        return sy.Matrix(mat)
+    else:
+        symMat = sy.zeros(mat.rows, mat.cols)
+        for r in range(mat.rows):
+            for c in range(mat.cols):
+                symMat[r,c] = mat[r,c]
+        return symMat
 
-def _symToMpmathMatrix(mat):
+def _fromSympyToMpmathMatrix(mat):
     mpMat = mpmath.matrix(mat.shape[0])
     for r in range(mat.shape[0]):
         for c in range(mat.shape[0]):
@@ -266,11 +270,8 @@ def _symToMpmathMatrix(mat):
     return mpMat
 
 def MTadjugate(mat):
-    if MTMODE == MODE_NORM:
-        pass
-    else:
-        symMat = _mpmathToSymMatrix(mat)
-        return _symToMpmathMatrix(symMat.adjugate())
+    symMat = _toSymMatrix(mat)
+    return _fromSympyToMpmathMatrix(symMat.adjugate())
     
     
 ############### OTHER ###############
