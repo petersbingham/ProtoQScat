@@ -32,7 +32,7 @@ def getParameterDesc(args):
             s = "Uncoupled Inelastic"
         else:
             s = "Uncoupled Elastic"
-    return s + " (" + floatList([args.r0_, args.v1_, args.v2_, args.t1_, args.t2_, args.lam_]) + ") Radial Well "
+    return s + " (" + tw.floatList([args.r0_, args.v1_, args.v2_, args.t1_, args.t2_, args.lam_]) + ") Radial Well "
 
 def doMatPlot(args, mat, imag, title, kcalString):
     matSeq = sm.matSequence()

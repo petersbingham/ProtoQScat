@@ -21,7 +21,7 @@ ene = args.eneStart_+args.eneComplex_*1j
 f = open("res.txt","w")
 
 for i in range(0,args.eneSteps_+1,1):
-    eneStr = formattedComplexString(ene, 6)
+    eneStr = tw.formattedComplexString(ene, 6)
     try:
         smat.setEnergy(ene)
         if args.type_ == "S":

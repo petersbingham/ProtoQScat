@@ -393,7 +393,7 @@ class PoleFinder:
         file.write("@<**********************************************************************************************>@\n")
         
     def _getComplexFormat(self):
-        if tw.MODE == MODE_NORM:
+        if tw.mode == tw.mode_norm:
             return "%.14f%+.14fi"
         else:
-            return "%."+str(DPS)+"f%+."+str(DPS)+"fi"   
+            return "%."+str(tw.dps)+"f%+."+str(tw.dps)+"fi"   

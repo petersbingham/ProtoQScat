@@ -40,10 +40,10 @@ class CoeffSolve(AuxHelper):
         self._endLogAction(self.typeStr)
     
     def _action(self, act=1):
-        if self.qsmode == MODE_MPMATH:
+        if self.qsmode == tw.mode_mpmath:
             args = {}
             if act==0:
-                self.typeStr = "mpmath_qr_solve_dps"+getArgDesc(mpmath.qr_solve, args)+", DPS "+str(DPS)
+                self.typeStr = "mpmath_qr_solve_dps"+getArgDesc(mpmath.qr_solve, args)+", dps "+str(tw.dps)
                 self.matrixType = 1
                 self.indexType = 1
             else:
@@ -128,7 +128,7 @@ class CoeffSolve(AuxHelper):
         return ret[0]
     
     def getValue(self, row):
-        if self.qsmode == MODE_MPMATH:
+        if self.qsmode == tw.mode_mpmath:
             ret = self.coeffVec[0][row]
         else:
             if self.indexType == 0:

@@ -4,7 +4,7 @@ from analytical.runargsrange import *
 rtArgs = argparse.ArgumentParser(description="Two Channel Radial Well Fit - Range Test", parents=[tcp_range])
 args = rtArgs.parse_args()
 
-if tw.MODE == MODE_MPMATH:
+if tw.mode == tw.mode_mpmath:
     print "Not supported for mpmath. Change mode in type_wrap.py."
 else:
     try:

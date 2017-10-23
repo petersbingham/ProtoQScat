@@ -68,7 +68,7 @@ class kCalculator:
         if self.ksigns is None:
             return self.ktype
         else:
-            return floatList(self.ksigns)
+            return tw.floatList(self.ksigns)
     def e(self, k, primType=False):
         ene = (1.0/self.getMult())*k**2
         if primType:
@@ -557,7 +557,7 @@ class mat:
     
     def _getFormattedStr(self, value, isImag):
         if isImag:
-            return formattedComplexString(tw.complex(value), self.precision)
+            return tw.formattedComplexString(tw.complex(value), self.precision)
         else:
-            return formattedFloatString(tw.complex(value).real, self.precision)
+            return tw.formattedFloatString(tw.complex(value).real, self.precision)
     

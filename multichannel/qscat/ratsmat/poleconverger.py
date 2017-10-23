@@ -68,9 +68,9 @@ class PoleConverger:
         self.setNmin = Nmin
         self.setNmax = Nmax
         if "COEFFS-mpmath" in resultFileHandler.getCoeffFilePath():
-            tw.MODE = tw.MODE_MPMATH
+            tw.mode = tw.mode_mpmath
         else:
-            tw.MODE = tw.MODE_NORM
+            tw.mode = tw.mode_norm
         self.poleSets = None
         fileBase = resultFileHandler.getRootDir()
         self.allRoots = self._parseFiles(fileBase, Roots, Root, False)

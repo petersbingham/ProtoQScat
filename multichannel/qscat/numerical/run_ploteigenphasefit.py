@@ -12,7 +12,7 @@ args = args_ephasefit.parse_args()
 
 FIT_CYCLE = ['red', 'blue', 'purple', 'orange', 'cyan']
 
-if tw.MODE == MODE_MPMATH:
+if tw.mode == tw.mode_mpmath:
     print "Not supported for mpmath. Change mode in type_wrap.py."
 else:
     try:

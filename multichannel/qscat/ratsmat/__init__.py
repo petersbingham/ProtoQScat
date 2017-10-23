@@ -24,7 +24,7 @@ DISPLAY_PRECISION = 8
 
 ######################## Minor ###########################
 
-SYMPY_NROOTS_N = DPS
+SYMPY_NROOTS_N = tw.dps
 SYMPY_NROOTS_MAXSTEPS = 5000
 
 DELVES_X_CENT = 0.20
@@ -57,7 +57,7 @@ class RatSMat(sm.mat):
         self.hasCoeffs = False
         self.ene = None
         
-        self.coeffSolve = CoeffSolve(self.suppressCmdOut, tw.MODE, PYTYPE_COEFF_SOLVE_METHOD)
+        self.coeffSolve = CoeffSolve(self.suppressCmdOut, tw.mode, PYTYPE_COEFF_SOLVE_METHOD)
         
         if _isElasticRootMethod():
             if not self.kCal.isElastic():
@@ -273,7 +273,7 @@ class RatSMat(sm.mat):
 
     def _readCoefficientsForFit(self, fit, ci, typeString):
         fileName = self.resultFileHandler.getCoeffFileName(fit, ci, typeString)
-        if tw.MODE == MODE_NORM:
+        if tw.mode == tw.mode_norm:
             return np.asmatrix(np.loadtxt(fileName, dtype=np.complex128, delimiter=","))
         else:
             f = open( fileName, "r" )
@@ -298,7 +298,7 @@ class RatSMat(sm.mat):
     def _writeCoefficientsForFit(self, fit, ci, typeString, matRef):
         fileName = self.resultFileHandler.getCoeffFileName(fit, ci, typeString)
         mat = matRef[self.enes[fit*self.fitSize]][ci]
-        if tw.MODE == MODE_NORM:
+        if tw.mode == tw.mode_norm:
             np.savetxt(fileName, mat, delimiter=",")
             self._fixFile(fileName)
         else:
