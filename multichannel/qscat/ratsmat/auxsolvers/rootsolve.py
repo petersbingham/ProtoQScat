@@ -2,12 +2,12 @@ from auxhelper import *
 from gilroots import *
 from globalSettings import *
 
-GIL_MODE_STANDARD = 0
-GIL_MODE_REFLECT_AXIS = 1
-GIL_MODE_REFLECT_POLE = 2
-GIL_MODE_REFLECT_CHECK = 4
-GIL_MODE_MAINTAIN = 8
-GIL_MODE_RETRY = 16
+DELVES_MODE_STANDARD = 0
+DELVES_MODE_REFLECT_AXIS = 1
+DELVES_MODE_REFLECT_POLE = 2
+DELVES_MODE_REFLECT_CHECK = 4
+DELVES_MODE_MAINTAIN = 8
+DELVES_MODE_RETRY = 16
 
 #v2: In _findRoots function matrix elements with poly(...): matLst[len(matLst)-1].append(poly(val))
 class SymDetRoots(AuxHelper):
@@ -76,10 +76,10 @@ class SymDetRoots(AuxHelper):
 
 
 class DelvesRoots(AuxHelper):
-    def __init__(self, suppressCmdOut, x_cent, y_cent, width, height, N, outlier_coeff, max_steps, muller_offset, known_roots, verbose, mode, distFactor):
+    def __init__(self, suppressCmdOut, x_cent, y_cent, width, height, N, outlier_coeff, max_steps, mul_tol, mul_N, mul_off, known_roots, verbose, summary, mode, distFactor):
         AuxHelper.__init__(self, suppressCmdOut)
         self.mode = mode
-        self.delves_Args = {'x_cent':x_cent, 'y_cent':y_cent, 'width':width, 'height':height, 'N':N, 'outlier_coeff':outlier_coeff, 'max_steps':max_steps, 'muller_offset':muller_offset, 'known_roots':known_roots, 'verbose':verbose}
+        self.delves_Args = {'x_cent':x_cent, 'y_cent':y_cent, 'width':width, 'height':height, 'N':N, 'outlier_coeff':outlier_coeff, 'max_steps':max_steps, 'mul_tol':mul_tol, 'mul_N':mul_N, 'mul_off':mul_off, 'known_roots':known_roots, 'verbose':verbose, 'summary':summary}
         self.typeStr = "get_roots_rect"+getArgDesc(get_roots_rect, self.delves_Args) + ", mode " +str(mode) + ", distFactor " +str(distFactor)
         self.cmp = num.Compare(distFactor)
 
@@ -99,7 +99,7 @@ class DelvesRoots(AuxHelper):
         return None
     
     def _handleNewRoot(self, newRoots, newRoot, f):
-        if self.mode & GIL_MODE_REFLECT_CHECK:
+        if self.mode & DELVES_MODE_REFLECT_CHECK:
             checkRoot = self._doesRootExist(newRoot, f)
             if checkRoot is not None:
                 newRoots.append(checkRoot)
@@ -107,7 +107,7 @@ class DelvesRoots(AuxHelper):
             newRoots.append(newRoot)
                                                 
     def getRoots(self, f, fp, lastRoots):
-        if self.mode & GIL_MODE_REFLECT_AXIS:
+        if self.mode & DELVES_MODE_REFLECT_AXIS:
             min = self.delves_Args['y_cent'] - self.delves_Args['height']
             max = self.delves_Args['y_cent'] + self.delves_Args['height']
             if abs(max) >= abs(min):
@@ -118,14 +118,14 @@ class DelvesRoots(AuxHelper):
                 self.delves_Args['height'] = -min / 2.0
 
         ret = -1
-        while ret!=0 and (ret==-1 or self.mode & GIL_MODE_RETRY):
+        while ret!=0 and (ret==-1 or self.mode & DELVES_MODE_RETRY):
             if ret==1:
                 self.delves_Args['N'] *= 2
             if ret==2:
                 self.delves_Args['max_steps'] *= 2
             ret, roots = get_roots_rect(f, fp, **self.delves_Args)
 
-        if self.mode & GIL_MODE_REFLECT_AXIS:
+        if self.mode & DELVES_MODE_REFLECT_AXIS:
             newRoots = []
             for root in roots:
                 newRoot = root.conjugate()
@@ -133,7 +133,7 @@ class DelvesRoots(AuxHelper):
                     self._handleNewRoot(newRoots, newRoot, f)
             roots.extend(newRoots)
 
-        if self.mode & GIL_MODE_REFLECT_POLE:
+        if self.mode & DELVES_MODE_REFLECT_POLE:
             newRoots = []
             for root in roots:
                 newRoot = root.conjugate()
@@ -141,7 +141,7 @@ class DelvesRoots(AuxHelper):
                     self._handleNewRoot(newRoots, newRoot, f)
             roots.extend(newRoots)           
 
-        if self.mode & GIL_MODE_MAINTAIN:
+        if self.mode & DELVES_MODE_MAINTAIN:
             for lastRoot in lastRoots:
                 if not self._doesRootAlreadyExist(roots, lastRoot):
                     checkRoot = Muller(lastRoot-offset, lastRoot+offset, lastRoot, f)

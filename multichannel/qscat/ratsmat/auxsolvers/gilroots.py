@@ -32,10 +32,7 @@ import math
 import cmath as cm
 from gilfunctions import limit
 
-#Following headers have been added during development of ProtoQScat:
-import general.type_wrap as tw
-
-def Muller(x1,x2,x3,f,tol = 1e-12,N=400,verbose=False):
+def Muller(x1,x2,x3,f,tol=1e-12,N=400,verbose=False):
     '''
     A method that works well for finding roots locally in the complex plane.
     Uses three points for initial guess, x1,x2,x3.
@@ -88,13 +85,8 @@ def Muller(x1,x2,x3,f,tol = 1e-12,N=400,verbose=False):
         if abs(D1) > abs(D2):
             D = D1
         elif D1 == D2 == 0:
-            if abs(f(x3))< tol:
-                return x3
-            else:
-                if verbose:
-                    print "Desired tolerance not reached and Muller denominator diverges.",
-                    "Please try different parameters in Muller for better results."
-                return x3
+            x = x3
+            break
         else: D = D2
 
         x = x3 - (x3-x2)*2.*C / D
@@ -104,7 +96,13 @@ def Muller(x1,x2,x3,f,tol = 1e-12,N=400,verbose=False):
         x3 = x
         #print x
 
-    return x
+    converged = True
+    if abs(f(x))>=tol:
+        converged = False
+        if verbose:
+            print ("Desired tolerance not reached. Please try different parameters in Muller "
+                   "for better results.")
+    return converged, x
 
 def residues(f_frac,roots):
     '''
@@ -200,7 +198,7 @@ def find_roots(y_smooth,c,num_roots_to_find):
     find the roots using the polynomial trick.
 
     Args:
-        y_smooth (list of complex numbers): poins along smoothed-out boundary.
+        y_smooth (list of complex numbers): points along smoothed-out boundary.
     '''
     p=[0]  ##placeholder
     for i in xrange(1,num_roots_to_find+1):
@@ -213,8 +211,7 @@ def find_roots(y_smooth,c,num_roots_to_find):
         e.append(s / k)
     coeff = [e[k]*(-1.)**(2.*num_roots_to_find-k)
         for k in xrange(0,num_roots_to_find+1)]
-    mappedCoeff = map(lambda val: complex(val), coeff)
-    return np.roots(mappedCoeff)
+    return np.roots(coeff)
 
 def combine(eps=1e-5,*args):
     '''
@@ -322,7 +319,7 @@ def get_max(y):
     in the numerically safe function new_f_frac_safe.
 
     '''
-    q75, q50, q25 = tw.percentile(y, [75 , 50, 25])
+    q75, q50, q25 = np.percentile(y, [75 , 50, 25])
     IQR = q75-q25
     return q50+IQR
 
@@ -343,8 +340,23 @@ def find_maxes(y):
             maxes.append(i)
     return maxes
 
+def print_get_roots_rect_summary(ret):
+    if ret == 0:
+        print "Calculations complete. No warnings."
+    else:
+        print "Calculations completed with following warnings occurring at least once:"
+        if ret & warn_imprecise_roots:
+            print "  -Imprecise number of roots in region."
+        if ret & warn_max_steps_exceeded:
+            print "  -Number of region steps exceeded."
+        if ret & warn_no_muller_root:
+            print "  -No muller root found with specified parameters."
+
+warn_imprecise_roots = 1
+warn_max_steps_exceeded = 2
+warn_no_muller_root = 4
 def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
-    max_steps=5,muller_offset=1e-5,known_roots=[],verbose=False):
+    max_steps=5,mul_tol=1e-12,mul_N=400,mul_off=1e-5,known_roots=[],verbose=False,summary=False):
     '''
     I assume f is analytic with simple (i.e. order one) zeros.
 
@@ -372,13 +384,19 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
         max_step (optional[int]): Number of iterations allowed for algorithm to
             repeat on smaller rectangles.
 
-        muller_offset (optional[float]): Size of the offset relative to the 
-            first point for the muller guesses
+        mul_tol (optional[float]): muller tolerance.
+
+        mul_N (optional[int]): maximum number of iterations for muller.
+
+        mul_off (optional[float]): muller point offset .
 
         known roots (optional[list of complex numbers]): Roots of f that are
             already known.
 
-        verbose (optional[boolean]): print warnings.
+        verbose (optional[boolean]): print all warnings.
+
+        summary (optional[boolean]): print a summary of warnings at end of
+            calculation.
 
     Returns:
         A list of roots for the function f inside the rectangle determined by
@@ -386,7 +404,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     '''
 
     ret = 0
-
+    
     c = get_boundary(x_cent,y_cent,width,height,N)
     f_frac = lambda z: fp(z)/(2j*np.pi*f(z))
     y = [f_frac(z) for z in c]
@@ -394,11 +412,15 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     outliers = find_maxes(map(abs,y))
 
     roots_near_boundary = []
+    cnt = 0
     for outlier_index in outliers:
-        try:
-            r = Muller(c[outlier_index-2], c[outlier_index+2],
-            (c[outlier_index])/2, f, verbose)
-            roots_near_boundary.append(r)
+        try:          
+            mull_ret, mull_root = Muller(c[outlier_index-2],c[outlier_index+2],
+            (c[outlier_index])/2,f,mul_tol,mul_N,verbose)
+            if mull_ret:
+                roots_near_boundary.append(mull_root)
+            else:
+                ret |= warn_no_muller_root
         except:
             pass
 
@@ -408,53 +430,60 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     subtracted_roots = inside_boundary(subtracted_roots,
                                         x_cent,y_cent,width+2.,height+2.)
 
-    max_ok =  abs(outlier_coeff*get_max(y))
+    max_ok = abs(outlier_coeff*get_max(y))
     subtracted_residues = residues(f_frac,subtracted_roots)
     y_smooth = [new_f_frac_safe(f_frac,z_el,subtracted_residues,
                                 subtracted_roots,max_ok,y_el,verbose)
                                 for y_el,z_el in zip(y,c)]
-    I0 = integrate.trapz(y_smooth, c)  ##approx number of roots not subtracted
+    I0 = integrate.trapz(y_smooth, c)  # approx number of roots not subtracted
 
     ## If there's only a few roots, find them.
-    if I0.real < 10:
+    if I0 < 10:
         num_roots_interior = int(round(abs(I0)))
         if num_roots_interior == 0:
+            if summary:
+                print_get_roots_rect_summary(ret)
             return ret, inside_boundary(subtracted_roots,x_cent,y_cent,width,height)
         if verbose:
-            if abs(num_roots_interior-I0)>0.005:
-                ret = 1
-                print "Warning!! Number of roots may be imprecise for this N."
-                print "Increase N for greater precision."
-            print "Approx number of roots in current rect = ", '{0:.2f}'.format(abs(complex(I0)))
+            print "Approx number of roots in current rect = ", abs(I0)
+        if abs(num_roots_interior-I0)>0.005:
+            ret |= warn_imprecise_roots
+            if verbose:
+                print ("Warning!! Number of roots may be imprecise for this N. Increase N "
+                       "for greater precision.")
         rough_roots = find_roots(y_smooth,c,num_roots_interior)
-        Muller_all = np.vectorize(Muller)
 
         ##TODO: best way to pick points for Muller method below
-        ##TODO: catch error in case Muller diverges (unlikely for these points)
-
-        interior_roots = purge(Muller_all(rough_roots-muller_offset,rough_roots+
-                             muller_offset,rough_roots,f,verbose).tolist())
-
+        mull_roots = []
+        for root in rough_roots:
+            mull_ret, mull_root = Muller(root-mul_off,root+mul_off,root,f,mul_tol,mul_N,verbose)
+            if mull_ret:
+                mull_roots.append(mull_root)
+            else:
+                ret |= warn_no_muller_root
+        interior_roots = purge(mull_roots)
         combined_roots = purge(roots_near_boundary + interior_roots)
     else:
         combined_roots = purge(roots_near_boundary)
     ## if some interior roots are missed or if there were many roots,
     ## subdivide the rectangle and search recursively.
-    if I0.real >= 10 or len(combined_roots) < num_roots_interior and max_steps != 0:
+    if I0>=10 or len(combined_roots) < num_roots_interior and max_steps != 0:
         x_list = [x_cent - width / 2.,x_cent - width / 2.,
                   x_cent + width / 2.,x_cent + width / 2.]
         y_list = [y_cent - height / 2.,y_cent + height / 2.,
                   y_cent - height / 2.,y_cent + height / 2.]
         for x,y in zip(x_list,y_list):
-            newret, roots_from_subrectangle = get_roots_rect(f,fp,x,y,
-                width/2.,height/2.,N,outlier_coeff,
-                max_steps=max_steps-1,known_roots=combined_roots)
+            newRet, roots_from_subrectangle = get_roots_rect(f,fp,x,y,
+                width/2.,height/2.,N,outlier_coeff,max_steps-1,mul_tol,mul_N,
+                known_roots=combined_roots,verbose=verbose)
+            ret |= newRet
             combined_roots = purge(combined_roots + roots_from_subrectangle)
-            if ret == 0:
-                ret = newret
     elif max_steps == 0:
+        ret |= warn_max_steps_exceeded
         if verbose:
-            ret = 2
             print "max_steps exceeded. Some interior roots might be missing."
-
+            
+    if summary:
+        print_get_roots_rect_summary(ret)
+        
     return ret, inside_boundary(combined_roots,x_cent,y_cent,width,height)

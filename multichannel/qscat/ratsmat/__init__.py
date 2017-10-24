@@ -27,18 +27,21 @@ DISPLAY_PRECISION = 8
 SYMPY_NROOTS_N = tw.dps
 SYMPY_NROOTS_MAXSTEPS = 5000
 
-DELVES_X_CENT = 0.20
+DELVES_X_CENT = 0.15
 DELVES_Y_CENT = 0.0
-DELVES_WIDTH = 0.19
+DELVES_WIDTH = 0.14
 DELVES_HEIGHT = 0.3
 DELVES_N = 1000
 DELVES_OUTLIER_COEFF = 100.
 DELVES_MAX_STEPS = 500
-DELVES_MULLER_OFFSET = 1e-6
+DELVES_MUL_TOL = 1e-12
+DELVES_MUL_N = 400
+DELVES_MUL_OFF = 1e-6
 DELVES_KNOWN_ROOTS = []
-DELVES_VERBOSE = True
-GIL_MODE = GIL_MODE_REFLECT_POLE
-GIL_DIST = 1e-10
+DELVES_VERBOSE = False
+DELVES_SUMMARY = True
+DELVES_MODE = DELVES_MODE_STANDARD
+DELVES_DIST = 1e-10
 
 
 ##########################################################
@@ -64,7 +67,7 @@ class RatSMat(sm.mat):
                 raise sm.MatException("Selected root finding method not applicable to inelastic scattering data.")
             self.rootSolver = SymDetRoots(self.suppressCmdOut, EXPANDEDDET_ROOTS_FINDTYPE, SYMPY_NROOTS_N, SYMPY_NROOTS_MAXSTEPS)
         else:
-            self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_X_CENT, DELVES_Y_CENT, DELVES_WIDTH, DELVES_HEIGHT, DELVES_N, DELVES_OUTLIER_COEFF, DELVES_MAX_STEPS, DELVES_MULLER_OFFSET, DELVES_KNOWN_ROOTS, DELVES_VERBOSE, GIL_MODE, GIL_DIST)
+            self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_X_CENT, DELVES_Y_CENT, DELVES_WIDTH, DELVES_HEIGHT, DELVES_N, DELVES_OUTLIER_COEFF, DELVES_MAX_STEPS, DELVES_MUL_TOL, DELVES_MUL_N, DELVES_MUL_OFF, DELVES_KNOWN_ROOTS, DELVES_VERBOSE, DELVES_SUMMARY, DELVES_MODE, DELVES_DIST)
             
         self.rootCleaner = RootClean(self.suppressCmdOut, EXPANDEDDET_ROOTS_CLEANWIDTH)
 
@@ -555,7 +558,7 @@ class RatSMat(sm.mat):
         if self.hasCoeffs:
             allRoots = []
             for eKey in self.alphas:
-                roots = self.rootSolver.getRoots(self._getDet, self._getDiffDet, lastRoots)
+                roots = self.rootSolver.getRoots(lambda x: complex(self._getDet(x)), lambda x: complex(self._getDiffDet(x)), lastRoots)
                 eRoots = map(lambda val: complex(val), roots)
                 kRoots = map(lambda val: self.kCal.fk(val,True), roots)
                 allRoots.extend(zip(kRoots,eRoots))
