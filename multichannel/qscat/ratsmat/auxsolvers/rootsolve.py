@@ -117,13 +117,15 @@ class DelvesRoots(AuxHelper):
                 self.delves_Args['y_cent'] = -min / 2.0
                 self.delves_Args['height'] = -min / 2.0
 
-        ret = -1
-        while ret!=0 and (ret==-1 or self.mode & DELVES_MODE_RETRY):
-            if ret==1:
+        warn = 0xFF
+        while warn!=0 and (warn==0xFF or self.mode & DELVES_MODE_RETRY):
+            if warn & warn_imprecise_roots:
                 self.delves_Args['N'] *= 2
-            if ret==2:
+            if warn & warn_max_steps_exceeded:
                 self.delves_Args['max_steps'] *= 2
-            ret, roots = get_roots_rect(f, fp, **self.delves_Args)
+            if warn & warn_no_muller_root:
+                self.delves_Args['mul_N'] *= 2
+            roots, warn, num_regions = get_roots_rect(f, fp, **self.delves_Args)
 
         if self.mode & DELVES_MODE_REFLECT_AXIS:
             newRoots = []

@@ -340,23 +340,57 @@ def find_maxes(y):
             maxes.append(i)
     return maxes
 
-def print_get_roots_rect_summary(ret):
-    if ret == 0:
-        print "Calculations complete. No warnings."
-    else:
-        print "Calculations completed with following warnings occurring at least once:"
-        if ret & warn_imprecise_roots:
-            print "  -Imprecise number of roots in region."
-        if ret & warn_max_steps_exceeded:
-            print "  -Number of region steps exceeded."
-        if ret & warn_no_muller_root:
-            print "  -No muller root found with specified parameters."
+def get_roots_rect_summary(warn,all_roots,roots_near_boundary,I0,x_cent,
+                             y_cent,width,height,num_regions,verbose,summary):
+    '''
+    Return final roots and optionally prints summary of get_roots_rect.
+
+    Args:
+        warn (int): warnings generated during get_roots_rect.
+        
+        all_roots (floats): all roots within region found by the routine.
+        
+        roots_near_boundary (floats): roots found during the smoothing.
+        
+        I0 (float): number of roots predicted using Roche.
+        
+        x_cent,y_cent (floats): coordinates of the center of the region.
+
+        width,height (floats): The (half) width of height of the rectangle.
+
+        num_regions (int): Total number of regions includings outer and subregions.
+
+        verbose (optional[boolean]): print all warnings.
+
+        summary (optional[boolean]): print a summary of warnings at end of
+            calculation.
+    '''
+    if summary:
+        print ("For region(x,y,w,h): "+str(x_cent)+" "+str(y_cent)+" "
+               +str(width)+" "+str(height)+" (" +str(num_regions-1) + " subregions)")
+        if warn == 0:
+            print "Calculations complete. No warnings."
+        else:
+            print "Calculations completed with following warnings occurring at least once:"
+            if warn & warn_imprecise_roots:
+                print "  -Imprecise number of roots in region."
+            if warn & warn_max_steps_exceeded:
+                print "  -Number of region steps exceeded."
+            if warn & warn_no_muller_root:
+                print "  -No muller root found with specified parameters."
+
+        roots_within_boundary = purge(inside_boundary(roots_near_boundary,
+                                                      x_cent,y_cent,width,height))
+        print "Total of " + str(len(all_roots)) + " roots found."
+        print "  " + str(len(roots_within_boundary)) + " during smoothing routine."
+        print "  " + str(abs(I0)) + " from application of Roche."
 
 warn_imprecise_roots = 1
 warn_max_steps_exceeded = 2
 warn_no_muller_root = 4
 def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
-    max_steps=5,mul_tol=1e-12,mul_N=400,mul_off=1e-5,known_roots=[],verbose=False,summary=False):
+    max_steps=5,mul_tol=1e-12,mul_N=400,mul_off=1e-5,known_roots=[],
+    verbose=False,summary=False):
     '''
     I assume f is analytic with simple (i.e. order one) zeros.
 
@@ -393,7 +427,8 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
         known roots (optional[list of complex numbers]): Roots of f that are
             already known.
 
-        verbose (optional[boolean]): print all warnings.
+        verbose (optional[boolean]): print all warnings and summaries for
+            subregions.
 
         summary (optional[boolean]): print a summary of warnings at end of
             calculation.
@@ -403,8 +438,9 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             the values x_cent,y_cent,width, and height.
     '''
 
-    ret = 0
-    
+    warn = 0
+    num_regions = 1
+
     c = get_boundary(x_cent,y_cent,width,height,N)
     f_frac = lambda z: fp(z)/(2j*np.pi*f(z))
     y = [f_frac(z) for z in c]
@@ -420,15 +456,15 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             if mull_ret:
                 roots_near_boundary.append(mull_root)
             else:
-                ret |= warn_no_muller_root
+                warn |= warn_no_muller_root
         except:
             pass
 
     subtracted_roots = purge(roots_near_boundary+known_roots)
 
     ## we don't need the roots far outside the boundary
-    subtracted_roots = inside_boundary(subtracted_roots,
-                                        x_cent,y_cent,width+2.,height+2.)
+    subtracted_roots = inside_boundary(subtracted_roots,x_cent,y_cent,
+                                       width+2.,height+2.)
 
     max_ok = abs(outlier_coeff*get_max(y))
     subtracted_residues = residues(f_frac,subtracted_roots)
@@ -437,30 +473,29 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
                                 for y_el,z_el in zip(y,c)]
     I0 = integrate.trapz(y_smooth, c)  # approx number of roots not subtracted
 
+    num_roots_interior = int(round(abs(I0)))
     ## If there's only a few roots, find them.
     if I0 < 10:
-        num_roots_interior = int(round(abs(I0)))
         if num_roots_interior == 0:
-            if summary:
-                print_get_roots_rect_summary(ret)
-            return ret, inside_boundary(subtracted_roots,x_cent,y_cent,width,height)
-        if verbose:
-            print "Approx number of roots in current rect = ", abs(I0)
+            get_roots_rect_summary(warn,subtracted_roots,roots_near_boundary,I0,
+                                   x_cent,y_cent,width,height,num_regions,verbose,summary)
+            return inside_boundary(subtracted_roots,x_cent,y_cent,width,height),warn,num_regions
         if abs(num_roots_interior-I0)>0.005:
-            ret |= warn_imprecise_roots
+            warn |= warn_imprecise_roots
             if verbose:
-                print ("Warning!! Number of roots may be imprecise for this N. Increase N "
-                       "for greater precision.")
+                print ("Warning!! Number of roots may be imprecise for this N. "
+                       "Increase N for greater precision.")
         rough_roots = find_roots(y_smooth,c,num_roots_interior)
 
         ##TODO: best way to pick points for Muller method below
         mull_roots = []
         for root in rough_roots:
-            mull_ret, mull_root = Muller(root-mul_off,root+mul_off,root,f,mul_tol,mul_N,verbose)
+            mull_ret, mull_root = Muller(root-mul_off,root+mul_off,root,f,
+                                         mul_tol,mul_N,verbose)
             if mull_ret:
                 mull_roots.append(mull_root)
             else:
-                ret |= warn_no_muller_root
+                warn |= warn_no_muller_root
         interior_roots = purge(mull_roots)
         combined_roots = purge(roots_near_boundary + interior_roots)
     else:
@@ -473,17 +508,19 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
         y_list = [y_cent - height / 2.,y_cent + height / 2.,
                   y_cent - height / 2.,y_cent + height / 2.]
         for x,y in zip(x_list,y_list):
-            newRet, roots_from_subrectangle = get_roots_rect(f,fp,x,y,
+            roots_from_subrectangle,newWarn,new_regions = get_roots_rect(f,fp,x,y,
                 width/2.,height/2.,N,outlier_coeff,max_steps-1,mul_tol,mul_N,
-                known_roots=combined_roots,verbose=verbose)
-            ret |= newRet
+                known_roots=combined_roots,verbose=verbose,
+                summary=(verbose and summary))
+            warn |= newWarn
+            num_regions += new_regions
             combined_roots = purge(combined_roots + roots_from_subrectangle)
     elif max_steps == 0:
-        ret |= warn_max_steps_exceeded
+        warn |= warn_max_steps_exceeded
         if verbose:
-            print "max_steps exceeded. Some interior roots might be missing."
-            
-    if summary:
-        print_get_roots_rect_summary(ret)
-        
-    return ret, inside_boundary(combined_roots,x_cent,y_cent,width,height)
+            print "Warning!! max_steps exceeded. Some interior roots might be missing."
+
+    get_roots_rect_summary(warn,combined_roots,roots_near_boundary,num_roots_interior,
+                           x_cent,y_cent,width,height,num_regions,verbose,summary)
+
+    return inside_boundary(combined_roots,x_cent,y_cent,width,height),warn,num_regions
