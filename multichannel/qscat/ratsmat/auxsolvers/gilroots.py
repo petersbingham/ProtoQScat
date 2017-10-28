@@ -30,7 +30,6 @@ from itertools import chain
 from scipy import integrate
 import math
 import cmath as cm
-from gilfunctions import limit
 
 def Muller(x1,x2,x3,f,tol=1e-12,N=400,verbose=False):
     '''
@@ -120,7 +119,35 @@ def residues(f_frac,roots):
     '''
     return [limit(lambda z: (z-root)*f_frac(z),root) for root in roots]
 
+def limit(f,z0,N=10,eps=1e-3):
+    '''
+    Takes possibly matrix-valued function f and its simple pole z0 and returns
+    limit_{z \to val} f(z). Estimates the value based on N surrounding
+    points at a distance eps.
 
+    Args:
+        f (function): the function for which the limit will be found.
+
+        z0 (complex number): The value at which the limit is evaluated.
+
+        N (int): number of points used in the estimate.
+
+        eps (optional[float]):
+            distance from z0 at which estimating points are placed.
+
+    Returns:
+        Limit value (complex):
+            The estimated value of :math:`limit_{z -> z_0} f(z)`.
+
+    '''
+    t=np.linspace(0.,2.*np.pi*(N-1.)/N,num=N)
+    c=np.exp(1j*t)*eps
+    try:
+        s=sum(f(z0 + c_el) for c_el in c)/float(N)
+        return s
+    except:
+        print "Something went wrong in estimating the limit."
+        return
 
 def new_f_frac(f_frac,z0,residues,roots,val=None):
     '''
@@ -229,7 +256,7 @@ def combine(eps=1e-5,*args):
     lst = list(chain(*args))
     return purge(lst,eps)
 
-def purge(lst,eps=1e-7,conj_root_mode=False,conj_root_eps=1e-10):
+def purge(lst,eps=1e-5):
     '''
     Get rid of redundant elements in a list. There is a precision cutoff eps.
 
@@ -246,17 +273,36 @@ def purge(lst,eps=1e-7,conj_root_mode=False,conj_root_eps=1e-10):
         return []
     for el in lst[:-1]:
         if abs(el-lst[-1]) < eps:
-            if not conj_root_mode or \
-            el.imag/lst[-1].imag>=0 or abs(el.imag)<conj_root_eps:
-                return purge(lst[:-1],eps,conj_root_mode,conj_root_eps)
-    return purge(lst[:-1],eps,conj_root_mode,conj_root_eps) + [lst[-1]]
+            return purge(lst[:-1],eps)
+    return purge(lst[:-1],eps) + [lst[-1]]
 
-def add_conjugates(lst):
+def root_purge(lst,eps=1e-7,min_imag=1e-10):
+    '''
+    Get rid of redundant elements in a list. There is a precision cutoff eps.
+
+    Args:
+        lst (list): elements.
+
+        eps (optional[float]): precision cutoff.
+
+    Returns:
+        A list without redundant elements.
+
+    '''
+    if len(lst) == 0:
+        return []
+    for el in lst[:-1]:
+        if abs(el-lst[-1]) < eps and \
+        (el.imag/lst[-1].imag>=0 or abs(el.imag)<conj_root_eps):
+            return root_purge(lst[:-1],eps,min_imag)
+    return root_purge(lst[:-1],eps,min_imag) + [lst[-1]]
+
+def add_conjugates(lst,eps=1e-7,min_imag=1e-10):
     new_lst = []
     for el in lst:
         new_lst.append(el)
         new_lst.append(el.conjugate())
-    return purge(new_lst,conj_root_mode=True)
+    return root_purge(new_lst,eps,min_imag)
 
 def linspace(c1,c2,num=50):
     '''
@@ -407,8 +453,9 @@ warn_imprecise_roots = 1
 warn_max_steps_exceeded = 2
 warn_no_muller_root = 4
 def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
-    max_steps=5,mul_tol=1e-12,mul_N=400,mul_off=1e-5,known_roots=[],
-    conj_root_mode=False,verbose=False,summary=False):
+    max_steps=5,mul_tol=1e-12,mul_N=400,mul_off=1e-5,max_order=10,
+    purge_eps=1e-7,conj_min_imag=None,verbose=False,summary=False,
+    known_roots=[]):
     '''
     I assume f is analytic with simple (i.e. order one) zeros.
 
@@ -445,7 +492,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
         known roots (optional[list of complex numbers]): Roots of f that are
             already known.
 
-        conj_root_mode (optional[boolean]): If function is a polynomial then
+        conj_min_imag (optional[boolean]): If function is a polynomial then
             roots will occur in a+ib, a-ib pairs. This options takes this mode
             into account when purging roots that are close to the real axis.
 
@@ -457,7 +504,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
 
     Returns:
         A list of roots for the function f inside the rectangle determined by
-            the values x_cent,y_cent,width, and height. Also a warning in and
+            the values x_cent,y_cent,width, and height. Also a warning and
             number of regions in calculation.
     '''
 
@@ -498,10 +545,10 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
 
     num_roots_interior = int(round(abs(I0)))
     ## If there's only a few roots, find them.
-    if I0 < 10:
+    if I0 < max_order:
         if num_roots_interior == 0:
             tot_interior_roots = inside_boundary(subtracted_roots,x_cent,y_cent,width,height)
-            if conj_root_mode:
+            if conj_min_imag:
                 final_roots = inside_boundary(add_conjugates(tot_interior_roots),
                                               x_cent,y_cent,width,height)
                 num_added_conj_roots = len(final_roots)-len(tot_interior_roots)
@@ -534,7 +581,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
         combined_roots = purge(roots_near_boundary)
     ## if some interior roots are missed or if there were many roots,
     ## subdivide the rectangle and search recursively.
-    if I0>=10 or len(combined_roots) < num_roots_interior and max_steps != 0:
+    if I0>=max_order or len(combined_roots) < num_roots_interior and max_steps != 0:
         x_list = [x_cent - width / 2.,x_cent - width / 2.,
                   x_cent + width / 2.,x_cent + width / 2.]
         y_list = [y_cent - height / 2.,y_cent + height / 2.,
@@ -553,7 +600,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             print "Warning!! max_steps exceeded. Some interior roots might be missing."
 
     tot_interior_roots = inside_boundary(combined_roots,x_cent,y_cent,width,height)
-    if conj_root_mode:
+    if conj_min_imag:
         final_roots = inside_boundary(add_conjugates(tot_interior_roots),
                                       x_cent,y_cent,width,height)
         num_added_conj_roots = len(final_roots)-len(tot_interior_roots)

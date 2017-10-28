@@ -31,18 +31,23 @@ DELVES_X_CENT = 0.15
 DELVES_Y_CENT = 0.0
 DELVES_WIDTH = 0.14
 DELVES_HEIGHT = 0.3
-DELVES_N = 1000
+DELVES_N = 10
 DELVES_OUTLIER_COEFF = 100.
-DELVES_MAX_STEPS = 500
+DELVES_MAX_STEPS = 5
+
 DELVES_MUL_TOL = 1e-12
 DELVES_MUL_N = 400
 DELVES_MUL_OFF = 1e-6
-DELVES_KNOWN_ROOTS = []
-DELVES_CONJUGATE_ROOT_MODE = True
+
+DELVES_MAX_POLY_ORDER = 5
+
+DELVES_PURGE_EPS = 1e-7
+DELVES_CONJ_ROOT_MIN_IMAG = 1e-10
+
 DELVES_VERBOSE = False
 DELVES_SUMMARY = True
+
 DELVES_MODE = DELVES_MODE_STANDARD
-DELVES_DIST = 1e-10
 
 
 ##########################################################
@@ -68,7 +73,10 @@ class RatSMat(sm.mat):
                 raise sm.MatException("Selected root finding method not applicable to inelastic scattering data.")
             self.rootSolver = SymDetRoots(self.suppressCmdOut, EXPANDEDDET_ROOTS_FINDTYPE, SYMPY_NROOTS_N, SYMPY_NROOTS_MAXSTEPS)
         else:
-            self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_X_CENT, DELVES_Y_CENT, DELVES_WIDTH, DELVES_HEIGHT, DELVES_N, DELVES_OUTLIER_COEFF, DELVES_MAX_STEPS, DELVES_MUL_TOL, DELVES_MUL_N, DELVES_MUL_OFF, DELVES_KNOWN_ROOTS, DELVES_CONJUGATE_ROOT_MODE, DELVES_VERBOSE, DELVES_SUMMARY, DELVES_MODE, DELVES_DIST)
+            self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_X_CENT, DELVES_Y_CENT, DELVES_WIDTH, DELVES_HEIGHT, 
+                                          DELVES_N, DELVES_OUTLIER_COEFF, DELVES_MAX_STEPS, DELVES_MUL_TOL, DELVES_MUL_N, 
+                                          DELVES_MUL_OFF, DELVES_MAX_POLY_ORDER, DELVES_PURGE_EPS, DELVES_CONJ_ROOT_MIN_IMAG,
+                                          DELVES_VERBOSE, DELVES_SUMMARY, DELVES_MODE)
             
         self.rootCleaner = RootClean(self.suppressCmdOut, EXPANDEDDET_ROOTS_CLEANWIDTH)
 

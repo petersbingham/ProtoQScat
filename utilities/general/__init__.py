@@ -1,7 +1,7 @@
 import inspect
 from tabulate import tabulate
 
-def getArgDesc(func, args):
+def getArgDesc(func, args, ignore=None):
     a = inspect.getargspec(func)
     if a.defaults is not None:
         d = dict(zip(a.args[-len(a.defaults):],a.defaults))
@@ -12,11 +12,12 @@ def getArgDesc(func, args):
     first = True
     for arg in a.args:
         if arg in d:
-            if not first:
-                argStr += ", "
-            else:
-                first = False
-            argStr += arg + " " + str(d[arg])
+            if ignore is not None and arg not in ignore:
+                if not first:
+                    argStr += ", "
+                else:
+                    first = False
+                argStr += arg + " " + str(d[arg])
     argStr += ")"
     return argStr
     #return str(d).replace(':', '').replace('\'', '').replace('{', '(').replace('}', ')')
