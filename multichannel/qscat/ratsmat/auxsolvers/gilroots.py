@@ -227,9 +227,9 @@ def combine(eps=1e-5,*args):
 
     '''
     lst = list(chain(*args))
-    return purge(lst, eps)
+    return purge(lst,eps)
 
-def purge(lst,eps=1e-5):
+def purge(lst,eps=1e-7,conj_root_mode=False,conj_root_eps=1e-10):
     '''
     Get rid of redundant elements in a list. There is a precision cutoff eps.
 
@@ -246,8 +246,17 @@ def purge(lst,eps=1e-5):
         return []
     for el in lst[:-1]:
         if abs(el-lst[-1]) < eps:
-            return purge(lst[:-1],eps)
-    return purge(lst[:-1],eps) + [lst[-1]]
+            if not conj_root_mode or \
+            el.imag/lst[-1].imag>=0 or abs(el.imag)<conj_root_eps:
+                return purge(lst[:-1],eps,conj_root_mode,conj_root_eps)
+    return purge(lst[:-1],eps,conj_root_mode,conj_root_eps) + [lst[-1]]
+
+def add_conjugates(lst):
+    new_lst = []
+    for el in lst:
+        new_lst.append(el)
+        new_lst.append(el.conjugate())
+    return purge(new_lst,conj_root_mode=True)
 
 def linspace(c1,c2,num=50):
     '''
@@ -340,17 +349,22 @@ def find_maxes(y):
             maxes.append(i)
     return maxes
 
-def get_roots_rect_summary(warn,all_roots,roots_near_boundary,I0,x_cent,
-                             y_cent,width,height,num_regions,verbose,summary):
+def get_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_near_boundary,
+                           num_roots_interior,I0,num_known_roots,x_cent,y_cent,width,height,
+                           num_regions,verbose,summary):
     '''
     Return final roots and optionally prints summary of get_roots_rect.
 
     Args:
         warn (int): warnings generated during get_roots_rect.
         
-        all_roots (floats): all roots within region found by the routine.
+        num_final_roots (floats): total roots within region found by the routine.
+        
+        num_added_conj_roots (floats): number of conjugate roots added.
         
         roots_near_boundary (floats): roots found during the smoothing.
+        
+        num_known_roots (floats): number of roots previously discovered.
         
         I0 (float): number of roots predicted using Roche.
         
@@ -379,18 +393,22 @@ def get_roots_rect_summary(warn,all_roots,roots_near_boundary,I0,x_cent,
             if warn & warn_no_muller_root:
                 print "  -No muller root found with specified parameters."
 
-        roots_within_boundary = purge(inside_boundary(roots_near_boundary,
-                                                      x_cent,y_cent,width,height))
-        print "Total of " + str(len(all_roots)) + " roots found."
+        roots_within_boundary = inside_boundary(purge(roots_near_boundary),
+                                                x_cent,y_cent,width,height)
+        print "Total of " + str(num_final_roots) + " roots found."
+        if num_known_roots != 0:
+            print "  " + str(num_known_roots) + " already discovered."
         print "  " + str(len(roots_within_boundary)) + " during smoothing routine."
-        print "  " + str(abs(I0)) + " from application of Roche."
+        print "  " + str(num_roots_interior) + " from application of Roche (" + str(abs(I0)) + " predicted)."
+        if num_added_conj_roots is not None:
+            print "  " + str(num_added_conj_roots) + " added conjugates.\n"
 
 warn_imprecise_roots = 1
 warn_max_steps_exceeded = 2
 warn_no_muller_root = 4
 def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     max_steps=5,mul_tol=1e-12,mul_N=400,mul_off=1e-5,known_roots=[],
-    verbose=False,summary=False):
+    conj_root_mode=False,verbose=False,summary=False):
     '''
     I assume f is analytic with simple (i.e. order one) zeros.
 
@@ -412,7 +430,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
 
         N (optional[int]): Number of points to sample per edge
 
-        outlier_coeff (float): multiplier for coefficient used when subtracting
+        outlier_coeff (optional[float]): multiplier for coefficient used when subtracting
             poles to improve numerical stability. See new_f_frac_safe.
 
         max_step (optional[int]): Number of iterations allowed for algorithm to
@@ -427,6 +445,10 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
         known roots (optional[list of complex numbers]): Roots of f that are
             already known.
 
+        conj_root_mode (optional[boolean]): If function is a polynomial then
+            roots will occur in a+ib, a-ib pairs. This options takes this mode
+            into account when purging roots that are close to the real axis.
+
         verbose (optional[boolean]): print all warnings and summaries for
             subregions.
 
@@ -435,7 +457,8 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
 
     Returns:
         A list of roots for the function f inside the rectangle determined by
-            the values x_cent,y_cent,width, and height.
+            the values x_cent,y_cent,width, and height. Also a warning in and
+            number of regions in calculation.
     '''
 
     warn = 0
@@ -477,9 +500,18 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     ## If there's only a few roots, find them.
     if I0 < 10:
         if num_roots_interior == 0:
-            get_roots_rect_summary(warn,subtracted_roots,roots_near_boundary,I0,
-                                   x_cent,y_cent,width,height,num_regions,verbose,summary)
-            return inside_boundary(subtracted_roots,x_cent,y_cent,width,height),warn,num_regions
+            tot_interior_roots = inside_boundary(subtracted_roots,x_cent,y_cent,width,height)
+            if conj_root_mode:
+                final_roots = inside_boundary(add_conjugates(tot_interior_roots),
+                                              x_cent,y_cent,width,height)
+                num_added_conj_roots = len(final_roots)-len(tot_interior_roots)
+            else:
+                final_roots = tot_interior_roots
+                num_added_conj_roots = None
+            get_roots_rect_summary(warn,len(final_roots),num_added_conj_roots,roots_near_boundary,
+                                   num_roots_interior,I0,len(known_roots),x_cent,y_cent,width,
+                                   height,num_regions,verbose,summary)
+            return final_roots,warn,num_regions
         if abs(num_roots_interior-I0)>0.005:
             warn |= warn_imprecise_roots
             if verbose:
@@ -497,7 +529,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             else:
                 warn |= warn_no_muller_root
         interior_roots = purge(mull_roots)
-        combined_roots = purge(roots_near_boundary + interior_roots)
+        combined_roots = purge(roots_near_boundary+interior_roots)
     else:
         combined_roots = purge(roots_near_boundary)
     ## if some interior roots are missed or if there were many roots,
@@ -514,13 +546,22 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
                 summary=(verbose and summary))
             warn |= newWarn
             num_regions += new_regions
-            combined_roots = purge(combined_roots + roots_from_subrectangle)
+            combined_roots = purge(combined_roots+roots_from_subrectangle)
     elif max_steps == 0:
         warn |= warn_max_steps_exceeded
         if verbose:
             print "Warning!! max_steps exceeded. Some interior roots might be missing."
 
-    get_roots_rect_summary(warn,combined_roots,roots_near_boundary,num_roots_interior,
-                           x_cent,y_cent,width,height,num_regions,verbose,summary)
+    tot_interior_roots = inside_boundary(combined_roots,x_cent,y_cent,width,height)
+    if conj_root_mode:
+        final_roots = inside_boundary(add_conjugates(tot_interior_roots),
+                                      x_cent,y_cent,width,height)
+        num_added_conj_roots = len(final_roots)-len(tot_interior_roots)
+    else:
+        final_roots = tot_interior_roots
+        num_added_conj_roots = None
+    get_roots_rect_summary(warn,len(final_roots),num_added_conj_roots,roots_near_boundary,
+                           num_roots_interior,I0,len(known_roots),x_cent,y_cent,width,
+                           height,num_regions,verbose,summary)
 
-    return inside_boundary(combined_roots,x_cent,y_cent,width,height),warn,num_regions
+    return final_roots,warn,num_regions

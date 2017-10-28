@@ -76,10 +76,10 @@ class SymDetRoots(AuxHelper):
 
 
 class DelvesRoots(AuxHelper):
-    def __init__(self, suppressCmdOut, x_cent, y_cent, width, height, N, outlier_coeff, max_steps, mul_tol, mul_N, mul_off, known_roots, verbose, summary, mode, distFactor):
+    def __init__(self, suppressCmdOut, x_cent, y_cent, width, height, N, outlier_coeff, max_steps, mul_tol, mul_N, mul_off, known_roots, conj_root_mode, verbose, summary, mode, distFactor):
         AuxHelper.__init__(self, suppressCmdOut)
         self.mode = mode
-        self.delves_Args = {'x_cent':x_cent, 'y_cent':y_cent, 'width':width, 'height':height, 'N':N, 'outlier_coeff':outlier_coeff, 'max_steps':max_steps, 'mul_tol':mul_tol, 'mul_N':mul_N, 'mul_off':mul_off, 'known_roots':known_roots, 'verbose':verbose, 'summary':summary}
+        self.delves_Args = {'x_cent':x_cent, 'y_cent':y_cent, 'width':width, 'height':height, 'N':N, 'outlier_coeff':outlier_coeff, 'max_steps':max_steps, 'mul_tol':mul_tol, 'mul_N':mul_N, 'mul_off':mul_off, 'known_roots':known_roots, 'conj_root_mode':conj_root_mode, 'verbose':verbose, 'summary':summary}
         self.typeStr = "get_roots_rect"+getArgDesc(get_roots_rect, self.delves_Args) + ", mode " +str(mode) + ", distFactor " +str(distFactor)
         self.cmp = num.Compare(distFactor)
 
