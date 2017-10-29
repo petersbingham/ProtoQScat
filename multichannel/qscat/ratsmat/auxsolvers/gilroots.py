@@ -372,12 +372,31 @@ def root_purge(lst,eps=1e-7,min_imag=1e-10):
             return root_purge(lst[:-1],eps,min_imag)
     return root_purge(lst[:-1],eps,min_imag) + [lst[-1]]
 
-def add_conjugates(lst,eps=1e-7,min_imag=1e-10):
+def add_missing_conjugates(lst,eps=1e-7,min_imag=1e-10):
     new_lst = []
     for el in lst:
         new_lst.append(el)
         new_lst.append(el.conjugate())
     return root_purge(new_lst,eps,min_imag)
+
+def handle_warning(warn, verbose):
+    imprecise_roots = "Warning!! Number of roots may be imprecise for " + \
+                      "this N. Increase N for greater precision."
+    max_steps_exceeded = "Warning!! max_steps exceeded. Some interior " + \
+                         "roots might be missing."
+    no_muller_root = "Warning!! Muller failed to converge or raised exception." 
+    not_all_interior_fnd = "Warning!! Not all predicted interior roots found."
+    
+    if verbose:
+        if warn == warn_imprecise_roots:
+            print imprecise_roots
+        elif warn == warn_max_steps_exceeded:
+            print max_steps_exceeded
+        elif warn == warn_no_muller_root:
+            print no_muller_root
+        elif warn == warn_not_all_interior_fnd:
+            print not_all_interior_fnd
+    return warn
 
 def get_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_near_boundary,
                            I0,num_interior_roots_fnd,num_known_roots,x_cent,y_cent,width,
@@ -432,27 +451,19 @@ def get_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_near_
             print "  " + str(num_known_roots) + " already discovered."
         print "  " + str(len(roots_within_boundary)) + " during smoothing routine."
         print "  " + str(num_interior_roots_fnd) + " from application of Roche (" + "{:.5f}".format(abs(I0)) + " predicted)."
-        if num_added_conj_roots is not None:
+        if num_added_conj_roots != 0:
             print "  " + str(num_added_conj_roots) + " added conjugates.\n"
 
-def handle_warning(warn, verbose):
-    imprecise_roots = "Warning!! Number of roots may be imprecise for " + \
-                      "this N. Increase N for greater precision."
-    max_steps_exceeded = "Warning!! max_steps exceeded. Some interior " + \
-                         "roots might be missing."
-    no_muller_root = "Warning!! Muller failed to converge." 
-    not_all_interior_fnd = "Warning!! Not all predicted interior roots found."
-    
-    if verbose:
-        if warn == warn_imprecise_roots:
-            print imprecise_roots
-        elif warn == warn_max_steps_exceeded:
-            print max_steps_exceeded
-        elif warn == warn_no_muller_root:
-            print no_muller_root
-        elif warn == warn_not_all_interior_fnd:
-            print not_all_interior_fnd
-    return warn
+def finialise_roots(roots,x_cent,y_cent,width,height,conj_min_imag):
+    inside_roots = inside_boundary(roots,x_cent,y_cent,width,height)
+    num_added_roots = 0
+    if conj_min_imag:
+        final_roots = inside_boundary(add_missing_conjugates(inside_roots),
+                                      x_cent,y_cent,width,height)
+        num_added_roots = len(final_roots)-len(inside_roots)
+    else:
+        final_roots = inside_roots
+    return final_roots, num_added_roots
 
 warn_imprecise_roots = 1
 warn_max_steps_exceeded = 2
@@ -534,7 +545,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             else:
                 warn |= handle_warning(warn_no_muller_root,verbose)
         except:
-            pass
+            warn |= handle_warning(warn_no_muller_root,verbose)
 
     subtracted_roots = purge(roots_near_boundary+known_roots)
 
@@ -556,17 +567,13 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     ## If there's only a few roots, find them.
     if I0 < max_order:
         if num_roots_interior == 0:
-            final_roots = inside_boundary(subtracted_roots,x_cent,y_cent,width,height)
-            if conj_min_imag:
-                final_roots = inside_boundary(add_conjugates(final_roots),
-                                              x_cent,y_cent,width,height)
-                num_added_conj_roots = len(final_roots)-len(final_roots)
-            else:
-                final_roots = final_roots
-                num_added_conj_roots = None
-            get_roots_rect_summary(warn,len(final_roots),num_added_conj_roots,roots_near_boundary,
-                                   num_roots_interior,I0,len(known_roots),x_cent,y_cent,width,
-                                   height,num_regions,verbose,summary)
+            final_roots,num_added_roots = finialise_roots(subtracted_roots,
+                                                          x_cent,y_cent,width,
+                                                          height,conj_min_imag)
+            get_roots_rect_summary(warn,len(final_roots),num_added_roots,
+                                   roots_near_boundary,num_roots_interior,I0,
+                                   len(known_roots),x_cent,y_cent,width,height,
+                                   num_regions,verbose,summary)
             return final_roots,warn,num_regions
         if abs(num_roots_interior-I0)>0.005:
             warn |= handle_warning(warn_imprecise_roots, verbose)
@@ -610,16 +617,11 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     if len(interior_roots) != num_roots_interior:
         warn |= handle_warning(warn_not_all_interior_fnd,verbose)
 
-    final_roots = inside_boundary(combined_roots,x_cent,y_cent,width,height)
-    if conj_min_imag:
-        final_roots_mod = inside_boundary(add_conjugates(final_roots),
-                                      x_cent,y_cent,width,height)
-        num_added_conj_roots = len(final_roots_mod)-len(final_roots)
-    else:
-        final_roots_mod = final_roots
-        num_added_conj_roots = None
-    get_roots_rect_summary(warn,len(final_roots_mod),num_added_conj_roots,roots_near_boundary,
-                           I0,len(interior_roots),len(known_roots),x_cent,y_cent,width,
-                           height,num_regions,verbose,summary)
+    final_roots,num_added_roots = finialise_roots(combined_roots,x_cent,y_cent,
+                                                  width,height,conj_min_imag)
+    get_roots_rect_summary(warn,len(final_roots),num_added_roots,
+                           roots_near_boundary,I0,len(interior_roots),
+                           len(known_roots),x_cent,y_cent,width,height,
+                           num_regions,verbose,summary)
 
-    return final_roots_mod,warn,num_regions
+    return final_roots,warn,num_regions

@@ -126,7 +126,7 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
     
     purge_eps=1e-7
     conj_min_imag=1e-8
-    conj_min_imag=None
+    #conj_min_imag=None
 
     if printPolys:
         print poly
