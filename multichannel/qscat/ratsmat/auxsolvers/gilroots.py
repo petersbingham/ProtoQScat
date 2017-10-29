@@ -240,22 +240,6 @@ def find_roots(y_smooth,c,num_roots_to_find):
         for k in xrange(0,num_roots_to_find+1)]
     return np.roots(coeff)
 
-def combine(eps=1e-5,*args):
-    '''
-    chain together several lists and purge redundancies.
-
-    Args:
-        eps (optional[float]): tolerance for purging elements.
-
-        args (lists): several lists.
-
-    Returns:
-        A list of combined elements.
-
-    '''
-    lst = list(chain(*args))
-    return purge(lst,eps)
-
 def purge(lst,eps=1e-5):
     '''
     Get rid of redundant elements in a list. There is a precision cutoff eps.
@@ -275,34 +259,6 @@ def purge(lst,eps=1e-5):
         if abs(el-lst[-1]) < eps:
             return purge(lst[:-1],eps)
     return purge(lst[:-1],eps) + [lst[-1]]
-
-def root_purge(lst,eps=1e-7,min_imag=1e-10):
-    '''
-    Get rid of redundant elements in a list. There is a precision cutoff eps.
-
-    Args:
-        lst (list): elements.
-
-        eps (optional[float]): precision cutoff.
-
-    Returns:
-        A list without redundant elements.
-
-    '''
-    if len(lst) == 0:
-        return []
-    for el in lst[:-1]:
-        if abs(el-lst[-1]) < eps and \
-        (el.imag/lst[-1].imag>=0 or abs(el.imag)<min_imag):
-            return root_purge(lst[:-1],eps,min_imag)
-    return root_purge(lst[:-1],eps,min_imag) + [lst[-1]]
-
-def add_conjugates(lst,eps=1e-7,min_imag=1e-10):
-    new_lst = []
-    for el in lst:
-        new_lst.append(el)
-        new_lst.append(el.conjugate())
-    return root_purge(new_lst,eps,min_imag)
 
 def linspace(c1,c2,num=50):
     '''
@@ -395,6 +351,34 @@ def find_maxes(y):
             maxes.append(i)
     return maxes
 
+def root_purge(lst,eps=1e-7,min_imag=1e-10):
+    '''
+    Get rid of redundant elements in a list. There is a precision cutoff eps.
+
+    Args:
+        lst (list): elements.
+
+        eps (optional[float]): precision cutoff.
+
+    Returns:
+        A list without redundant elements.
+
+    '''
+    if len(lst) == 0:
+        return []
+    for el in lst[:-1]:
+        if abs(el-lst[-1]) < eps and \
+        (el.imag/lst[-1].imag>=0 or abs(el.imag)<min_imag):
+            return root_purge(lst[:-1],eps,min_imag)
+    return root_purge(lst[:-1],eps,min_imag) + [lst[-1]]
+
+def add_conjugates(lst,eps=1e-7,min_imag=1e-10):
+    new_lst = []
+    for el in lst:
+        new_lst.append(el)
+        new_lst.append(el.conjugate())
+    return root_purge(new_lst,eps,min_imag)
+
 def get_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_near_boundary,
                            I0,num_interior_roots_fnd,num_known_roots,x_cent,y_cent,width,
                            height,num_regions,verbose,summary):
@@ -450,6 +434,25 @@ def get_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_near_
         print "  " + str(num_interior_roots_fnd) + " from application of Roche (" + "{:.5f}".format(abs(I0)) + " predicted)."
         if num_added_conj_roots is not None:
             print "  " + str(num_added_conj_roots) + " added conjugates.\n"
+
+def handle_warning(warn, verbose):
+    imprecise_roots = "Warning!! Number of roots may be imprecise for " + \
+                      "this N. Increase N for greater precision."
+    max_steps_exceeded = "Warning!! max_steps exceeded. Some interior " + \
+                         "roots might be missing."
+    no_muller_root = "Warning!! Muller failed to converge." 
+    not_all_interior_fnd = "Warning!! Not all predicted interior roots found."
+    
+    if verbose:
+        if warn == warn_imprecise_roots:
+            print imprecise_roots
+        elif warn == warn_max_steps_exceeded:
+            print max_steps_exceeded
+        elif warn == warn_no_muller_root:
+            print no_muller_root
+        elif warn == warn_not_all_interior_fnd:
+            print not_all_interior_fnd
+    return warn
 
 warn_imprecise_roots = 1
 warn_max_steps_exceeded = 2
@@ -529,7 +532,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             if mull_ret:
                 roots_near_boundary.append(mull_root)
             else:
-                warn |= warn_no_muller_root
+                warn |= handle_warning(warn_no_muller_root,verbose)
         except:
             pass
 
@@ -566,10 +569,8 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
                                    height,num_regions,verbose,summary)
             return final_roots,warn,num_regions
         if abs(num_roots_interior-I0)>0.005:
-            warn |= warn_imprecise_roots
-            if verbose:
-                print ("Warning!! Number of roots may be imprecise for this N. "
-                       "Increase N for greater precision.")
+            warn |= handle_warning(warn_imprecise_roots, verbose)
+
         rough_roots = find_roots(y_smooth,c,num_roots_interior)
 
         ##TODO: best way to pick points for Muller method below
@@ -580,7 +581,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             if mull_ret:
                 mull_roots.append(mull_root)
             else:
-                warn |= warn_no_muller_root
+                warn |= handle_warning(warn_no_muller_root,verbose)
         interior_roots = purge(mull_roots)
         combined_roots = purge(roots_near_boundary+interior_roots)
     else:
@@ -604,14 +605,10 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             interior_roots = purge(interior_roots+roots_from_subrectangle)
         combined_roots = purge(combined_roots+interior_roots)
     elif max_steps == 0:
-        warn |= warn_max_steps_exceeded
-        if verbose:
-            print "Warning!! max_steps exceeded. Some interior roots might be missing."
+        warn |= handle_warning(warn_max_steps_exceeded,verbose)
 
     if len(interior_roots) != num_roots_interior:
-        warn |= warn_not_all_interior_fnd
-        if verbose:
-            print "Warning!! Not all predicted interior roots found."
+        warn |= handle_warning(warn_not_all_interior_fnd,verbose)
 
     final_roots = inside_boundary(combined_roots,x_cent,y_cent,width,height)
     if conj_min_imag:
