@@ -120,6 +120,13 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
     max_steps = 5
     mul_tol = 1e-12
     mul_N = 400
+    mul_off=1e-5
+    
+    max_order=10,
+    
+    purge_eps=1e-7
+    conj_min_imag=1e-8
+    conj_min_imag=None
 
     if printPolys:
         print poly
@@ -146,7 +153,7 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
             print "mul_N:" + str(mul_N)
         ret = Roots.get_roots_rect(f,fp,x_cent,y_cent,width,height,N,
                                    outlier_coeff,max_steps,mul_tol,mul_N,
-                                   conj_root_mode=True,
+                                   mul_off,max_order,purge_eps,conj_min_imag,
                                    verbose=False,summary=True)
         roots_gil, warn, numregions = ret
         roots_gil = np.asarray(roots_gil)
@@ -171,7 +178,7 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
               print str(root) + "  \t" + str(f(root))
 
 def test_Roots_3(printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False):
-    for N in range(2,51):
+    for N in range(2,41):
         test_Poly_Roots(N,printRoots,printPolys,printParams,doubleOnWarning)
 
 if __name__ == "__main__":
