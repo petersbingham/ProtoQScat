@@ -44,8 +44,7 @@ DELVES_MAX_POLY_ORDER = 10
 DELVES_PURGE_EPS = 1e-6
 DELVES_CONJ_ROOT_MIN_IMAG = 1e-6
 
-DELVES_VERBOSE = False
-DELVES_SUMMARY = True
+DELVES_LOG = log_summary
 
 DELVES_MODE = DELVES_MODE_STANDARD
 
@@ -76,7 +75,7 @@ class RatSMat(sm.mat):
             self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_X_CENT, DELVES_Y_CENT, DELVES_WIDTH, DELVES_HEIGHT, 
                                           DELVES_N, DELVES_OUTLIER_COEFF, DELVES_MAX_STEPS, DELVES_MUL_TOL, DELVES_MUL_N, 
                                           DELVES_MUL_OFF, DELVES_MAX_POLY_ORDER, DELVES_PURGE_EPS, DELVES_CONJ_ROOT_MIN_IMAG,
-                                          DELVES_VERBOSE, DELVES_SUMMARY, DELVES_MODE)
+                                          DELVES_LOG, DELVES_MODE)
             
         self.rootCleaner = RootClean(self.suppressCmdOut, EXPANDEDDET_ROOTS_CLEANWIDTH)
 

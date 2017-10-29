@@ -77,12 +77,12 @@ class SymDetRoots(AuxHelper):
 
 class DelvesRoots(AuxHelper):
     def __init__(self, suppressCmdOut, x_cent, y_cent, width, height, N, outlier_coeff, max_steps, mul_tol, 
-                 mul_N, mul_off, max_order, purge_eps, conj_min_imag, verbose, summary, mode):
+                 mul_N, mul_off, max_order, purge_eps, conj_min_imag, log, mode):
         AuxHelper.__init__(self, suppressCmdOut)
         self.mode = mode
         self.delves_Args = {'x_cent':x_cent, 'y_cent':y_cent, 'width':width, 'height':height, 'N':N, 'outlier_coeff':outlier_coeff, 
                             'max_steps':max_steps, 'mul_tol':mul_tol, 'mul_N':mul_N, 'mul_off':mul_off, 'max_order':max_order, 
-                            'purge_eps':purge_eps, 'conj_min_imag':conj_min_imag, 'verbose':verbose, 'summary':summary}
+                            'purge_eps':purge_eps, 'conj_min_imag':conj_min_imag, 'log':log}
         self.typeStr = "get_roots_rect"+getArgDesc(get_roots_rect, self.delves_Args, ["known_roots"]) + ", mode " +str(mode)
         self.cmp = num.Compare(purge_eps)
 
@@ -126,7 +126,7 @@ class DelvesRoots(AuxHelper):
                 self.delves_Args['N'] *= 2
             if warn & warn_max_steps_exceeded:
                 self.delves_Args['max_steps'] *= 2
-            if warn & warn_no_muller_root:
+            if warn & warn_no_bnd_muller_root or warn & warn_no_int_muller_root:
                 self.delves_Args['mul_N'] *= 2
             roots, warn, num_regions = get_roots_rect(f, fp, **self.delves_Args)
 
