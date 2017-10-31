@@ -155,6 +155,7 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
                                    outlier_coeff,max_steps,mul_tol,mul_N,
                                    mul_off,max_order,purge_eps,conj_min_imag,
                                    log=Roots.log_summary)
+                                   #log=Roots.log_summary|Roots.log_recursive)
         roots_gil, warn, numregions = ret
         roots_gil = np.asarray(roots_gil)
         roots_gil = Roots.inside_boundary(roots_gil,x_cent,y_cent,width,height)
