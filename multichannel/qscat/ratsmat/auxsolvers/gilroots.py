@@ -387,7 +387,7 @@ def handle_warning(warn,verbose,lvl_cnt):
             print root_subtraction_division_by_zero
     return warn
 
-def get_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_near_boundary,
+def print_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_near_boundary,
                            I0,num_interior_roots_fnd,num_sub_roots_fnd,num_known_roots,
                            x_cent,y_cent,width,height,num_regions,lvl_cnt,verbose):
     '''
@@ -450,7 +450,23 @@ def get_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_near_
         print s+"    " + str(num_interior_roots_fnd) + " from Poly Muller."
         print s+"    " + str(num_sub_roots_fnd) + " from subregions."
         if num_added_conj_roots != 0:
-            print s+"  " + str(num_added_conj_roots) + " added conjugates.\n"
+            print s+"  " + str(num_added_conj_roots) + " added conjugates."
+
+def print_roots(roots_near_boundary_all,roots_near_boundary,roots_subtracted,
+                roots_rough,roots_interior_mull_all,roots_interior_mull,
+                roots_interior_all_subs,roots_all,roots_final,lvl_cnt,verbose):
+    s = " "*lvl_cnt
+    if verbose:
+        print "\n"+s+"All:\n" + str(np.array(roots_near_boundary_all))
+        print s+"Purged:\n" + str(np.array(roots_near_boundary))
+        print s+"Subtracted:\n" + str(np.array(roots_subtracted))
+        print ""
+        print s+"Rough:\n" + str(roots_rough)
+        print s+"Interior:\n" + str(np.array(roots_interior_mull_all))
+        print s+"Purged:\n" + str(np.array(roots_interior_mull))
+        print ""
+        print s+"All:\n" + str(np.array(roots_all))
+        print s+"Final:\n" + str(np.array(roots_final))
 
 def locate_roots(x1,x2,x3,f,mul_tol,mul_N,roots,log,lvl_cnt):
     warn = 0
@@ -566,7 +582,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
                                        width+2.,height+2.)
     max_ok = abs(outlier_coeff*get_max(y))
     residues_subtracted = residues(f_frac,roots_subtracted)
-    
+
     
     y_smooth = []
     for y_el,z_el in zip(y,c):
@@ -579,7 +595,8 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     I0 = integrate.trapz(y_smooth, c)  # Approx number of roots not subtracted
     num_roots_interior_mull = int(round(abs(I0)))
     
-    
+    roots_rough = []
+    roots_interior_mull_all = []
     roots_interior_mull = []
     if I0 < max_order:
         # If there's only a few roots, find them.
@@ -587,10 +604,10 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             roots_final,num_added_roots = finialise_roots(roots_subtracted,
                                                           x_cent,y_cent,width,
                                                           height,conj_min_imag)
-            get_roots_rect_summary(warn,len(roots_final),num_added_roots,
-                                   roots_near_boundary,I0,0,0,len(roots_known),
-                                   x_cent,y_cent,width,height,num_regions,
-                                   lvl_cnt,log&log_summary)
+            print_roots_rect_summary(warn,len(roots_final),num_added_roots,
+                                     roots_near_boundary,I0,0,0,len(roots_known),
+                                     x_cent,y_cent,width,height,num_regions,
+                                     lvl_cnt,log&log_summary)
             return roots_final,warn,num_regions
         if abs(num_roots_interior_mull-I0)>0.005:
             warn |= handle_warning(warn_imprecise_roots,log&log_all_warn,
@@ -598,7 +615,6 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
 
         roots_rough = locate_poly_roots(y_smooth,c,num_roots_interior_mull)
         ##TODO: best way to pick points for Muller method below
-        roots_interior_mull_all = []
         for root in roots_rough:
             warn |= locate_roots(root-mul_off,root+mul_off,root,f,mul_tol,
                                  mul_N,roots_interior_mull_all,log,lvl_cnt)
@@ -631,9 +647,12 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
 
     roots_final,num_added_roots = finialise_roots(roots_all,x_cent,y_cent,
                                                   width,height,conj_min_imag)
-    get_roots_rect_summary(warn,len(roots_final),num_added_roots,
-                           roots_near_boundary,I0,len(roots_interior_mull),
-                           len(roots_interior_all_subs),len(roots_known),
-                           x_cent,y_cent,width,height,num_regions,lvl_cnt,
-                           log&log_summary)
+    print_roots_rect_summary(warn,len(roots_final),num_added_roots,
+                             roots_near_boundary,I0,len(roots_interior_mull),
+                             len(roots_interior_all_subs),len(roots_known),
+                             x_cent,y_cent,width,height,num_regions,lvl_cnt,
+                             log&log_summary)
+    print_roots(roots_near_boundary_all,roots_near_boundary,roots_subtracted,
+                roots_rough,roots_interior_mull_all,roots_interior_mull,
+                roots_interior_all_subs,roots_all,roots_final,lvl_cnt,log&log_debug)
     return roots_final,warn,num_regions
