@@ -76,15 +76,15 @@ class SymDetRoots(AuxHelper):
 
 
 class DelvesRoots(AuxHelper):
-    def __init__(self, suppressCmdOut, x_cent, y_cent, width, height, N, outlier_coeff, max_steps, mul_tol, 
-                 mul_N, mul_off, max_order, dist_thres, conj_min_imag, log, mode):
+    def __init__(self, suppressCmdOut, x_cent, y_cent, width, height, N, outlier_coeff, max_steps, 
+                 max_order, mul_tol, mul_N, mul_off, dist_eps, lmt_N, lmt_eps, min_i, log, mode):
         AuxHelper.__init__(self, suppressCmdOut)
         self.mode = mode
         self.delves_Args = {'x_cent':x_cent, 'y_cent':y_cent, 'width':width, 'height':height, 'N':N, 'outlier_coeff':outlier_coeff, 
                             'max_steps':max_steps, 'mul_tol':mul_tol, 'mul_N':mul_N, 'mul_off':mul_off, 'max_order':max_order, 
-                            'dist_thres':dist_thres, 'conj_min_imag':conj_min_imag, 'log':log}
+                            'dist_eps':dist_eps, 'lmt_N':lmt_N, 'lmt_eps':lmt_eps, 'min_i':min_i, 'log':log}
         self.typeStr = "get_roots_rect"+getArgDesc(get_roots_rect, self.delves_Args, ["known_roots", "lvl_cnt"]) + ", mode " +str(mode)
-        self.cmp = num.Compare(dist_thres)
+        self.cmp = num.Compare(dist_eps)
 
     def _doesRootAlreadyExist(self, roots, newRoot):
         found = False
