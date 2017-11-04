@@ -400,7 +400,7 @@ def handle_warning(warn,verbose,lvl_cnt):
 
 def print_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_near_boundary,
                            I0,num_interior_roots_fnd,num_sub_roots_fnd,num_known_roots,
-                           x_cent,y_cent,width,height,num_regions,lvl_cnt,dist_thres,verbose):
+                           x_cent,y_cent,width,height,lvl_cnt,dist_thres,verbose):
     '''
     Return final roots and optionally prints summary of get_roots_rect.
 
@@ -421,19 +421,15 @@ def print_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_nea
 
         width,height (floats): The (half) width of height of the rectangle.
 
-        num_regions (int): Total number of regions includings outer and subregions.
-
         verbose (optional[boolean]): print all warnings.
     '''
     s = " "*lvl_cnt
+    d = "-"*lvl_cnt
     if verbose:
-        if num_regions>1:
-            print ""
-        print s+"Contains " +str(num_regions-1) + " subregions."
         if warn == 0:
-            print s+"Calculations complete. No warnings."
+            print d+"Calculations complete. No warnings."
         else:
-            print s+"Calculations completed with following warnings occurring at least once:"
+            print d+"Calculations completed with following warnings occurring at least once:"
             if warn & warn_imprecise_roots:
                 print s+"  -Imprecise number of roots in region."
             if warn & warn_max_steps_exceeded:
@@ -576,7 +572,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     warn = 0
     num_regions = 1
 
-    s = " "*lvl_cnt
+    s = "-"*lvl_cnt
     if log&log_recursive:
         print ("\n"+s+"Region(x,y,w,h): "+str(x_cent)+" "+str(y_cent)+" "
                +str(width)+" "+str(height))
@@ -625,8 +621,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             print_roots_rect_summary(warn,len(roots_final),conjs_added,
                                      roots_near_boundary,I0,0,0,
                                      len(roots_known),x_cent,y_cent,width,
-                                     height,num_regions,lvl_cnt,dist_thres,
-                                     log&log_summary)
+                                     height,lvl_cnt,dist_thres,log&log_summary)
             print_roots(roots_near_boundary_all,roots_near_boundary,roots_subtracted,
                         [],[],[],[],[],[],roots_final,roots_new,lvl_cnt,log&log_debug)
             return roots_new,warn,num_regions
@@ -654,11 +649,14 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     # subdivide the rectangle and search recursively.
     roots_interior_all_subs = []
     all_interior_found = len(roots_interior_mull_final) >= tot_num_interior_pred
+    was_subs = False
     if (I0>=max_order or not all_interior_found) and max_steps!=0:
+        was_subs = True
         x_list = [x_cent - width / 2.,x_cent - width / 2.,
                   x_cent + width / 2.,x_cent + width / 2.]
         y_list = [y_cent - height / 2.,y_cent + height / 2.,
                   y_cent - height / 2.,y_cent + height / 2.]
+        print s+"Contains " +str(len(x_list)) + " subregions:"
         for x,y in zip(x_list,y_list):
             new_log = log if log&log_recursive else log_off
             roots_from_subrectangle,newWarn,new_regions = get_roots_rect(f,fp,
@@ -679,11 +677,12 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     roots_final,conjs_added = correct_roots(roots_all,x_cent,y_cent,width,
                                            height,conj_min_imag)
     roots_new = get_unique(roots_final,roots_known,dist_thres)
+    if was_subs: print
     print_roots_rect_summary(warn,len(roots_final),conjs_added,
                              roots_near_boundary,I0,len(roots_interior_mull_unique),
                              len(roots_interior_all_subs),len(roots_known),
-                             x_cent,y_cent,width,height,num_regions,lvl_cnt,
-                             dist_thres,log&log_summary)
+                             x_cent,y_cent,width,height,lvl_cnt,dist_thres,
+                             log&log_summary)
     print_roots(roots_near_boundary_all,roots_near_boundary,roots_subtracted,
                 roots_rough,roots_interior_mull_all,roots_interior_mull,
                 roots_interior_mull_unique, roots_interior_all_subs,roots_all,
