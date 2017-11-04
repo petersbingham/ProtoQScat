@@ -156,11 +156,13 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
                                    mul_off,max_order,purge_eps,conj_min_imag,
                                    log=Roots.log_summary)
                                    #log=Roots.log_summary|Roots.log_recursive)
+                                   #log=Roots.log_summary|Roots.log_debug)
+                                   #log=Roots.log_summary|Roots.log_debug|Roots.log_recursive)
         roots_gil, warn, numregions = ret
         roots_gil = np.asarray(roots_gil)
         roots_gil = Roots.inside_boundary(roots_gil,x_cent,y_cent,width,height)
 
-        print "Comparison with numpy:"
+        print "\nComparison with numpy:"
         print "\t" + str(len(roots_numpy)) + " numpy roots"
         print "\t" + str(len(roots_gil)) + " gil roots"
         common = 0
@@ -186,4 +188,4 @@ if __name__ == "__main__":
     #test_Roots_1()
     #test_Roots_2()
     test_Roots_3()
-    #test_Poly_Roots(11, printRoots=True, printPolys=False, printParams=False, doubleOnWarning=False)
+    #test_Poly_Roots(32, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)
