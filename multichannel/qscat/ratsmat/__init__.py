@@ -46,6 +46,7 @@ DELVES_LMT_EPS = 1e-3
 DELVES_CONJ_ROOT_MIN_IMAG = 1e-6
 
 DELVES_LOG = log_summary
+#DELVES_LOG = log_summary | log_debug | log_recursive
 
 DELVES_MODE = DELVES_MODE_STANDARD
 

@@ -609,7 +609,7 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
             warn |= handle_warning(warn_root_subtraction_division_by_zero,
                                    log&log_all_warn,lvl_cnt)
     I0 = integrate.trapz(y_smooth, c)  # Approx number of roots not subtracted
-    tot_num_interior_pred = int(round(abs(I0)))
+    tot_num_interior_pred = int(math.ceil(abs(I0)-0.005))
     
     roots_rough = []
     roots_interior_mull_all = []
@@ -639,8 +639,9 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
                                        mul_N,roots_interior_mull_all,log,
                                        lvl_cnt)
         roots_interior_mull = purge(roots_interior_mull_all,dist_eps)
-    roots_interior_mull_unique = get_unique(roots_interior_mull,
-                                            roots_near_boundary,dist_eps)
+    roots_interior_mull_unique = inside_boundary(get_unique(roots_interior_mull,
+                                     roots_near_boundary,dist_eps),
+                                     x_cent,y_cent,width,height)
 
     roots_interior_mull_final,conjs_added = correct_roots(roots_interior_mull_unique,
                                                           x_cent,y_cent,width,height,
@@ -650,10 +651,11 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
     # Don't count the added conjs at thie stage, just pass them to the subregions.
     # This is because the Roche sometimes does not locate both paired roots.
     all_interior_found = len(roots_interior_mull_unique) >= tot_num_interior_pred
+    roche_accurate = abs(tot_num_interior_pred-I0)<0.005
     was_subs = False
     # If some interior roots are missed or if there were many roots,
     # subdivide the rectangle and search recursively.
-    if (I0>=max_order or not all_interior_found) and max_steps!=0:
+    if (I0>=max_order or not all_interior_found or not roche_accurate) and max_steps!=0:
         was_subs = True
         x_list = [x_cent - width / 2.,x_cent - width / 2.,
                   x_cent + width / 2.,x_cent + width / 2.]

@@ -120,8 +120,8 @@ class DelvesRoots(AuxHelper):
                 self.delves_Args['y_cent'] = -min / 2.0
                 self.delves_Args['height'] = -min / 2.0
 
-        warn = 0xFF
-        while warn!=0 and (warn==0xFF or self.mode & DELVES_MODE_RETRY):
+        warn = 0x100
+        while warn!=0 and (warn==0x100 or self.mode & DELVES_MODE_RETRY):
             if warn & warn_imprecise_roots:
                 self.delves_Args['N'] *= 2
             if warn & warn_max_steps_exceeded:
