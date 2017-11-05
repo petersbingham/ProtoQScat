@@ -67,7 +67,7 @@ def test_Roots_1():
     width = 5.*np.pi-1e-5
     height = 5.*np.pi-1e-5
 
-    roots_gil, warn, numregions = Roots.get_roots_rect(f,fp,x_cent,y_cent,width,height,N)
+    roots_gil, warn, numregions = Roots.droots(f,fp,x_cent,y_cent,width,height,N)
     roots = np.asarray(retRoots)
     roots_inside_boundary = Roots.inside_boundary(roots,x_cent,y_cent,width,height)
     print two_sets_almost_equal(np.asarray(roots_inside_boundary)/np.pi,
@@ -83,7 +83,7 @@ def test_Roots_2_fun(f, fp):
     width = 5.*np.pi+1e-5
     height = 5.*np.pi+1e-5
 
-    roots_gil, warn, numregions = Roots.get_roots_rect(f,fp,x_cent,y_cent,width,height,N,summary=True)
+    roots_gil, warn, numregions = Roots.droots(f,fp,x_cent,y_cent,width,height,N)
     roots = np.asarray(retRoots)
     roots_inside_boundary = Roots.inside_boundary(roots,x_cent,y_cent,width,height)
     print two_sets_almost_equal(np.asarray(roots_inside_boundary)/np.pi,
@@ -120,7 +120,8 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
     max_steps = 5
     max_order=10
     
-    mul_tol = 1e-12
+    mul_ltol = 1e-12
+    mul_htol = 1e-12
     mul_N = 400
     mul_off = 1e-5
     
@@ -134,14 +135,14 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
         print poly
         print poly_diff
 
-    ret = -1
-    while ret==-1 or (doubleOnWarning and ret!=0):
+    ret = 0x100
+    while ret==0x100 or (doubleOnWarning and ret!=0):
         # Doubling is for test purposes.
         if ret & Roots.warn_imprecise_roots:
             N *= 2
         elif ret & Roots.warn_max_steps_exceeded:
             max_steps *= 2
-        elif ret & Roots.warn_no_muller_root:
+        elif ret & Roots.warn_bnd_muller_exception or ret & Roots.warn_no_int_muller_root:
             mul_N *= 2
         if printParams:
             print "x_cent:" + str(x_cent)
@@ -151,16 +152,16 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
             print "N:" + str(N)
             print "outlier_coeff:" + str(outlier_coeff)
             print "max_steps:" + str(max_steps)
-            print "mul_tol:" + str(mul_tol)
+            print "mul_ltol:" + str(mul_ltol)
+            print "mul_htol:" + str(mul_htol)
             print "mul_N:" + str(mul_N)
-        ret = Roots.get_roots_rect(f,fp,x_cent,y_cent,width,height,N,
-                                   outlier_coeff,max_steps,max_order,mul_tol,
-                                   mul_N,mul_off,dist_eps,lmt_N,lmt_eps,
-                                   min_i,
-                                   log=Roots.log_summary)
-                                   #log=Roots.log_summary|Roots.log_recursive)
-                                   #log=Roots.log_summary|Roots.log_debug)
-                                   #log=Roots.log_summary|Roots.log_debug|Roots.log_recursive)
+        ret = Roots.droots(f,fp,x_cent,y_cent,width,height,N,outlier_coeff,
+                           max_steps,max_order,mul_N,mul_ltol,mul_htol,mul_off,
+                           dist_eps,lmt_N,lmt_eps,min_i,
+                           log=Roots.log_summary)
+                           #log=Roots.log_summary|Roots.log_recursive)
+                           #log=Roots.log_summary|Roots.log_debug)
+                           #log=Roots.log_summary|Roots.log_debug|Roots.log_recursive)
         roots_gil, warn, numregions = ret
         roots_gil = np.asarray(roots_gil)
         roots_gil = Roots.inside_boundary(roots_gil,x_cent,y_cent,width,height)
@@ -190,5 +191,5 @@ def test_Roots_3(printRoots=False, printPolys=False, printParams=False, doubleOn
 if __name__ == "__main__":
     #test_Roots_1()
     #test_Roots_2()
-    test_Roots_3()
-    #test_Poly_Roots(20, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)
+    #test_Roots_3()
+    test_Poly_Roots(12, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)
