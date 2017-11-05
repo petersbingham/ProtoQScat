@@ -122,13 +122,13 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
     
     mul_tol = 1e-12
     mul_N = 400
-    mul_off=1e-5
+    mul_off = 1e-5
     
-    dist_eps=1e-7
-    lmt_N=10
-    lmt_eps=1e-3
-    min_i=1e-8
-    #min_i=None
+    dist_eps = 1e-7
+    lmt_N = 10
+    lmt_eps = 1e-3
+    min_i = 1e-8
+    min_i=None
 
     if printPolys:
         print poly

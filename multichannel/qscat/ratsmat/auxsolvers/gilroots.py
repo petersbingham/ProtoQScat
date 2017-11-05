@@ -455,8 +455,8 @@ def print_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_nea
             print s + str(num_known_roots) + " known roots."
         print s+"Total of " + str(num_final_roots) + " new roots found."
         print s+"  " + str(len(roots_within_boundary)) + " from Boundary Muller."
-        print (s+"  {:.5f}".format(abs(I0)) + " Roche predicted roots. " + 
-               str(num_roots_found) + " of these located:")
+        print (s+"  Internal: {:.5f}".format(abs(I0)) + " Roche predicted. " + 
+               str(num_roots_found) + " located:")
         print s+"    " + str(num_interior_roots_fnd) + " from Poly Muller."
         print s+"    " + str(num_sub_roots_fnd) + " from subregions."
         if num_added_conj_roots != 0:
@@ -641,18 +641,18 @@ def get_roots_rect(f,fp,x_cent,y_cent,width,height,N=10,outlier_coeff=100.,
         roots_interior_mull = purge(roots_interior_mull_all,dist_eps)
     roots_interior_mull_unique = get_unique(roots_interior_mull,
                                             roots_near_boundary,dist_eps)
-    roots_all = purge(roots_near_boundary+roots_interior_mull_unique,dist_eps)
 
-    # Dont add conjs to roots_all at this stage. conjs added to interior may be 
-    # contained within the boundary.
     roots_interior_mull_final,conjs_added = correct_roots(roots_interior_mull_unique,
-                                                         x_cent,y_cent,width,height,
-                                                         min_i)
+                                                          x_cent,y_cent,width,height,
+                                                          min_i)
+    roots_all = purge(roots_near_boundary+roots_interior_mull_final,dist_eps)
+    roots_interior_all_subs = []
+    # Don't count the added conjs at thie stage, just pass them to the subregions.
+    # This is because the Roche sometimes does not locate both paired roots.
+    all_interior_found = len(roots_interior_mull_unique) >= tot_num_interior_pred
+    was_subs = False
     # If some interior roots are missed or if there were many roots,
     # subdivide the rectangle and search recursively.
-    roots_interior_all_subs = []
-    all_interior_found = len(roots_interior_mull_final) >= tot_num_interior_pred
-    was_subs = False
     if (I0>=max_order or not all_interior_found) and max_steps!=0:
         was_subs = True
         x_list = [x_cent - width / 2.,x_cent - width / 2.,
