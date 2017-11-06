@@ -665,7 +665,7 @@ def droots(f,fp,rx,ry,rw,rh,N=10,outlier_coeff=100.,max_steps=5,max_order=10,
         for x,y in zip(x_list,y_list):
             new_log = log if log&log_recursive else log_off
             roots_from_subrectangle,newWarn,new_regions = droots(f,fp,
-                rx,ry,rw/2.,rh/2.,N,outlier_coeff,max_steps-1,max_order,
+                x,y,rw/2.,rh/2.,N,outlier_coeff,max_steps-1,max_order,
                 mul_N,mul_ltol,mul_htol,mul_off,dist_eps,lmt_N,lmt_eps,min_i,
                 new_log,roots_all,lvl_cnt+1)
             warn |= newWarn

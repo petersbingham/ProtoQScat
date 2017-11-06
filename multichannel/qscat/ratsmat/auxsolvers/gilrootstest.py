@@ -192,4 +192,4 @@ if __name__ == "__main__":
     #test_Roots_1()
     #test_Roots_2()
     #test_Roots_3()
-    test_Poly_Roots(12, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)
+    test_Poly_Roots(14, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)
