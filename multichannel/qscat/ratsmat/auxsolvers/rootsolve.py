@@ -76,11 +76,11 @@ class SymDetRoots(AuxHelper):
 
 
 class DelvesRoots(AuxHelper):
-    def __init__(self, suppressCmdOut, x, y, w, h, N, outlier_coeff, max_steps, max_order, 
+    def __init__(self, suppressCmdOut, rx, ry, rw, rh, N, outlier_coeff, max_steps, max_order, 
                  mul_N, mul_ltol, mul_htol, mul_off, dist_eps, lmt_N, lmt_eps, min_i, log, mode):
         AuxHelper.__init__(self, suppressCmdOut)
         self.mode = mode
-        self.delves_Args = {'x':x, 'y':y, 'w':w, 'h':h, 'N':N, 'outlier_coeff':outlier_coeff, 'max_steps':max_steps, 
+        self.delves_Args = {'rx':rx, 'ry':ry, 'rw':rw, 'rh':rh, 'N':N, 'outlier_coeff':outlier_coeff, 'max_steps':max_steps, 
                             'mul_N':mul_N, 'mul_ltol':mul_ltol, 'mul_htol':mul_htol, 'mul_off':mul_off, 'max_order':max_order, 
                             'dist_eps':dist_eps, 'lmt_N':lmt_N, 'lmt_eps':lmt_eps, 'min_i':min_i, 'log':log}
         self.typeStr = "droots"+getArgDesc(pydelves.droots, self.delves_Args, ["roots_known", "lvl_cnt"]) + ", mode " +str(mode)
@@ -124,7 +124,7 @@ class DelvesRoots(AuxHelper):
         while warn!=0 and (warn==0x100 or self.mode & DELVES_MODE_RETRY):
             if warn & pydelves.warn_imprecise_roots:
                 self.delves_Args['N'] *= 2
-            if warn & pydelves.warn_max_steps_exceeded:
+            if warn & pydelves.warn_max_steps_reached:
                 self.delves_Args['max_steps'] *= 2
             if warn & pydelves.warn_no_bnd_muller_root or warn & pydelves.warn_no_int_muller_root:
                 self.delves_Args['mul_N'] *= 2

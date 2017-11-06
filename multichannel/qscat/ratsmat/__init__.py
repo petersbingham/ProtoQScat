@@ -27,10 +27,10 @@ DISPLAY_PRECISION = 8
 SYMPY_NROOTS_N = tw.dps
 SYMPY_NROOTS_MAXSTEPS = 5000
 
-DELVES_X = 0.15
-DELVES_Y = 0.0
-DELVES_W = 0.14
-DELVES_H = 0.3
+DELVES_RX = 0.15
+DELVES_RY = 0.0
+DELVES_RW = 0.14
+DELVES_RH = 0.3
 DELVES_N = 1000
 DELVES_OUTLIER_COEFF = 100.
 DELVES_MAX_STEPS = 5
@@ -45,6 +45,7 @@ DELVES_DIST_EPS = 1e-6
 DELVES_LMT_N = 10
 DELVES_LMT_EPS = 1e-3
 DELVES_CONJ_ROOT_MIN_IMAG = 1e-6
+#DELVES_CONJ_ROOT_MIN_IMAG = None
 
 DELVES_LOG = pydelves.log_summary
 DELVES_LOG = pydelves.log_summary | pydelves.log_debug | pydelves.log_recursive
@@ -75,7 +76,7 @@ class RatSMat(sm.mat):
                 raise sm.MatException("Selected root finding method not applicable to inelastic scattering data.")
             self.rootSolver = SymDetRoots(self.suppressCmdOut, EXPANDEDDET_ROOTS_FINDTYPE, SYMPY_NROOTS_N, SYMPY_NROOTS_MAXSTEPS)
         else:
-            self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_X, DELVES_Y, DELVES_W, DELVES_H,DELVES_N, DELVES_OUTLIER_COEFF, 
+            self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_RX, DELVES_RY, DELVES_RW, DELVES_RH,DELVES_N, DELVES_OUTLIER_COEFF, 
                                           DELVES_MAX_STEPS, DELVES_MAX_POLY_ORDER, DELVES_MUL_N,DELVES_MUL_LTOL, DELVES_MUL_HTOL, 
                                           DELVES_MUL_OFF, DELVES_DIST_EPS,DELVES_LMT_N, DELVES_LMT_EPS, DELVES_CONJ_ROOT_MIN_IMAG, 
                                           DELVES_LOG, DELVES_MODE)

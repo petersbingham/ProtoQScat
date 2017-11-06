@@ -140,7 +140,7 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
         # Doubling is for test purposes.
         if ret & Roots.warn_imprecise_roots:
             N *= 2
-        elif ret & Roots.warn_max_steps_exceeded:
+        elif ret & Roots.warn_max_steps_reached:
             max_steps *= 2
         elif ret & Roots.warn_bnd_muller_exception or ret & Roots.warn_no_int_muller_root:
             mul_N *= 2
@@ -191,5 +191,5 @@ def test_Roots_3(printRoots=False, printPolys=False, printParams=False, doubleOn
 if __name__ == "__main__":
     #test_Roots_1()
     #test_Roots_2()
-    #test_Roots_3()
-    test_Poly_Roots(14, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)
+    test_Roots_3()
+    #test_Poly_Roots(14, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)
