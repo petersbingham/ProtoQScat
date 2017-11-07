@@ -77,13 +77,12 @@ class SymDetRoots(AuxHelper):
 
 class DelvesRoots(AuxHelper):
     def __init__(self, suppressCmdOut, rx, ry, rw, rh, N, outlier_coeff, max_steps, max_order, 
-                 mul_N, mul_ltol, mul_htol, mul_off, dist_eps, lmt_N, lmt_eps, min_i, log, mode):
+                 mul_N, mul_ltol, mul_htol, mul_off, dist_eps, lmt_N, lmt_eps, I0_tol, mode, min_i):
         AuxHelper.__init__(self, suppressCmdOut)
-        self.mode = mode
         self.delves_Args = {'rx':rx, 'ry':ry, 'rw':rw, 'rh':rh, 'N':N, 'outlier_coeff':outlier_coeff, 'max_steps':max_steps, 
                             'mul_N':mul_N, 'mul_ltol':mul_ltol, 'mul_htol':mul_htol, 'mul_off':mul_off, 'max_order':max_order, 
-                            'dist_eps':dist_eps, 'lmt_N':lmt_N, 'lmt_eps':lmt_eps, 'min_i':min_i, 'log':log}
-        self.typeStr = "droots"+getArgDesc(pydelves.droots, self.delves_Args, ["roots_known", "lvl_cnt"]) + ", mode " +str(mode)
+                            'dist_eps':dist_eps, 'lmt_N':lmt_N, 'lmt_eps':lmt_eps, 'I0_tol':I0_tol, 'mode':mode, 'min_i':min_i}
+        self.typeStr = "droots"+getArgDesc(pydelves.droots, self.delves_Args, ["roots_known", "lvl_cnt"])
         self.cmp = num.Compare(dist_eps)
 
     def _doesRootAlreadyExist(self, roots, newRoot):
@@ -110,49 +109,7 @@ class DelvesRoots(AuxHelper):
             newRoots.append(newRoot)
                                                 
     def getRoots(self, f, fp, lastRoots):
-        if self.mode & DELVES_MODE_REFLECT_AXIS:
-            min = self.delves_Args['y_cent'] - self.delves_Args['height']
-            max = self.delves_Args['y_cent'] + self.delves_Args['height']
-            if abs(max) >= abs(min):
-                self.delves_Args['y_cent'] = max / 2.0
-                self.delves_Args['height'] = max / 2.0
-            else:
-                self.delves_Args['y_cent'] = -min / 2.0
-                self.delves_Args['height'] = -min / 2.0
-
-        warn = 0x100
-        while warn!=0 and (warn==0x100 or self.mode & DELVES_MODE_RETRY):
-            if warn & pydelves.warn_imprecise_roots:
-                self.delves_Args['N'] *= 2
-            if warn & pydelves.warn_max_steps_reached:
-                self.delves_Args['max_steps'] *= 2
-            if warn & pydelves.warn_no_bnd_muller_root or warn & pydelves.warn_no_int_muller_root:
-                self.delves_Args['mul_N'] *= 2
-            roots, warn, num_regions = pydelves.droots(f, fp, **self.delves_Args)
-
-        if self.mode & DELVES_MODE_REFLECT_AXIS:
-            newRoots = []
-            for root in roots:
-                newRoot = root.conjugate()
-                if (abs(max) >= abs(min) and abs(newRoot.imag)<=abs(min)) or (abs(max) < abs(min) and abs(newRoot.imag)<=abs(max)):
-                    self._handleNewRoot(newRoots, newRoot, f)
-            roots.extend(newRoots)
-
-        if self.mode & DELVES_MODE_REFLECT_POLE:
-            newRoots = []
-            for root in roots:
-                newRoot = root.conjugate()
-                if not self._doesRootAlreadyExist(roots, newRoot):
-                    self._handleNewRoot(newRoots, newRoot, f)
-            roots.extend(newRoots)           
-
-        if self.mode & DELVES_MODE_MAINTAIN:
-            for lastRoot in lastRoots:
-                if not self._doesRootAlreadyExist(roots, lastRoot):
-                    checkRoot = Muller(lastRoot-offset, lastRoot+offset, lastRoot, f)
-                    if self.cmp.complexCompare(checkRoot, lastRoot):
-                        roots.append(checkRoot)
-
+        roots, warn, num_regions = pydelves.droots(f, fp, **self.delves_Args)
         return roots
 
     def printCalStr(self, wereLoaded=False):

@@ -115,7 +115,7 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
     width += 0.1
     height += 0.1
 
-    N = 10
+    N = 20
     outlier_coeff = 100.
     max_steps = 5
     max_order=10
@@ -128,8 +128,9 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
     dist_eps = 1e-7
     lmt_N = 10
     lmt_eps = 1e-3
+    I0_tol = 5e-3
+    
     min_i = 1e-8
-    min_i = None
 
     if printPolys:
         print poly
@@ -155,13 +156,12 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
             print "mul_ltol:" + str(mul_ltol)
             print "mul_htol:" + str(mul_htol)
             print "mul_N:" + str(mul_N)
+        mode = Roots.mode_log_summary|Roots.mode_log_recursive
+        #mode = Roots.mode_log_summary|Roots.mode_log_debug
+        #mode = Roots.mode_log_summary|Roots.mode_log_debug|Roots.mode_log_recursive
         ret = Roots.droots(f,fp,x_cent,y_cent,width,height,N,outlier_coeff,
                            max_steps,max_order,mul_N,mul_ltol,mul_htol,mul_off,
-                           dist_eps,lmt_N,lmt_eps,min_i,
-                           log=Roots.log_summary)
-                           #log=Roots.log_summary|Roots.log_recursive)
-                           #log=Roots.log_summary|Roots.log_debug)
-                           #log=Roots.log_summary|Roots.log_debug|Roots.log_recursive)
+                           dist_eps,lmt_N,lmt_eps,I0_tol,mode,min_i)
         roots_gil, warn, numregions = ret
         roots_gil = np.asarray(roots_gil)
         roots_gil = Roots.inside_boundary(roots_gil,x_cent,y_cent,width,height)
@@ -191,5 +191,5 @@ def test_Roots_3(printRoots=False, printPolys=False, printParams=False, doubleOn
 if __name__ == "__main__":
     #test_Roots_1()
     #test_Roots_2()
-    test_Roots_3()
-    #test_Poly_Roots(14, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)
+    #test_Roots_3()
+    test_Poly_Roots(38, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)
