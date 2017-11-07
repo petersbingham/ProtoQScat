@@ -156,7 +156,8 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
             print "mul_ltol:" + str(mul_ltol)
             print "mul_htol:" + str(mul_htol)
             print "mul_N:" + str(mul_N)
-        mode = Roots.mode_log_summary|Roots.mode_log_recursive
+        mode = Roots.mode_log_summary
+        #mode = Roots.mode_log_summary|Roots.mode_log_recursive
         #mode = Roots.mode_log_summary|Roots.mode_log_debug
         #mode = Roots.mode_log_summary|Roots.mode_log_debug|Roots.mode_log_recursive
         ret = Roots.droots(f,fp,x_cent,y_cent,width,height,N,outlier_coeff,
@@ -191,5 +192,5 @@ def test_Roots_3(printRoots=False, printPolys=False, printParams=False, doubleOn
 if __name__ == "__main__":
     #test_Roots_1()
     #test_Roots_2()
-    #test_Roots_3()
-    test_Poly_Roots(38, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)
+    test_Roots_3()
+    #test_Poly_Roots(38, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False)

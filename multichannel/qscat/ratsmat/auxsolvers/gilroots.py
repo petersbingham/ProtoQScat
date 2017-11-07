@@ -462,23 +462,23 @@ def print_roots_rect_summary(warn,num_final_roots,num_added_conj_roots,roots_nea
         if num_added_conj_roots != 0:
             print s+"    " + str(num_added_conj_roots) + " added conjugates."
 
-def print_roots(roots_near_boundary_all,roots_near_boundary_unique,roots_subtracted,
-                failed_mullers_boundary,roots_rough,roots_interior_mull_all,
+def print_roots(roots_boundary_near_all,roots_near_boundary_unique,roots_subtracted,
+                boundary_failed_mulls,roots_rough,roots_interior_mull_all,
                 roots_interior_mull,roots_interior_mull_unique,
-                failed_mullers_interior,roots_interior_all_subs,roots_all,
+                interior_failed_mulls,roots_interior_all_subs,roots_all,
                 roots_final,roots_new,lvl_cnt,verbose):
     s = " "*lvl_cnt
     if verbose:
-        print "\n"+s+"All:\n" + str(np.array(roots_near_boundary_all))
+        print "\n"+s+"All:\n" + str(np.array(roots_boundary_near_all))
         print s+"Unique Purged:\n" + str(np.array(roots_near_boundary_unique))
         print s+"Subtracted:\n" + str(np.array(roots_subtracted))
-        print s+"Failed:\n" + str(np.array(failed_mullers_boundary))
+        print s+"Failed:\n" + str(np.array(boundary_failed_mulls))
         print ""
         print s+"Rough:\n" + str(roots_rough)
         print s+"Interior:\n" + str(np.array(roots_interior_mull_all))
         print s+"Purged:\n" + str(np.array(roots_interior_mull))
         print s+"Unique:\n" + str(np.array(roots_interior_mull_unique))
-        print s+"Failed:\n" + str(np.array(failed_mullers_interior))
+        print s+"Failed:\n" + str(np.array(interior_failed_mulls))
         print ""
         print s+"Subs:\n" + str(np.array(roots_interior_all_subs))
         print ""
@@ -510,6 +510,28 @@ def correct_roots(roots,rx,ry,rw,rh,add_conjs,dist_eps,min_i):
     else:
         roots_final = roots_inside
     return roots_final, conjs_added
+
+class root_container:
+    def __init__(self, known):
+        self.known = known
+        
+        self.boundary_near_all = []
+        self.boundary_failed_mulls = []        
+        
+        self.subtracted = []
+        
+        self.interior_rough = []
+        self.interior_mull_all = []
+        self.interior_mull = []
+        self.interior_failed_mulls = []
+        self.interior_mull_unique = []
+        self.interior_mull_final = []
+        
+        self.interior_all_subs = []
+          
+        self.all = []
+        self.final = []
+        self.new = []
 
 mode_default = 0
 mode_add_conjs = 0x1
@@ -590,33 +612,32 @@ def droots(f,fp,rx,ry,rw,rh,N=10,outlier_coeff=100.,max_steps=5,max_order=10,
         print ("\n"+s+"Region(rx,ry,rw,rh): "+str(rx)+" "+str(ry)+" "
                +str(rw)+" "+str(rh))
 
+    roots = root_container(roots_known)
 
     c = get_boundary(rx,ry,rw,rh,N)
     f_frac = lambda z: fp(z)/(2j*np.pi*f(z))
     y = [f_frac(z) for z in c]
 
     outliers = find_maxes(map(abs,y))
-    roots_near_boundary_all = []
-    failed_mullers_boundary = []
     for outlier_index in outliers:
         warn |= locate_muller_root(c[outlier_index-2],c[outlier_index+2],
                                    c[outlier_index]/2,f,mul_N,mul_ltol,mul_htol,
-                                   roots_near_boundary_all,
-                                   failed_mullers_boundary,mode,lvl_cnt)
-    roots_near_boundary_unique = get_unique(purge(roots_near_boundary_all,dist_eps),
-                                     roots_known,dist_eps)
-    roots_subtracted = purge(roots_near_boundary_unique+roots_known,dist_eps)
+                                   roots.boundary_near_all,
+                                   roots.boundary_failed_mulls,mode,lvl_cnt)
+    roots.near_boundary_unique = get_unique(purge(roots.boundary_near_all,dist_eps),
+                                     roots.known,dist_eps)
+    roots.subtracted = purge(roots.near_boundary_unique+roots.known,dist_eps)
     # We don't need the roots far outside the boundary
-    roots_subtracted = inside_boundary(roots_subtracted,rx,ry,
+    roots.subtracted = inside_boundary(roots.subtracted,rx,ry,
                                        rw+2.,rh+2.)
     max_ok = abs(outlier_coeff*get_max(y))
-    residues_subtracted = residues(f_frac,roots_subtracted,lmt_N,lmt_eps)
+    residues_subtracted = residues(f_frac,roots.subtracted,lmt_N,lmt_eps)
 
     
     y_smooth = []
     for y_el,z_el in zip(y,c):
         val, ret = new_f_frac_safe(f_frac,z_el,residues_subtracted,
-                                   roots_subtracted,max_ok,y_el,lmt_N,lmt_eps)
+                                   roots.subtracted,max_ok,y_el,lmt_N,lmt_eps)
         y_smooth.append(val)
         if not ret:
             warn |= handle_warning(warn_root_subtraction_division_by_zero,
@@ -624,48 +645,43 @@ def droots(f,fp,rx,ry,rw,rh,N=10,outlier_coeff=100.,max_steps=5,max_order=10,
     I0 = integrate.trapz(y_smooth, c)  # Approx number of roots not subtracted
     tot_num_interior_pred = int(math.ceil(abs(I0)-I0_tol))
     
-    roots_rough = []
-    roots_interior_mull_all = []
-    roots_interior_mull = []
-    failed_mullers_interior = []
     if I0 < max_order:
         # If there's only a few roots, find them.
         if tot_num_interior_pred == 0:
-            roots_final,conjs_added = correct_roots(roots_subtracted,rx,
+            roots.final,conjs_added = correct_roots(roots.subtracted,rx,
                                                    ry,rw,rh,mode&mode_add_conjs,
                                                    dist_eps,min_i)
-            roots_new = get_unique(roots_final,roots_known,dist_eps)
-            print_roots_rect_summary(warn,len(roots_new),conjs_added,
-                                     roots_near_boundary_unique,I0,0,0,
-                                     len(roots_known),rx,ry,rw,
+            roots.new = get_unique(roots.final,roots.known,dist_eps)
+            print_roots_rect_summary(warn,len(roots.new),conjs_added,
+                                     roots.near_boundary_unique,I0,0,0,
+                                     len(roots.known),rx,ry,rw,
                                      rh,lvl_cnt,dist_eps,mode&mode_log_summary)
-            print_roots(roots_near_boundary_all,roots_near_boundary_unique,roots_subtracted,
-                        failed_mullers_boundary,[],[],[],[],[],[],[],roots_final,roots_new,
+            print_roots(roots.boundary_near_all,roots.near_boundary_unique,roots.subtracted,
+                        roots.boundary_failed_mulls,[],[],[],[],[],[],[],roots.final,roots.new,
                         lvl_cnt,mode&mode_log_debug)
-            return roots_new,warn,num_regions
+            return roots.new,warn,num_regions
         if abs(tot_num_interior_pred-I0)>0.005:
             warn |= handle_warning(warn_imprecise_roots,mode&mode_log_all_warn,
                                    lvl_cnt)
 
-        roots_rough = locate_poly_roots(y_smooth,c,tot_num_interior_pred)
+        roots.interior_rough = locate_poly_roots(y_smooth,c,tot_num_interior_pred)
         ##TODO: best way to pick points for Muller method below
-        for root in roots_rough:
+        for root in roots.interior_rough:
             warn |= locate_muller_root(root-mul_off,root+mul_off,root,f,mul_N,
-                                       mul_ltol,mul_htol,roots_interior_mull_all,
-                                       failed_mullers_interior,mode,lvl_cnt)
-        roots_interior_mull = purge(roots_interior_mull_all,dist_eps)
-    roots_interior_mull_unique = inside_boundary(get_unique(roots_interior_mull,
-                                     roots_near_boundary_unique,dist_eps),
+                                       mul_ltol,mul_htol,roots.interior_mull_all,
+                                       roots.interior_failed_mulls,mode,lvl_cnt)
+        roots.interior_mull = purge(roots.interior_mull_all,dist_eps)
+    roots.interior_mull_unique = inside_boundary(get_unique(roots.interior_mull,
+                                     roots.near_boundary_unique,dist_eps),
                                      rx,ry,rw,rh)
 
-    roots_interior_mull_final,conjs_added = correct_roots(roots_interior_mull_unique,
+    roots.interior_mull_final,conjs_added = correct_roots(roots.interior_mull_unique,
                                                           rx,ry,rw,rh,mode&mode_add_conjs,
                                                           dist_eps,min_i)
-    roots_all = purge(roots_near_boundary_unique+roots_interior_mull_final,dist_eps)
-    roots_interior_all_subs = []
+    roots.all = purge(roots.near_boundary_unique+roots.interior_mull_final,dist_eps)
     # Don't count the added conjs at thie stage, just pass them to the subregions.
     # This is because the Roche sometimes does not locate both paired roots.
-    all_interior_found = len(roots_interior_mull_unique) >= tot_num_interior_pred
+    all_interior_found = len(roots.interior_mull_unique) >= tot_num_interior_pred
     roche_accurate = abs(tot_num_interior_pred-I0)<I0_tol
     was_subs = False
     # If some interior roots are missed or if there were many roots,
@@ -680,32 +696,32 @@ def droots(f,fp,rx,ry,rw,rh,N=10,outlier_coeff=100.,max_steps=5,max_order=10,
             print s+"Contains " +str(len(x_list)) + " subregions:"
         new_log = mode if mode&mode_log_recursive else mode&mode_log_switch 
         for x,y in zip(x_list,y_list):
-            roots_from_subrectangle,newWarn,new_regions = droots(f,fp,
+            roots.from_subrectangle,newWarn,new_regions = droots(f,fp,
                 x,y,rw/2.,rh/2.,N,outlier_coeff,max_steps-1,max_order,
                 mul_N,mul_ltol,mul_htol,mul_off,dist_eps,lmt_N,lmt_eps,I0_tol,
-                new_log,min_i,roots_all,lvl_cnt+1)
+                new_log,min_i,roots.all,lvl_cnt+1)
             warn |= newWarn
             num_regions += new_regions
-            roots_interior_all_subs.extend(roots_from_subrectangle)
+            roots.interior_all_subs.extend(roots.from_subrectangle)
     elif max_steps == 0:
         warn |= handle_warning(warn_max_steps_reached,mode&mode_log_all_warn,lvl_cnt)
-    tot_num_interior_found = len(roots_interior_mull_final+roots_interior_all_subs)
+    tot_num_interior_found = len(roots.interior_mull_final+roots.interior_all_subs)
     if tot_num_interior_found != tot_num_interior_pred:
         warn |= handle_warning(warn_not_all_interior_fnd,mode&mode_log_all_warn,lvl_cnt)
-    roots_all = purge(roots_all+roots_interior_all_subs,dist_eps)
+    roots.all = purge(roots.all+roots.interior_all_subs,dist_eps)
 
 
-    roots_final,conjs_added = correct_roots(roots_all,rx,ry,rw,rh,mode&mode_add_conjs,
+    roots.final,conjs_added = correct_roots(roots.all,rx,ry,rw,rh,mode&mode_add_conjs,
                                             dist_eps,min_i)
-    roots_new = get_unique(roots_final,roots_known,dist_eps)
+    roots.new = get_unique(roots.final,roots.known,dist_eps)
     if was_subs and mode&mode_log_summary: print
-    print_roots_rect_summary(warn,len(roots_new),conjs_added,roots_near_boundary_unique,
-                             I0,len(roots_interior_mull_unique),
-                             len(roots_interior_all_subs),len(roots_known),
+    print_roots_rect_summary(warn,len(roots.new),conjs_added,roots.near_boundary_unique,
+                             I0,len(roots.interior_mull_unique),
+                             len(roots.interior_all_subs),len(roots.known),
                              rx,ry,rw,rh,lvl_cnt,dist_eps,mode&mode_log_summary)
-    print_roots(roots_near_boundary_all,roots_near_boundary_unique,roots_subtracted,
-                failed_mullers_boundary,roots_rough,roots_interior_mull_all,
-                roots_interior_mull,roots_interior_mull_unique,
-                failed_mullers_interior,roots_interior_all_subs,roots_all,
-                roots_final,roots_new,lvl_cnt,mode&mode_log_debug)
-    return roots_new,warn,num_regions
+    print_roots(roots.boundary_near_all,roots.near_boundary_unique,roots.subtracted,
+                roots.boundary_failed_mulls,roots.interior_rough,roots.interior_mull_all,
+                roots.interior_mull,roots.interior_mull_unique,
+                roots.interior_failed_mulls,roots.interior_all_subs,roots.all,
+                roots.final,roots.new,lvl_cnt,mode&mode_log_debug)
+    return roots.new,warn,num_regions
