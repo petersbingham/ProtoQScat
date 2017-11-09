@@ -156,7 +156,8 @@ def test_Poly_Roots(N, printRoots=False, printPolys=False, printParams=False, do
             print "mul_ltol:" + str(mul_ltol)
             print "mul_htol:" + str(mul_htol)
             print "mul_N:" + str(mul_N)
-        mode = Roots.mode_log_summary
+        mode = Roots.mode_default    
+        #mode = Roots.mode_log_summary
         #mode = Roots.mode_log_summary|Roots.mode_log_recursive
         #mode = Roots.mode_log_summary|Roots.mode_log_debug
         #mode = Roots.mode_log_summary|Roots.mode_log_debug|Roots.mode_log_recursive
