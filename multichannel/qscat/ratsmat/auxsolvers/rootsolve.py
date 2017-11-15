@@ -109,7 +109,7 @@ class DelvesRoots(AuxHelper):
             newRoots.append(newRoot)
                                                 
     def getRoots(self, f, fp, lastRoots):
-        roots, warn, num_regions = pydelves.droots(f, fp, **self.delves_Args)
+        ok, roots = pydelves.droots(f, fp, **self.delves_Args)
         return roots
 
     def printCalStr(self, wereLoaded=False):

@@ -24,6 +24,8 @@ Throughout we denote :math:`f_{frac} = f'/f`.
 
 I have also tried several optimizations and strategies for numerical stability.
 
+Modified by P Bingham October-November 2017
+
 """
 import numpy as np
 from scipy import integrate
@@ -32,6 +34,9 @@ from gilfunctions import *
 
 
 mode_default = 0
+#If function is a polynomial then roots will occur in a+ib, a-ib pairs.
+#If mode==mode_add_conjs then routine will take advantage of this by
+#automatically adding missing partners.
 mode_add_conjs = 0x1
 
 mode_log_recursive = 0x200
@@ -50,7 +55,7 @@ note_bnd_muller_exception = 8
 note_no_int_muller_root = 16
 note_int_muller_exception = 32
 note_not_all_interior_fnd = 64
-note_root_subtraction_division_by_zero = 128
+note_root_sub_div_by_zero = 128
 
 def root_purge(lst,eps=1e-7,min_i=1e-10):
     if len(lst) == 0:
@@ -95,7 +100,7 @@ def correct_roots(roots,p):
 class root_container:
     def __init__(self, known):
         self.known = known
-        
+
         self.boundary_all = []
         self.boundary_failed_mulls = []  
         self.boundary_purged = [] 
@@ -103,9 +108,9 @@ class root_container:
         self.boundary_within = []
         self.boundary_and_known = []
         self.residues_subtracted = []
-        
+
         self.subtracted = []
-        
+
         self.interior_rough = []
         self.interior_mull_all = []
         self.interior_failed_mulls = []
@@ -126,7 +131,7 @@ class root_container:
     def log_region(self,p,I0,isSubregions):
         if p.mode & mode_log_summary:
             self._log_region(p,I0,isSubregions)
-            
+
     def _log_region(self,p,I0,isSubregions):
         s = "."*p.lvl_cnt
         p.print_region_string()
@@ -146,7 +151,7 @@ class root_container:
     def log_sub_region(self,p,num_regions):
         if p.mode & mode_log_summary:
             self._log_sub_region(p,num_regions)
-            
+
     def _log_sub_region(self,p,num_regions):
         s = "."*p.lvl_cnt
         num_sub_roots_fnd = len(self.interior_all_subs)
@@ -154,11 +159,11 @@ class root_container:
             print ""
         print(s+"  "+str(num_sub_roots_fnd)+" from "+str(num_regions)+\
               " subregions.")
-        
+
     def log_totals(self,p):
         if p.mode & mode_log_summary:
             self._log_totals(p)
-            
+
     def _log_totals(self,p):
         s = "."*p.lvl_cnt
         num_interior_roots_fnd = len(self.interior_mull_new)
@@ -204,31 +209,32 @@ class root_container:
                             "specified parameters.")
                 if state & note_not_all_interior_fnd:
                     print s+"  -Not all predicted interior roots found."
-                if state & note_root_subtraction_division_by_zero:
+                if state & note_root_sub_div_by_zero:
                     print s+"  -Division by zero when subtracting roots."
 
     def log_roots(self,p):
         if p.mode & mode_log_debug:
             self._log_roots(p)
-        
+
     def _log_roots(self,p):
         s = "."*p.lvl_cnt
-        print "\n"+s+"Boundary:\n"+str(np.array(self.boundary_all))
-        print (s+"Unique Purged:\n"+str(np.array(self.boundary_new)))
+        print s+"\nBOUNDARY:"
+        print s+"Muller:\n"+str(np.array(self.boundary_all))
+        print (s+"New:\n"+str(np.array(self.boundary_new)))
         print s+"Within:\n"+str(np.array(self.boundary_within))
         print s+"Subtracted:\n"+str(np.array(self.subtracted))
         print s+"Failed:\n"+str(np.array(self.boundary_failed_mulls))
-        print ""
+        print "\nINTERIOR:"
         print s+"Rough Poly:\n"+str(self.interior_rough)
-        print s+"Interior:\n"+str(np.array(self.interior_mull_all))
+        print s+"Muller:\n"+str(np.array(self.interior_mull_all))
         print s+"Purged:\n"+str(np.array(self.interior_mull_purged))
         print s+"New:\n"+str(np.array(self.interior_mull_new))
         print s+"Failed:\n"+str(np.array(self.interior_failed_mulls))
-        print ""
-        print s+"Subs:\n"+str(np.array(self.interior_all_subs))
-        print ""
-        print s+"Final:\n"+str(np.array(self.end_unique))
-    
+        print "\nSUBREGIONS:"
+        print s+"New:\n"+str(np.array(self.interior_all_subs))
+        print "\nFINAL:"
+        print s+"New:\n"+str(np.array(self.end_unique))
+
     def log_close_region(self,p):
         if p.mode & mode_log_summary:
             print "-"*p.lvl_cnt
@@ -243,23 +249,23 @@ class root_container:
         self.boundary_purged = purge(self.boundary_all,p.dist_eps)
         self.boundary_new = get_unique(self.boundary_purged,self.known,
                                           p.dist_eps)
-        
+
         self.boundary_and_known = purge(self.boundary_new+self.known,
                                         p.dist_eps)
-        
+
         self.boundary_within = inside_boundary(self.boundary_purged,
                                                p.rx,p.ry,p.rw,p.rh)
-        
+
         # We don't need the roots far outside the boundary
         self.subtracted = inside_boundary(self.boundary_and_known,
                                           p.rx,p.ry,p.rw+2.,p.rh+2.)
         self.residues_subtracted = \
             residues(b.f_frac,self.subtracted,p.lmt_N,p.lmt_eps)
         return state
-    
+
     def is_polysolve_required(self,p,num_pred_roots):
         return num_pred_roots <= p.max_order and num_pred_roots >= 1
-    
+
     def from_polysolve(self,p,b,num_pred_roots):
         self.interior_rough = locate_poly_roots(b.y_smooth,b.c,num_pred_roots)
         state = 0
@@ -269,13 +275,13 @@ class root_container:
                                        self.interior_mull_all,
                                        self.interior_failed_mulls)
         self.interior_mull_purged = purge(self.interior_mull_all,p.dist_eps)
-        
+
         self.interior_mull_within = inside_boundary(self.interior_mull_purged,
                                                     p.rx,p.ry,p.rw,p.rh)
         self.interior_mull_new = get_unique(self.interior_mull_within,
-                                               self.boundary_new,p.dist_eps)      
+                                               self.boundary_new,p.dist_eps)
         return state
-    
+
     def finialise_region_roots(self,p,I0,sub_required):
         # This should be the only place where conjugate addition is required
         # Only the newly found roots here. Already know can be added later.
@@ -283,7 +289,7 @@ class root_container:
             purge(self.boundary_new+self.interior_mull_new,p.dist_eps)
         self.region_corrected,self.num_added_conjs = correct_roots(self.region,p)
         self.log_region(p,I0,sub_required)
-        
+
     def finialise_end_roots(self,p,state):
         # Only return new roots. They'll be added to known roots in the parent.
         self.end = self.region_corrected+self.interior_all_subs
@@ -326,7 +332,7 @@ class parameters:
             s = "-"*self.lvl_cnt
             print ("\n"+s+"Region(rx,ry,rw,rh): "+str(self.rx)+" "+ \
                    str(self.ry)+" "+str(self.rw)+" "+str(self.rh))
-        
+
     def handle_state_change(self, state):
         s = "."*self.lvl_cnt
         imprecise_roots = s+"Note!! Number of roots may be imprecise for " + \
@@ -341,7 +347,7 @@ class parameters:
                                "found."
         root_subtraction_division_by_zero = s+"Note!! Division by zero " + \
                                             "during root subtraction."
-        
+
         if self.mode & mode_log_all_notes:
             if state == note_imprecise_roots:
                 print imprecise_roots
@@ -357,10 +363,10 @@ class parameters:
                 print int_muller_exception
             elif state == note_not_all_interior_fnd:
                 print not_all_interior_fnd
-            elif state == note_root_subtraction_division_by_zero:
+            elif state == note_root_sub_div_by_zero:
                 print root_subtraction_division_by_zero
         return state
-    
+
     def is_roche_accurate(self,I0,num_pred_roots):
         return abs(num_pred_roots-I0)<self.I0_tol
 
@@ -370,9 +376,10 @@ class boundary:
         self.f_frac = lambda z: p.fp(z)/(2j*np.pi*p.f(z))
         self.y = [self.f_frac(z) for z in self.c]
         self.max_ok = abs(p.outlier_coeff*get_max(self.y))
-        
+
     def smoothed(self,p,roots):
         self.y_smooth = []
+        state = 0
         for y_el,z_el in zip(self.y,self.c):
             val, ret = new_f_frac_safe(self.f_frac,z_el,
                                        roots.residues_subtracted,
@@ -380,7 +387,8 @@ class boundary:
                                        p.lmt_N,p.lmt_eps)
             self.y_smooth.append(val)
             if not ret:
-                state |= p.handle_state_change(note_root_subtraction_division_by_zero)
+                state |= p.handle_state_change(note_root_sub_div_by_zero)
+        return state
 
 
 def is_subdivision_required(p,roots,I0,num_pred_roots):
@@ -395,7 +403,7 @@ def is_subdivision_required(p,roots,I0,num_pred_roots):
     if not all_int_fnd:
         return True
     return False
-    
+
 def calculate_for_subregions(p,roots):
     x_list = [p.rx - p.rw / 2.,p.rx - p.rw / 2., 
               p.rx + p.rw / 2.,p.rx + p.rw / 2.]
@@ -415,12 +423,12 @@ def calculate_for_subregions(p,roots):
             state |= warn_max_steps_reached
         roots.interior_all_subs.extend(sub_roots)
     return state,num_regions
-        
+
 
 def droots(f,fp,rx,ry,rw,rh,N=10,outlier_coeff=100.,max_steps=5,max_order=10,
            mul_N=400,mul_ltol=1e-12,mul_htol=1e-12,mul_off=1e-5,dist_eps=1e-7,
            lmt_N=10,lmt_eps=1e-3,I0_tol=5e-3,mode=mode_default,min_i=1e-6,
-           roots_known=[],lvl_cnt=0):
+           known_roots=[],lvl_cnt=0):
     '''
     I assume f is analytic with simple (i.e. order one) zeros.
 
@@ -446,7 +454,7 @@ def droots(f,fp,rx,ry,rw,rh,N=10,outlier_coeff=100.,max_steps=5,max_order=10,
             subtracting poles to improve numerical stability. 
             See new_f_frac_safe.
 
-        max_step (optional[int]): Number of iterations allowed for algorithm to
+        max_steps (optional[int]): Number of iterations allowed for algorithm to
             repeat on smaller rectangles.
 
         max_order (optional[int]): Max power of polynomial to be solved,
@@ -466,30 +474,43 @@ def droots(f,fp,rx,ry,rw,rh,N=10,outlier_coeff=100.,max_steps=5,max_order=10,
         lmt_N (int): number of points used in the estimate when calculaing the
             residues.
 
-        known roots (optional[list of complex numbers]): Roots of f that are
-            already known.
+        lmt_eps (optional[float]): distance from z0 at which estimating points 
+            are placed for the subtraction.
 
-        min_i (optional[boolean]): If function is a polynomial then
-            roots will occur in a+ib, a-ib pairs. This options takes this mode
-            into account when purging roots that are close to the real axis.
-            calculation.
+        I0_tol (optional[float]): The Roche should return an integer number of 
+            roots if the calculation has been performed accurately. This 
+            parameter is the decimal deviation from integer required to render
+            the calculation inaccurate. When inaccurate and the number of 
+            iterations is less than max_step the routine will recurse.
+
+        mode (optional[int]): This sets the calculation mode. See top of file
+            for available modes.
+            
+        min_i (optional[float]): If mode==mode_add_conjs then this parameter
+            determines the minimum distance from the real axis a root must lie
+            before being considered as having a conjugate partner.
+
+        known_roots (internal[list of complex numbers]): Roots of f that are
+            already known. Used when recursing
+
+        lvl_cnt (internal[int]): number of times the routine has recursed.
 
     Returns:
-        A boolean indicating if all roots found for the max_steps and 
+        A boolean indicating if all roots found for the supplied max_steps and 
             I0_tol parameters. A list of roots for the function f inside the 
             rectangle determined by the values rx,ry,rw and rh.
     '''
     p = parameters(f,fp,rx,ry,rw,rh,N,outlier_coeff,max_steps,max_order,mul_N,
                    mul_ltol,mul_htol,mul_off,dist_eps,lmt_N,lmt_eps,I0_tol,
                    mode,min_i,lvl_cnt)
-    roots = root_container(roots_known)
+    roots = root_container(known_roots)
     state = 0
     num_regions = 0
-    
+
     b = boundary(p)
     state |= roots.at_boundary(p,b)
 
-    b.smoothed(p,roots)           
+    state |= b.smoothed(p,roots)           
     I0 = integrate.trapz(b.y_smooth, b.c)  # Approx num of roots not subtracted
     num_pred_roots = int(math.ceil(abs(I0)-p.I0_tol))
 

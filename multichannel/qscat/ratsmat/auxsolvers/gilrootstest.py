@@ -64,8 +64,8 @@ def test_Roots():
     fp = lambda z: np.cos(z)
     x_cent = 0.
     y_cent = 0.
-    width = 5.*np.pi-1e-5
-    height = 5.*np.pi-1e-5
+    width = 5.*np.pi+1e-5
+    height = 5.*np.pi+1e-5
 
     all_fnd,retroots = Roots.droots(f,fp,x_cent,y_cent,width,height,N)
     roots = np.asarray(retroots)
@@ -74,6 +74,9 @@ def test_Roots():
 
 
 def test_Poly_Roots_N(N, printRoots=False, printPolys=False, printParams=False, doubleOnWarning=False):
+    '''
+    Find roots of polynomials with increasing powers. Compares with roots returned from np.roots.
+    '''
     print "\nN=" + str(N)
 
     coeff = []
@@ -84,7 +87,7 @@ def test_Poly_Roots_N(N, printRoots=False, printPolys=False, printParams=False, 
 
     poly = np.poly1d(coeff)
     poly_diff = np.polyder(poly)
-    
+
     f = lambda z: poly(z)
     fp = lambda z: poly_diff(z)
     width = (bnds[0][1]-bnds[0][0])/2.
@@ -94,27 +97,27 @@ def test_Poly_Roots_N(N, printRoots=False, printPolys=False, printParams=False, 
     width += 0.1
     height += 0.1
 
-    N = 5
+    N = 1000
     outlier_coeff = 100.
     max_steps = 5
-    max_order=10
-    
+    max_order = 10
+
     mul_ltol = 1e-12
     mul_htol = 1e-12
     mul_N = 400
     mul_off = 1e-5
-    
+
     dist_eps = 1e-7
     lmt_N = 10
     lmt_eps = 1e-3
     I0_tol = 5e-3
-    
+ 
     min_i = 1e-8
-    
+ 
     #mode = Roots.mode_default    
-    #mode = Roots.mode_log_summary
+    mode = Roots.mode_log_summary
     #mode = Roots.mode_log_summary|Roots.mode_log_notes
-    mode = Roots.mode_log_summary|Roots.mode_log_recursive|Roots.mode_log_notes
+    #mode = Roots.mode_log_summary|Roots.mode_log_recursive|Roots.mode_log_notes
     #mode = Roots.mode_log_summary|Roots.mode_log_debug
     #mode = Roots.mode_log_summary|Roots.mode_log_notes|Roots.mode_log_debug|Roots.mode_log_recursive
 
@@ -133,10 +136,11 @@ def test_Poly_Roots_N(N, printRoots=False, printPolys=False, printParams=False, 
         print "mul_ltol:" + str(mul_ltol)
         print "mul_htol:" + str(mul_htol)
         print "mul_N:" + str(mul_N)
-        
+    
     all_fnd,roots=Roots.droots(f,fp,x_cent,y_cent,width,height,N,outlier_coeff,
                                max_steps,max_order,mul_N,mul_ltol,mul_htol,
                                mul_off,dist_eps,lmt_N,lmt_eps,I0_tol,mode,min_i)
+    print "Ret good" if all_fnd else "Ret bad"
 
     print "Comparison with numpy:"
     print "\t" + str(len(roots_numpy)) + " numpy roots"

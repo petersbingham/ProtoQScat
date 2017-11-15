@@ -7,6 +7,8 @@ Created on Sat Feb 28 20:15:35 2015
 
 Functions moved from file containing Delves routine
 
+Modified by P Bingham October-November 2017
+
 """
 import numpy as np
 from scipy import integrate
@@ -78,6 +80,10 @@ def residues(f_frac,roots,lmt_N=10,lmt_eps=1e-3):
         f_frac (function): a complex.
 
         roots (a list of complex numbers): the roots of f; poles of f_frac.
+
+        lmt_N (int): parameter to he limit function.
+
+        lmt_eps (optional[float]): parameter to he limit function.
 
     Returns:
         A list of residues of f_frac.
