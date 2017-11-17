@@ -12,6 +12,7 @@ import general.numerical as num
 REPLACESTR = "REPLACETHIS"
 
 BASEDIR = basedir
+BASEDIR = "E:\Peter's Documents\PhD\Results\Test"
 
 RESULTSDIR = BASEDIR + sep() + "Results" + sep()
 COEFFDIR = sep() + "CoefficientFiles" + sep()
