@@ -27,7 +27,7 @@ class PoleMetaCalculator:
         self.distThresholds = {k:[] for k in self.cfSteps}
         self.allDistThresholds = []
 
-    def doPoleCalculations(self, smats, kCal, mode, populateSmatCB=None, cmpPole=None):
+    def doPoleCalculations(self, smats, kCal, mode, populateSmatCB=None, ratkCal=None, cmpPole=None):
         if len(smats) <= self.endIndex:
             raise Exception("Specified End Index outside range.")
         if self.startIndex < 0:
@@ -43,7 +43,7 @@ class PoleMetaCalculator:
                 self.distThresholds[cfSteps].append(distThreshold)
                 if distThreshold not in self.allDistThresholds:
                     self.allDistThresholds.append(distThreshold)
-                pf = PoleFinder(copy.deepcopy(smats), kCal, self.resultFileHandler, self.startIndex, self.endIndex, self.offset, distThreshold, cfSteps, cmpPole, mode, populateSmatCB, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax)
+                pf = PoleFinder(copy.deepcopy(smats), kCal, self.resultFileHandler, self.startIndex, self.endIndex, self.offset, distThreshold, cfSteps, cmpPole, mode, populateSmatCB, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax, ratkCal=ratkCal)
                 self.errState = self.errState | pf.errState
                 if not self.errState:
                     tabCounts[cfSteps].append((pf.NmaxTotPoles, pf.NmaxLostPoles))

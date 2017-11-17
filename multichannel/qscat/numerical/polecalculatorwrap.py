@@ -16,6 +16,10 @@ MODE_POS_DOUBLE = 4
 MODE_POS_INC = 5
 MODE_COMP_DOUBLE = 6
 MODE_COMP_INC = 7
+MODE_NEG_DOUBLE = 8
+MODE_NEG_INC = 9
+MODE_CUST_DOUBLE = 10
+MODE_CUST_INC = 11
 
 import argparse
 parentArgs = argparse.ArgumentParser(description="Numercal Data Fit - Pole find")
@@ -34,35 +38,46 @@ args = parentArgs.parse_args()
 
 from scriptparameters import *
 
-def _doPoleFind(kCal, mode):
+kCAL=[1.0]*len(THRESHOLDS)
+
+def _doPoleFind(ratkCal, mode):
     kmats = readkMats(FILENAME)
     smats = sm.getSfromKmatrices(kmats,NUMCHANNELS)
     if args.endIndex_ == -1:
         args.endIndex_ = len(smats)-1
-    resultFileHandler = getFileHandler(kCal, args.startIndex_, args.endIndex_)
-    
+    resultFileHandler = getFileHandler(kCAL, args.startIndex_, args.endIndex_)
+    resultFileHandler.setRatsMatCalcStr(str(ratkCal))
     cfSteps = map(int, args.cfSteps_.split(','))
     p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfSteps, args.startingDistThreshold_, args.amalgThreshold_, args.zeroValExp_, args.Nmin_, args.Nmax_, resultFileHandler)
     cmpPole = RMATRIX_POLES[args.cmpIndex_] if args.cmpIndex_<len(RMATRIX_POLES) else None
-    p.doPoleCalculations(smats, kCal, mode, cmpPole=cmpPole)
+    
+    p.doPoleCalculations(smats, kCAL, mode, ratkCal=ratkCal, cmpPole=cmpPole)
 
 def _polesForAllSigns(mode):
     kperms = num.getPermutations([1.0,-1.0], len(THRESHOLDS))
     for kperm in kperms:
-        kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=kperm, massMult=MASSMULT)
-        _doPoleFind(kCal, mode)
+        ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=kperm, massMult=MASSMULT)
+        _doPoleFind(ratkCal, mode)
 
 def _polesForRot(mode):
-    kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_ROT, massMult=MASSMULT)
-    _doPoleFind(kCal, mode)
+    ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_ROT, massMult=MASSMULT)
+    _doPoleFind(ratkCal, mode)
 
 def _polesForPos(mode):
-    kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=[1.0]*len(THRESHOLDS), massMult=MASSMULT)
-    _doPoleFind(kCal, mode)
+    ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=[1.0]*len(THRESHOLDS), massMult=MASSMULT)
+    _doPoleFind(ratkCal, mode)
+
+def _polesForNeg(mode):
+    ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=[-1.0]*len(THRESHOLDS), massMult=MASSMULT)
+    _doPoleFind(ratkCal, mode)
+
+def _polesForCust(mode):
+    ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=[-1.0,1.0,-1.0], massMult=MASSMULT)
+    _doPoleFind(ratkCal, mode)
 
 def _polesForComp(mode):
-    kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_COMP, massMult=MASSMULT)
-    _doPoleFind(kCal, mode)
+    ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_COMP, massMult=MASSMULT)
+    _doPoleFind(ratkCal, mode)
 
 if args.mode_ == MODE_ALLSIGNS_DOUBLE:
     _polesForAllSigns(DOUBLE_N)
@@ -80,3 +95,11 @@ elif args.mode_ == MODE_COMP_DOUBLE:
     _polesForComp(DOUBLE_N)
 elif args.mode_ == MODE_COMP_INC:
     _polesForComp(INC_N)
+elif args.mode_ == MODE_NEG_DOUBLE:
+    _polesForNeg(DOUBLE_N)
+elif args.mode_ == MODE_NEG_INC:
+    _polesForNeg(INC_N)
+elif args.mode_ == MODE_CUST_DOUBLE:
+    _polesForCust(DOUBLE_N)
+elif args.mode_ == MODE_CUST_INC:
+    _polesForCust(INC_N)

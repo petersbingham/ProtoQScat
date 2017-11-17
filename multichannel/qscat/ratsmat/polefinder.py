@@ -14,7 +14,7 @@ INC_N = 'incN'
 COMPLETE_STR = "Complete"
    
 class PoleFinder:
-    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distThreshold, cfSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX):
+    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distThreshold, cfSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX, ratkCal=None):
         self.sMats = sMats
         self.kCal = kCal
         self.resultFileHandler = resultFileHandler
@@ -37,6 +37,7 @@ class PoleFinder:
         self.first = True
         self.Nmin = Nmin
         self.Nmax = Nmax
+        self.ratkCal = ratkCal
         self.NmaxTotPoles = 0
         self.NmaxLostPoles = 0
         self.errState = False
@@ -183,6 +184,8 @@ class PoleFinder:
             self.populateSmatCB(sMats, self.sMats)
         file = open(self.resultFileHandler.getRootFilePath(), 'w')
         try:
+            if self.ratkCal is not None:
+                ratSmat.kCal = self.ratkCal
             ratSmat.doCalc()
             roots = ratSmat.findRoots(self.lastRoots)
             self.lastRoots = roots

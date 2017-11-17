@@ -114,8 +114,8 @@ def test_Poly_Roots_N(N, printRoots=False, printPolys=False, printParams=False, 
  
     min_i = 1e-8
  
-    #mode = Roots.mode_default    
-    mode = Roots.mode_log_summary
+    mode = Roots.mode_default    
+    #mode = Roots.mode_log_summary
     #mode = Roots.mode_log_summary|Roots.mode_log_notes
     #mode = Roots.mode_log_summary|Roots.mode_log_recursive|Roots.mode_log_notes
     #mode = Roots.mode_log_summary|Roots.mode_log_debug

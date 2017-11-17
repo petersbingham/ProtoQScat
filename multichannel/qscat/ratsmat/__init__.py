@@ -47,7 +47,7 @@ DELVES_LMT_EPS = 1e-3
 DELVES_I0_TOL = 5e-3
 
 DELVES_MODE = pydelves.mode_log_summary
-DELVES_MODE = pydelves.mode_log_summary | pydelves.mode_log_debug | pydelves.mode_log_recursive
+#DELVES_MODE = pydelves.mode_log_summary | pydelves.mode_log_debug | pydelves.mode_log_recursive
 
 DELVES_CONJ_ROOT_MIN_IMAG = 1e-6
 

@@ -14,7 +14,7 @@ def getArgDesc(func, args, ignore=None):
         if arg in d:
             if ignore is not None and arg not in ignore:
                 if not first:
-                    argStr += ", "
+                    argStr += ","
                 else:
                     first = False
                 argStr += arg + " " + str(d[arg])

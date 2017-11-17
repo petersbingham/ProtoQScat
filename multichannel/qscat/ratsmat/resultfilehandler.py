@@ -44,6 +44,9 @@ class ResultFileHandler:
         self.distThresholdEnd = None
     
         self.cleanRootRoutine = None
+        
+        #Optional if using different calculator post fit
+        self.ratsMatCalcStr = None
 
     def setFitInfo(self, numFits, fitSize):
         self.numFits = numFits
@@ -60,6 +63,9 @@ class ResultFileHandler:
         base = self._getBaseString()
         self.coeffPath = base+COEFFDIR+self.getPostStr()+sep()
         self._makeDir(self.coeffPath)
+    
+    def setRatsMatCalcStr(self, calsStr):
+        self.ratsMatCalcStr = calsStr
     
     def setRootFindRoutine(self, rootFindRoutine):
         self.rootFindRoutine = rootFindRoutine
@@ -138,7 +144,10 @@ class ResultFileHandler:
         return "N=" + str(self.fitSize) + "_" + "S=" + str(self.startIndex) + "_" + "E=" + str((self.endIndex+1*self.numFits)-1)
     
     def _getRootsInitPath(self):
-        return self._getBaseString() + sep() + "ROOTS-" + self.rootFindRoutine + sep()
+        s = ""
+        if self.ratsMatCalcStr is not None:
+            s = self.ratsMatCalcStr + sep()
+        return self._getBaseString() + sep() + s + "ROOTS-" + self.rootFindRoutine + sep()
     
     def _getRootsPath(self):
         if self.cleanRootRoutine is None:
