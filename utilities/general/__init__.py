@@ -12,7 +12,7 @@ def getArgDesc(func, args, ignore=None):
     first = True
     for arg in a.args:
         if arg in d:
-            if ignore is not None and arg not in ignore:
+            if ignore is None or arg not in ignore:
                 if not first:
                     argStr += ","
                 else:

@@ -32,7 +32,7 @@ import math
 from gilfunctions import *
 
 
-mode_default = 0
+mode_off = 0
 #If function is a polynomial then roots will occur in a+ib, a-ib pairs.
 #If mode==mode_add_conjs then routine will take advantage of this by
 #automatically adding missing partners.
@@ -56,21 +56,21 @@ note_int_muller_exception = 32
 note_not_all_interior_fnd = 64
 note_root_sub_div_by_zero = 128
 
-def root_purge(lst,eps=1e-7,min_i=1e-8):
+def root_purge(lst,eps=1e-7,conj_min_i=1e-8):
     if len(lst) == 0:
         return []
     for el in lst[:-1]:
         if abs(el-lst[-1]) < eps and \
-        (el.imag/lst[-1].imag>=0 or abs(el.imag)<min_i):
-            return root_purge(lst[:-1],eps,min_i)
-    return root_purge(lst[:-1],eps,min_i) + [lst[-1]]
+        (el.imag/lst[-1].imag>=0 or abs(el.imag)<conj_min_i):
+            return root_purge(lst[:-1],eps,conj_min_i)
+    return root_purge(lst[:-1],eps,conj_min_i) + [lst[-1]]
 
-def add_miss_conjs(lst,eps=1e-7,min_i=1e-8):
+def add_miss_conjs(lst,eps=1e-7,conj_min_i=1e-8):
     new_lst = []
     for el in lst:
         new_lst.append(el)
         new_lst.append(el.conjugate())
-    return root_purge(new_lst,eps,min_i)
+    return root_purge(new_lst,eps,conj_min_i)
 
 def locate_muller_root(lp,x1,x2,x3,roots,failed_roots):
     state = 0
@@ -89,7 +89,7 @@ def correct_roots(lp,b,roots):
     roots_inside = inside_boundary(roots,b.rx,b.ry,b.rw,b.rh)
     conjs_added = 0
     if lp.mode & mode_add_conjs:
-        roots_miss_conj = add_miss_conjs(roots_inside,gp.dist_eps,gp.min_i)
+        roots_miss_conj = add_miss_conjs(roots_inside,gp.dist_eps,gp.conj_min_i)
         roots_final = inside_boundary(roots_missing_conjs,b.rx,b.ry,b.rw,b.rh)
         conjs_added = len(roots_final)-len(roots_inside)
     else:
@@ -257,7 +257,8 @@ class root_container:
 
         # We don't need the roots far outside the boundary
         self.subtracted = inside_boundary(self.boundary_and_known,
-                                          b.rx,b.ry,b.rw+2.,b.rh+2.)
+                                          b.rx,b.ry,b.rw+gp.bnd_thres,
+                                          b.rh+gp.bnd_thres)
         self.residues_subtracted = \
             residues(b.f_frac,self.subtracted,gp.lmt_N,gp.lmt_eps)
         return state
@@ -372,11 +373,12 @@ class global_parameters:
         self.mul_htol = 1e-12
         self.mul_off = 1e-5
         
+        self.conj_min_i = 1e-8
+        
         self.dist_eps = 1e-7
         self.lmt_N = 10
         self.lmt_eps = 1e-3
-        
-        self.min_i = 1e-8
+        self.bnd_thres = 2.
 
     def set_delves_routine_parameters(self,outlier_coeff,max_order,I0_tol):
         self.outlier_coeff = outlier_coeff
@@ -389,14 +391,14 @@ class global_parameters:
         self.mul_htol = mul_htol
         self.mul_off = mul_off
 
-    def set_advanced_parameters(self,dist_eps,lmt_N,lmt_eps,min_i):
+    def set_mode_parameters(self, conj_min_i):
+        self.conj_min_i = conj_min_i
+
+    def set_advanced_parameters(self,dist_eps,lmt_N,lmt_eps,bnd_thres):
         self.dist_eps = dist_eps
         self.lmt_N = lmt_N
         self.lmt_eps = lmt_eps
-        self.min_i = min_i
-
-    def set_mode_parameters(self,min_i):
-        self.min_i = min_i
+        self.bnd_thres = bnd_thres
 
     def set_calc_parameters(self,f,fp,N):
         self.f = f
@@ -454,8 +456,7 @@ class local_parameters:
 
 gp = global_parameters()
 
-def set_delves_routine_parameters(outlier_coeff=100.,
-                                  max_order=10,I0_tol=5e-3):
+def set_delves_routine_parameters(outlier_coeff=100.,max_order=10,I0_tol=5e-3):
     '''
     Set primary routine arguments
     
@@ -475,8 +476,7 @@ def set_delves_routine_parameters(outlier_coeff=100.,
     '''
     gp.set_delves_routine_parameters(outlier_coeff,max_order,I0_tol)
 
-def set_muller_parameters(mul_N=400,mul_ltol=1e-12,mul_htol=1e-12,
-                          mul_off=1e-5):
+def set_muller_parameters(mul_N=400,mul_ltol=1e-12,mul_htol=1e-12,mul_off=1e-5):
     '''
     Set arguments related to the muller routine
     
@@ -492,12 +492,23 @@ def set_muller_parameters(mul_N=400,mul_ltol=1e-12,mul_htol=1e-12,
     '''
     gp.set_muller_parameters(mul_N,mul_ltol,mul_htol,mul_off)
 
-def set_advanced_parameters(dist_eps=1e-7,lmt_N=10,lmt_eps=1e-3,min_i=1e-8):
+def set_mode_parameters(conj_min_i=1e-8):
     '''
     Set advanced arguments
     
     Args:
+        conj_min_i (optional[float]): If mode==mode_add_conjs then this parameter
+            determines the minimum distance from the real axis a root must lie
+            before being considered as having a conjugate partner.
 
+    '''
+    gp.set_mode_parameters(conj_min_i)
+    
+def set_advanced_parameters(dist_eps=1e-7,lmt_N=10,lmt_eps=1e-3,bnd_thres=2.):
+    '''
+    Set advanced arguments
+    
+    Args:
         dist_eps (optional[float]): epsilon used when distinguishing roots
             using absolute values. Within this they are judged the same root.
 
@@ -507,14 +518,14 @@ def set_advanced_parameters(dist_eps=1e-7,lmt_N=10,lmt_eps=1e-3,min_i=1e-8):
         lmt_eps (optional[float]): distance from z0 at which estimating points 
             are placed for the subtraction.
 
-        min_i (optional[float]): If mode==mode_add_conjs then this parameter
-            determines the minimum distance from the real axis a root must lie
-            before being considered as having a conjugate partner.
+        bnd_thres (optional[float]): The perpendicular distance outwards from 
+            the region boundary within which roots must lie to be considered
+            boundary.
 
     '''
-    gp.set_advanced_parameters(dist_eps,lmt_N,lmt_eps,min_i)
+    gp.set_advanced_parameters(dist_eps,lmt_N,lmt_eps,bnd_thres)
 
-def droots(f,fp,rx,ry,rw,rh,N=10,max_steps=5,mode=mode_default,
+def droots(f,fp,rx,ry,rw,rh,N=10,max_steps=5,mode=mode_off,
            known_roots=[],lvl_cnt=0):
     '''
     I assume f is analytic with simple (i.e. order one) zeros.
