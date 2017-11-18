@@ -389,10 +389,11 @@ class global_parameters:
         self.mul_htol = mul_htol
         self.mul_off = mul_off
 
-    def set_advanced_parameters(self,dist_eps,lmt_N,lmt_eps):
+    def set_advanced_parameters(self,dist_eps,lmt_N,lmt_eps,min_i):
         self.dist_eps = dist_eps
         self.lmt_N = lmt_N
         self.lmt_eps = lmt_eps
+        self.min_i = min_i
 
     def set_mode_parameters(self,min_i):
         self.min_i = min_i
@@ -511,7 +512,7 @@ def set_advanced_parameters(dist_eps=1e-7,lmt_N=10,lmt_eps=1e-3,min_i=1e-8):
             before being considered as having a conjugate partner.
 
     '''
-    gp.set_advanced_parameters(dist_eps,lmt_N,lmt_eps)
+    gp.set_advanced_parameters(dist_eps,lmt_N,lmt_eps,min_i)
 
 def droots(f,fp,rx,ry,rw,rh,N=10,max_steps=5,mode=mode_default,
            known_roots=[],lvl_cnt=0):
