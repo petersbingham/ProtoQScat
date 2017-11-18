@@ -56,7 +56,7 @@ note_int_muller_exception = 32
 note_not_all_interior_fnd = 64
 note_root_sub_div_by_zero = 128
 
-def root_purge(lst,eps=1e-7,min_i=1e-10):
+def root_purge(lst,eps=1e-7,min_i=1e-8):
     if len(lst) == 0:
         return []
     for el in lst[:-1]:
@@ -65,7 +65,7 @@ def root_purge(lst,eps=1e-7,min_i=1e-10):
             return root_purge(lst[:-1],eps,min_i)
     return root_purge(lst[:-1],eps,min_i) + [lst[-1]]
 
-def add_miss_conjs(lst,eps=1e-7,min_i=1e-10):
+def add_miss_conjs(lst,eps=1e-7,min_i=1e-8):
     new_lst = []
     for el in lst:
         new_lst.append(el)
@@ -376,7 +376,7 @@ class global_parameters:
         self.lmt_N = 10
         self.lmt_eps = 1e-3
         
-        self.min_i = 1e-6
+        self.min_i = 1e-8
 
     def set_delves_routine_parameters(self,outlier_coeff,max_order,I0_tol):
         self.outlier_coeff = outlier_coeff
@@ -491,7 +491,7 @@ def set_muller_parameters(mul_N=400,mul_ltol=1e-12,mul_htol=1e-12,
     '''
     gp.set_muller_parameters(mul_N,mul_ltol,mul_htol,mul_off)
 
-def set_advanced_parameters(dist_eps=1e-7,lmt_N=10,lmt_eps=1e-3,min_i=1e-6):
+def set_advanced_parameters(dist_eps=1e-7,lmt_N=10,lmt_eps=1e-3,min_i=1e-8):
     '''
     Set advanced arguments
     
