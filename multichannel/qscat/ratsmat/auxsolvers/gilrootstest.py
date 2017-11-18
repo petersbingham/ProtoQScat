@@ -114,8 +114,8 @@ def test_Poly_Roots_N(N, printRoots=False, printPolys=False, printParams=False, 
  
     min_i = 1e-8
  
-    mode = Roots.mode_default    
-    #mode = Roots.mode_log_summary
+    #mode = Roots.mode_default    
+    mode = Roots.mode_log_summary
     #mode = Roots.mode_log_summary|Roots.mode_log_notes
     #mode = Roots.mode_log_summary|Roots.mode_log_recursive|Roots.mode_log_notes
     #mode = Roots.mode_log_summary|Roots.mode_log_debug
@@ -137,9 +137,10 @@ def test_Poly_Roots_N(N, printRoots=False, printPolys=False, printParams=False, 
         print "mul_htol:" + str(mul_htol)
         print "mul_N:" + str(mul_N)
     
-    all_fnd,roots=Roots.droots(f,fp,x_cent,y_cent,width,height,N,outlier_coeff,
-                               max_steps,max_order,mul_N,mul_ltol,mul_htol,
-                               mul_off,dist_eps,lmt_N,lmt_eps,I0_tol,mode,min_i)
+    Roots.set_delves_routine_parameters(outlier_coeff,max_order,I0_tol)
+    Roots.set_muller_parameters(mul_N,mul_ltol,mul_htol,mul_off)
+    Roots.set_advanced_parameters(dist_eps,lmt_N,lmt_eps,min_i)
+    all_fnd,roots=Roots.droots(f,fp,x_cent,y_cent,width,height,N,max_steps,mode)
     print "Ret good" if all_fnd else "Ret bad"
 
     print "Comparison with numpy:"
@@ -166,5 +167,5 @@ def test_Poly_Roots(printRoots=False, printPolys=False, printParams=False):
 
 if __name__ == "__main__":
     #test_Roots()
-    #test_Poly_Roots()
-    test_Poly_Roots_N(18, printRoots=False, printPolys=False, printParams=False)
+    test_Poly_Roots()
+    #test_Poly_Roots_N(18, printRoots=False, printPolys=False, printParams=False)

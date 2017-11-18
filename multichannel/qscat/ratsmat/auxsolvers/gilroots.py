@@ -4,6 +4,7 @@ Created on Sat Feb 28 20:15:35 2015
 
 @author: gil
 @title: Rootfinder
+Modified by P Bingham October-November 2017
 
 Find the roots of a function f in the complex plane inside of a rectangular region.
 We implement the method in the following paper:
@@ -23,8 +24,6 @@ to :math:`\sum_i z_i^k`, where i is the index of the roots.
 Throughout we denote :math:`f_{frac} = f'/f`.
 
 I have also tried several optimizations and strategies for numerical stability.
-
-Modified by P Bingham October-November 2017
 
 """
 import numpy as np
@@ -73,7 +72,7 @@ def add_miss_conjs(lst,eps=1e-7,min_i=1e-10):
         new_lst.append(el.conjugate())
     return root_purge(new_lst,eps,min_i)
 
-def locate_muller_root(x1,x2,x3,roots,failed_roots):
+def locate_muller_root(lp,x1,x2,x3,roots,failed_roots):
     state = 0
     try:          
         mull_root,ret = muller(x1,x2,x3,gp.f,gp.mul_N,gp.mul_ltol,gp.mul_htol)
@@ -81,15 +80,15 @@ def locate_muller_root(x1,x2,x3,roots,failed_roots):
             roots.append(mull_root)
         else:
             failed_roots.append(mull_root)
-            state |= gp.handle_state_change(note_no_bnd_muller_root)
+            state |= gp.handle_state_change(lp,note_no_bnd_muller_root)
     except:
-        state |= gp.handle_state_change(note_bnd_muller_exception)
+        state |= gp.handle_state_change(lp,note_bnd_muller_exception)
     return state
 
-def correct_roots(b,roots):
+def correct_roots(lp,b,roots):
     roots_inside = inside_boundary(roots,b.rx,b.ry,b.rw,b.rh)
     conjs_added = 0
-    if gp.mode & mode_add_conjs:
+    if lp.mode & mode_add_conjs:
         roots_miss_conj = add_miss_conjs(roots_inside,gp.dist_eps,gp.min_i)
         roots_final = inside_boundary(roots_missing_conjs,b.rx,b.ry,b.rw,b.rh)
         conjs_added = len(roots_final)-len(roots_inside)
@@ -128,13 +127,13 @@ class root_container:
         self.end_purged = []
         self.end_unique = []
 
-    def log_region(self,I0,isSubregions):
-        if gp.mode & mode_log_summary:
-            self._log_region(I0,isSubregions)
+    def log_region(self,lp,b,I0,isSubregions):
+        if lp.mode & mode_log_summary:
+            self._log_region(lp,b,I0,isSubregions)
 
-    def _log_region(self,I0,isSubregions):
-        s = "."*gp.lvl_cnt
-        gp.print_region_string()
+    def _log_region(self,lp,b,I0,isSubregions):
+        s = "."*lp.lvl_cnt
+        gp.print_region_string(lp,b)
         num_known_roots = len(self.known)
         num_interior_roots_fnd = len(self.interior_mull_new)
         if num_known_roots != 0:
@@ -145,27 +144,27 @@ class root_container:
         print s+"  " + str(num_interior_roots_fnd) + " from Poly Muller."+a
         if not isSubregions:
             print s+"  There were no subregions."
-        elif gp.mode & mode_log_recursive:
+        elif lp.mode & mode_log_recursive:
             print s+"  Subregions:"
 
-    def log_sub_region(self,num_regions):
-        if gp.mode & mode_log_summary:
-            self._log_sub_region(num_regions)
+    def log_sub_region(self,lp,num_regions):
+        if lp.mode & mode_log_summary:
+            self._log_sub_region(lp,num_regions)
 
-    def _log_sub_region(self,num_regions):
-        s = "."*gp.lvl_cnt
+    def _log_sub_region(self,lp,num_regions):
+        s = "."*lp.lvl_cnt
         num_sub_roots_fnd = len(self.interior_all_subs)
-        if num_regions>0 and gp.mode & mode_log_recursive:
+        if num_regions>0 and lp.mode & mode_log_recursive:
             print ""
         print(s+"  "+str(num_sub_roots_fnd)+" from "+str(num_regions)+\
               " subregions.")
 
-    def log_totals(self):
-        if gp.mode & mode_log_summary:
-            self._log_totals()
+    def log_totals(self,lp):
+        if lp.mode & mode_log_summary:
+            self._log_totals(lp)
 
-    def _log_totals(self):
-        s = "."*gp.lvl_cnt
+    def _log_totals(self,lp):
+        s = "."*lp.lvl_cnt
         num_interior_roots_fnd = len(self.interior_mull_new)
         num_sub_roots_fnd = len(self.interior_all_subs)
         num_roots_found = num_interior_roots_fnd+\
@@ -176,23 +175,23 @@ class root_container:
         msg = s+str(len(self.end_unique))+" total in this region. "
         if self.num_added_conjs != 0:
             msg += "Including "+str(self.num_added_conjs)+" added conjugates. "
-            if gp.lvl_cnt>0:
+            if lp.lvl_cnt>0:
                 msg += str(len(self.end_unique+self.known))+\
                        " accumulated so far."
         print msg
 
-    def log_notes(self,state):
-        if gp.mode & mode_log_summary:
-            self._log_notes(state)
+    def log_notes(self,lp,state):
+        if lp.mode & mode_log_summary:
+            self._log_notes(lp,state)
 
-    def _log_notes(self,state):
-        s = "."*gp.lvl_cnt
+    def _log_notes(self,lp,state):
+        s = "."*lp.lvl_cnt
         if state & warn_max_steps_reached:
             print s+"WARNING: max_steps limit hit."
         else:
             print s+"All roots found for max_steps and I0_tol parameters."
 
-        if gp.mode & mode_log_notes:
+        if lp.mode & mode_log_notes:
             if state == 0:
                 print s+"No notes."
             else:
@@ -212,12 +211,12 @@ class root_container:
                 if state & note_root_sub_div_by_zero:
                     print s+"  -Division by zero when subtracting roots."
 
-    def log_roots(self):
-        if gp.mode & mode_log_debug:
-            self._log_roots()
+    def log_roots(self,lp):
+        if lp.mode & mode_log_debug:
+            self._log_roots(lp)
 
-    def _log_roots(self):
-        s = "."*gp.lvl_cnt
+    def _log_roots(self,lp):
+        s = "."*lp.lvl_cnt
         print s+"\nBOUNDARY:"
         print s+"Muller:\n"+str(np.array(self.boundary_all))
         print (s+"New:\n"+str(np.array(self.boundary_new)))
@@ -235,17 +234,17 @@ class root_container:
         print "\nFINAL:"
         print s+"New:\n"+str(np.array(self.end_unique))
 
-    def log_close_region(self):
-        if gp.mode & mode_log_summary:
-            print "-"*gp.lvl_cnt
+    def log_close_region(self,lp):
+        if lp.mode & mode_log_summary:
+            print "-"*lp.lvl_cnt
 
-    def at_boundary(self,b):
+    def at_boundary(self,lp,b):
         outliers = find_maxes(map(abs,b.y))
         state = 0
         for index in outliers:
-            state |= locate_muller_root(b.c[index-2],b.c[index+2],b.c[index]/2,
-                                       self.boundary_all,
-                                       self.boundary_failed_mulls)
+            state |= locate_muller_root(lp,b.c[index-2],b.c[index+2],
+                                        b.c[index]/2,self.boundary_all,
+                                        self.boundary_failed_mulls)
         self.boundary_purged = purge(self.boundary_all,gp.dist_eps)
         self.boundary_new = get_unique(self.boundary_purged,self.known,
                                           gp.dist_eps)
@@ -266,14 +265,14 @@ class root_container:
     def is_polysolve_required(self,num_pred_roots):
         return num_pred_roots <= gp.max_order and num_pred_roots >= 1
 
-    def from_polysolve(self,b,num_pred_roots):
+    def from_polysolve(self,lp,b,num_pred_roots):
         self.interior_rough = locate_poly_roots(b.y_smooth,b.c,num_pred_roots)
         state = 0
         ##TODO: best way to pick points for Muller method below
         for root in self.interior_rough:
-            state |= locate_muller_root(root-gp.mul_off,root+gp.mul_off,root,
-                                       self.interior_mull_all,
-                                       self.interior_failed_mulls)
+            state |= locate_muller_root(lp,root-gp.mul_off,root+gp.mul_off,root,
+                                        self.interior_mull_all,
+                                        self.interior_failed_mulls)
         self.interior_mull_purged = purge(self.interior_mull_all,gp.dist_eps)
 
         self.interior_mull_within = inside_boundary(self.interior_mull_purged,
@@ -282,23 +281,23 @@ class root_container:
                                                self.boundary_new,gp.dist_eps)
         return state
 
-    def finialise_region_roots(self,b,I0,sub_required):
+    def finialise_region_roots(self,lp,b,I0,sub_required):
         # This should be the only place where conjugate addition is required
         # Only the newly found roots here. Already know can be added later.
         self.region = \
             purge(self.boundary_new+self.interior_mull_new,gp.dist_eps)
-        self.region_corrected,self.num_added_conjs = correct_roots(b,self.region)
-        self.log_region(I0,sub_required)
+        self.region_corrected,self.num_added_conjs = correct_roots(lp,b,self.region)
+        self.log_region(lp,b,I0,sub_required)
 
-    def finialise_end_roots(self,state):
+    def finialise_end_roots(self,lp,state):
         # Only return new roots. They'll be added to known roots in the parent.
         self.end = self.region_corrected+self.interior_all_subs
         self.end_purged = purge(self.end,gp.dist_eps)
         self.end_unique = get_unique(self.end_purged,self.known,gp.dist_eps)
-        self.log_totals()
-        self.log_notes(state)
-        self.log_roots()
-        self.log_close_region()
+        self.log_totals(lp)
+        self.log_notes(lp,state)
+        self.log_roots(lp)
+        self.log_close_region(lp)
 
 class boundary:
     def __init__(self,rx,ry,rw,rh):
@@ -311,7 +310,7 @@ class boundary:
         self.y = [self.f_frac(z) for z in self.c]
         self.max_ok = abs(gp.outlier_coeff*get_max(self.y))
 
-    def smoothed(self,roots):
+    def smoothed(self,lp,roots):
         self.y_smooth = []
         state = 0
         for y_el,z_el in zip(self.y,self.c):
@@ -321,7 +320,7 @@ class boundary:
                                        gp.lmt_N,gp.lmt_eps)
             self.y_smooth.append(val)
             if not ret:
-                state |= gp.handle_state_change(note_root_sub_div_by_zero)
+                state |= gp.handle_state_change(lp,note_root_sub_div_by_zero)
         return state
 
 
@@ -338,31 +337,30 @@ def is_subdivision_required(roots,I0,num_pred_roots):
         return True
     return False
 
-def calculate_for_subregions(b,roots):
+def calculate_for_subregions(lp,b,roots):
     x_list = [b.rx - b.rw / 2.,b.rx - b.rw / 2., 
               b.rx + b.rw / 2.,b.rx + b.rw / 2.]
     y_list = [b.ry - b.rh / 2.,b.ry + b.rh / 2.,
               b.ry - b.rh / 2.,b.ry + b.rh / 2.]
     num_regions = len(x_list)
-    if gp.mode & mode_log_recursive:
-        new_mode = gp.mode
+    if lp.mode & mode_log_recursive:
+        new_mode = lp.mode
     else:
-        new_mode = gp.mode & mode_log_switch
+        new_mode = lp.mode & mode_log_switch
     state = 0
     known_roots = roots.region + roots.known
     for x,y in zip(x_list,y_list):
-        ret,sub_roots = droots(gp.f,gp.fp,x,y,b.rw/2.,b.rh/2.,gp.max_steps-1,
-                               new_mode,known_roots,gp.lvl_cnt+1)
+        ret,sub_roots = droots(gp.f,gp.fp,x,y,b.rw/2.,b.rh/2.,gp.N,
+                               lp.max_steps-1,new_mode,known_roots,lp.lvl_cnt+1)
         if not ret:
             state |= warn_max_steps_reached
         roots.interior_all_subs.extend(sub_roots)
     return state,num_regions
 
-class parameters:
+class global_parameters:
     def __init__(self): 
         self.f = None
         self.fp = None
-        self.mode = None
         
         self.N = 10
         self.outlier_coeff = 100.
@@ -379,45 +377,39 @@ class parameters:
         self.lmt_eps = 1e-3
         
         self.min_i = 1e-6
-        
-        self.lvl_cnt = 0
 
-    def set_delves_routine_parameters(self,N=10,outlier_coeff=100.,max_order=10,
-                                      I0_tol=5e-3):
-        self.N = N
+    def set_delves_routine_parameters(self,outlier_coeff,max_order,I0_tol):
         self.outlier_coeff = outlier_coeff
         self.max_order = max_order
         self.I0_tol = I0_tol
 
-    def set_muller_parameters(self,mul_N=400,mul_ltol=1e-12,mul_htol=1e-12,
-                              mul_off=1e-5):
+    def set_muller_parameters(self,mul_N,mul_ltol,mul_htol,mul_off):
         self.mul_N = mul_N
         self.mul_ltol = mul_ltol
         self.mul_htol = mul_htol
         self.mul_off = mul_off
 
-    def set_advanced_parameters(self,dist_eps=1e-7,lmt_N=10,lmt_eps=1e-3):
+    def set_advanced_parameters(self,dist_eps,lmt_N,lmt_eps):
         self.dist_eps = dist_eps
         self.lmt_N = lmt_N
         self.lmt_eps = lmt_eps
 
-    def set_mode_parameters(self,min_i=1e-6):
+    def set_mode_parameters(self,min_i):
         self.min_i = min_i
 
-    def set_calc_parameters(self,f,fp,mode,lvl_cnt):
+    def set_calc_parameters(self,f,fp,N):
         self.f = f
         self.fp = fp
-        self.mode = mode
-        self.lvl_cnt = lvl_cnt
+        self.N = N
 
-    def print_region_string(self):
-        if self.mode & mode_log_summary:
-            s = "-"*self.lvl_cnt
-            print ("\n"+s+"Region(rx,ry,rw,rh): "+str(self.rx)+" "+ \
-                   str(self.ry)+" "+str(self.rw)+" "+str(self.rh))
+    def print_region_string(self,lp,b):
+        if lp.mode & mode_log_summary:
+            s = "-"*lp.lvl_cnt
+            print ("\n"+s+"Region(rx,ry,rw,rh): "+str(b.rx)+" "+str(b.ry)+\
+                   " "+str(b.rw)+" "+str(b.rh))
 
-    def handle_state_change(self, state):
-        s = "."*self.lvl_cnt
+    def handle_state_change(self,lp,state):
+        s = "."*lp.lvl_cnt
         imprecise_roots = s+"Note!! Number of roots may be imprecise for " + \
                           "this N. Increase N for greater precision."
         max_steps_exceeded = s+"Note!! max_steps exceeded. Some interior " + \
@@ -431,7 +423,7 @@ class parameters:
         root_subtraction_division_by_zero = s+"Note!! Division by zero " + \
                                             "during root subtraction."
 
-        if self.mode & mode_log_all_notes:
+        if lp.mode & mode_log_all_notes:
             if state == note_imprecise_roots:
                 print imprecise_roots
             elif state == warn_max_steps_reached:
@@ -453,16 +445,20 @@ class parameters:
     def is_roche_accurate(self,I0,num_pred_roots):
         return abs(num_pred_roots-I0)<self.I0_tol
 
-gp = parameters()
+class local_parameters:
+    def __init__(self,max_steps,mode,lvl_cnt):
+        self.max_steps = max_steps
+        self.mode = mode
+        self.lvl_cnt = lvl_cnt
 
-def set_delves_routine_parameters(N=10,outlier_coeff=100.,
+gp = global_parameters()
+
+def set_delves_routine_parameters(outlier_coeff=100.,
                                   max_order=10,I0_tol=5e-3):
     '''
     Set primary routine arguments
     
     Args:
-        N (optional[int]): Number of points to sample per edge
-
         outlier_coeff (optional[float]): multiplier for coefficient used when 
             subtracting poles to improve numerical stability. 
             See new_f_frac_safe.
@@ -476,7 +472,7 @@ def set_delves_routine_parameters(N=10,outlier_coeff=100.,
             the calculation inaccurate. When inaccurate and the number of 
             iterations is less than max_step the routine will recurse.
     '''
-    gp.set_delves_routine_parameters(N,outlier_coeff,max_order,I0_tol)
+    gp.set_delves_routine_parameters(outlier_coeff,max_order,I0_tol)
 
 def set_muller_parameters(mul_N=400,mul_ltol=1e-12,mul_htol=1e-12,
                           mul_off=1e-5):
@@ -517,7 +513,7 @@ def set_advanced_parameters(dist_eps=1e-7,lmt_N=10,lmt_eps=1e-3,min_i=1e-6):
     '''
     gp.set_advanced_parameters(dist_eps,lmt_N,lmt_eps)
 
-def droots(f,fp,rx,ry,rw,rh,max_steps=5,mode=mode_default,
+def droots(f,fp,rx,ry,rw,rh,N=10,max_steps=5,mode=mode_default,
            known_roots=[],lvl_cnt=0):
     '''
     I assume f is analytic with simple (i.e. order one) zeros.
@@ -538,6 +534,8 @@ def droots(f,fp,rx,ry,rw,rh,max_steps=5,mode=mode_default,
         rw,rh (floats): half the width and height of the rectangular
             region.
 
+        N (optional[int]): Number of points to sample per edge
+
         max_steps (optional[int]): Number of iterations allowed for algorithm to
             repeat on smaller rectangles.
 
@@ -554,39 +552,40 @@ def droots(f,fp,rx,ry,rw,rh,max_steps=5,mode=mode_default,
             I0_tol parameters. A list of roots for the function f inside the 
             rectangle determined by the values rx,ry,rw and rh.
     '''
-    gp.set_calc_parameters(f,fp,mode,lvl_cnt)
+    lp = local_parameters(max_steps,mode,lvl_cnt)
+    gp.set_calc_parameters(f,fp,N)
     roots = root_container(known_roots)
     state = 0
     num_regions = 0
 
     b = boundary(rx,ry,rw,rh)
-    state |= roots.at_boundary(b)
+    state |= roots.at_boundary(lp,b)
 
-    state |= b.smoothed(roots)           
+    state |= b.smoothed(lp,roots)           
     I0 = integrate.trapz(b.y_smooth, b.c)  # Approx num of roots not subtracted
     num_pred_roots = int(math.ceil(abs(I0)-gp.I0_tol))
 
     if abs(num_pred_roots-I0)>gp.I0_tol:
-        state |= gp.handle_state_change(note_imprecise_roots)    
+        state |= gp.handle_state_change(lp,note_imprecise_roots)    
 
     if roots.is_polysolve_required(num_pred_roots):
-        state |= roots.from_polysolve(b,num_pred_roots)  
+        state |= roots.from_polysolve(lp,b,num_pred_roots)  
 
     sub_required = is_subdivision_required(roots,I0,num_pred_roots)
-    sub_possible = gp.max_steps!=0
-    roots.finialise_region_roots(b,I0,sub_required and sub_possible)
+    sub_possible = lp.max_steps!=0
+    roots.finialise_region_roots(lp,b,I0,sub_required and sub_possible)
     if sub_required:
         if sub_possible:
-            new_notes,num_regions = calculate_for_subregions(b,roots)
+            new_notes,num_regions = calculate_for_subregions(lp,b,roots)
             state |= (new_notes&warn_max_steps_reached)
-            roots.log_sub_region(num_regions)
+            roots.log_sub_region(lp,num_regions)
         else:
-            state |= gp.handle_state_change(warn_max_steps_reached)
+            state |= gp.handle_state_change(lp,warn_max_steps_reached)
 
     tot_interior_found = len(roots.region_corrected+roots.interior_all_subs)
     if tot_interior_found != num_pred_roots:
-        state |= gp.handle_state_change(note_not_all_interior_fnd)
+        state |= gp.handle_state_change(lp,note_not_all_interior_fnd)
     
-    roots.finialise_end_roots(state)
+    roots.finialise_end_roots(lp,state)
 
     return not state&warn_max_steps_reached,roots.end_unique
