@@ -33,23 +33,28 @@ DELVES_RW = 0.14
 DELVES_RH = 0.3
 DELVES_N = 1000
 DELVES_MAX_STEPS = 5
-DELVES_MODE = pydelves.mode_log_summary
-#DELVES_MODE = pydelves.mode_log_summary | pydelves.mode_log_debug | pydelves.mode_log_recursive
+log_mode = pydelves.mode_log_summary | pydelves.mode_log_debug | pydelves.mode_log_recursive
+#log_mode = pydelves.mode_log_summary | pydelves.mode_log_debug | pydelves.mode_log_recursive
+calc_mode = pydelves.mode_accept_int_muller_close_to_good_roche | pydelves.mode_accept_bnd_muller_close_to_start | pydelves.mode_recurse_on_not_all_interior_found
+#calc_mode = pydelves.mode_accept_all_mullers
+DELVES_MODE = log_mode | calc_mode
 
 DELVES_OUTLIER_COEFF = 100.
 DELVES_MAX_POLY_ORDER = 10
 DELVES_I0_TOL = 5e-3
 
 DELVES_MUL_N = 400
-DELVES_MUL_LTOL = 1e-6
-DELVES_MUL_HTOL = 1e-6
+DELVES_MUL_FZLTOL = 1e-6
+DELVES_MUL_FZHTOL = 1e-6
 DELVES_MUL_OFF = 1e-6
+
+DELVES_MUL_ZTOL = 1e-1
+DELVES_CONJ_MIN_IMAG = 1e-6
 
 DELVES_DIST_EPS = 1e-6
 DELVES_LMT_N = 10
 DELVES_LMT_EPS = 1e-3
 DELVES_BND_THRES = 2.
-DELVES_CONJ_MIN_IMAG = 1e-6
 
 ##########################################################
 ##########################################################
@@ -75,9 +80,9 @@ class RatSMat(sm.mat):
             self.rootSolver = SymDetRoots(self.suppressCmdOut, EXPANDEDDET_ROOTS_FINDTYPE, SYMPY_NROOTS_N, SYMPY_NROOTS_MAXSTEPS)
         else:
             self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_RX, DELVES_RY, DELVES_RW, DELVES_RH,DELVES_N, DELVES_OUTLIER_COEFF, 
-                                          DELVES_MAX_STEPS, DELVES_MAX_POLY_ORDER, DELVES_MUL_N,DELVES_MUL_LTOL, DELVES_MUL_HTOL, 
-                                          DELVES_MUL_OFF, DELVES_DIST_EPS,DELVES_LMT_N, DELVES_LMT_EPS, DELVES_BND_THRES, DELVES_I0_TOL, 
-                                          DELVES_MODE, DELVES_CONJ_MIN_IMAG)
+                                          DELVES_MAX_STEPS, DELVES_MAX_POLY_ORDER, DELVES_MUL_N,DELVES_MUL_FZLTOL, DELVES_MUL_FZHTOL, 
+                                          DELVES_MUL_OFF, DELVES_MUL_ZTOL, DELVES_CONJ_MIN_IMAG, DELVES_DIST_EPS, DELVES_LMT_N, 
+                                          DELVES_LMT_EPS, DELVES_BND_THRES, DELVES_I0_TOL, DELVES_MODE)
             
         self.rootCleaner = RootClean(self.suppressCmdOut, EXPANDEDDET_ROOTS_CLEANWIDTH)
 

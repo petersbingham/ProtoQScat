@@ -95,30 +95,29 @@ def add_miss_conjs(lst,eps=1e-7,conj_min_i=1e-8):
         new_lst.append(el.conjugate())
     return root_purge(new_lst,eps,conj_min_i)
 
-def locate_muller_root(lp,x1,x2,x3,roots,failed_roots):
+def locate_muller_root(lp,x1,x2,x3,found_roots,failed_roots):
     status = 0
     try:          
         mull_root,ret = muller(x1,x2,x3,gp.f,gp.mul_N,gp.mul_fzltol,gp.mul_fzhtol)
         if lp.mode & mode_accept_all_mullers or ret:
-            roots.append(mull_root)
+            found_roots.append(mull_root)
         else:
-            failed_roots.append((mull_root,x3))
+            failed_roots.append((x3,mull_root))
             status |= note_muller_fail_1st
     except:
         status |= note_muller_exception
     return status
 
-def check_against_start_roots(good_roots,failed_roots,reaccepted_roots):
+def check_against_start_roots(failed_roots,reaccepted_roots):
     status = 0
     for rough_root, mull_root in failed_roots:
         if abs(rough_root-mull_root) < gp.mul_ztol:
             reaccepted_roots.append(mull_root)
         else:
             status |= note_muller_fail_2nd
-    good_roots.extend(reaccepted_roots)
     return status
 
-def check_against_rough_roots(lp,I0,good_roots,failed_roots,reaccepted_roots):
+def check_against_rough_roots(lp,I0,failed_roots,reaccepted_roots):
     check = False
     if lp.mode & mode_accept_int_muller_close_to_any_roche:
         check = True
@@ -126,15 +125,13 @@ def check_against_rough_roots(lp,I0,good_roots,failed_roots,reaccepted_roots):
         if gp.is_roche_accurate(I0):
             check = True
     if check:
-        return check_against_start_roots(good_roots,failed_roots,
-                                         reaccepted_roots)
+        return check_against_start_roots(failed_roots,reaccepted_roots)
     return 0
 
-def check_against_bnd_start_roots(lp,good_roots,failed_roots,reaccepted_roots):
+def check_against_bnd_start_roots(lp,failed_roots,reaccepted_roots):
     check = False
     if lp.mode & mode_accept_bnd_muller_close_to_start:
-        return check_against_start_roots(good_roots,failed_roots,
-                                         reaccepted_roots)
+        return check_against_start_roots(failed_roots,reaccepted_roots)
     return 0
 
 def correct_roots(lp,b,roots):
@@ -152,24 +149,30 @@ class root_container:
     def __init__(self, known):
         self.known = known
 
+        self.boundary_outliers = []
+        self.boundary_passed_fz = []
+        self.boundary_failed_fz = []  
+        self.boundary_passed_z = []
         self.boundary_all = []
-        self.boundary_failed_mulls = []  
-        self.boundary_reaccepted = []
         self.boundary_purged = [] 
         self.boundary_new = []     
         self.boundary_within = []
         self.boundary_and_known = []
+        self.subtracted = []
         self.residues_subtracted = []
 
-        self.subtracted = []
-
-        self.interior_rough = []
         self.interior_mull_all = []
         self.interior_failed_mulls = []
         self.interior_reaccepted = []
-        self.interior_mull_purged = []
-        self.interior_mull_within = []
-        self.interior_mull_new = []
+        
+        self.interior_rough = []
+        self.interior_passed_fz = []
+        self.interior_failed_fz = []  
+        self.interior_passed_z = []
+        self.interior_all = []        
+        self.interior_purged = []
+        self.interior_within = []
+        self.interior_new = []
 
         self.region = []
         self.region_corrected = []
@@ -189,7 +192,7 @@ class root_container:
         s = "."*lp.lvl_cnt
         gp.print_region_string(lp,b)
         num_known_roots = len(self.known)
-        num_interior_roots_fnd = len(self.interior_mull_new)
+        num_interior_roots_fnd = len(self.interior_new)
         if num_known_roots != 0:
             print s + str(num_known_roots) + " known."
         print s+str(len(self.boundary_within))+" from Boundary Muller."
@@ -219,7 +222,7 @@ class root_container:
 
     def _log_totals(self,lp):
         s = "."*lp.lvl_cnt
-        num_interior_roots_fnd = len(self.interior_mull_new)
+        num_interior_roots_fnd = len(self.interior_new)
         num_sub_roots_fnd = len(self.interior_all_subs)
         num_roots_found = num_interior_roots_fnd+\
                           num_sub_roots_fnd+\
@@ -256,26 +259,35 @@ class root_container:
 
     def _log_roots(self,lp):
         s = "."*lp.lvl_cnt
+        
         print s+"\nBOUNDARY:"
-        print s+"Muller:\n"+str(np.array(self.boundary_all))
-        print s+"Reaccepted:\n"+str(np.array(self.boundary_reaccepted))
-        print (s+"New:\n"+str(np.array(self.boundary_new)))
+        print s+"Outliers:\n"+str(np.array(self.boundary_outliers))
+        print s+"Passed fz:\n"+str(np.array(self.boundary_passed_fz))
+        if len(self.boundary_failed_fz) > 0:
+            print s+"Failed fz rough:\n"+str(np.array(zip(*self.boundary_failed_fz)[0]))
+            print s+"Failed fz mull:\n"+str(np.array(zip(*self.boundary_failed_fz)[1]))
+        else:
+            print s+"Failed fz:\n[]"
+        print s+"Passed z:\n"+str(np.array(self.boundary_passed_z))
+        print s+"All Passed:\n"+str(np.array(self.boundary_all))
+        print s+"New:\n"+str(np.array(self.boundary_new))
         print s+"Within:\n"+str(np.array(self.boundary_within))
         print s+"Subtracted:\n"+str(np.array(self.subtracted))
-        if len(self.boundary_failed_mulls) > 0:
-            print s+"Failed:\n"+str(np.array(zip(*self.boundary_failed_mulls)[0]))
-        else:
-            print s+"Failed:\n[]"
+        
         print "\nINTERIOR:"
-        print s+"Rough Poly:\n"+str(self.interior_rough)
-        print s+"Muller:\n"+str(np.array(self.interior_mull_all))
-        print s+"Reaccepted:\n"+str(np.array(self.interior_reaccepted))
-        print s+"Purged:\n"+str(np.array(self.interior_mull_purged))
-        print s+"New:\n"+str(np.array(self.interior_mull_new))
-        if len(self.interior_failed_mulls) > 0:
-            print s+"Failed:\n"+str(np.array(zip(*self.interior_failed_mulls)[0]))
+        print s+"Rough:\n"+str(np.array(self.interior_rough))
+        print s+"Passed fz:\n"+str(np.array(self.interior_passed_fz))
+        if len(self.interior_failed_fz) > 0:
+            print s+"Failed fz rough:\n"+str(np.array(zip(*self.interior_failed_fz)[0]))
+            print s+"Failed fz mull:\n"+str(np.array(zip(*self.interior_failed_fz)[1]))
         else:
-            print s+"Failed:\n[]"
+            print s+"Failed fz:\n[]"
+        print s+"Passed z:\n"+str(np.array(self.interior_passed_z))
+        print s+"All Passed:\n"+str(np.array(self.interior_all))
+        print s+"Purged:\n"+str(np.array(self.interior_purged))
+        print s+"Within:\n"+str(np.array(self.interior_within))
+        print s+"New:\n"+str(np.array(self.interior_new))
+            
         print "\nSUBREGIONS:"
         print s+"New:\n"+str(np.array(self.interior_all_subs))
         print "\nFINAL:"
@@ -286,15 +298,17 @@ class root_container:
             print "-"*lp.lvl_cnt
 
     def at_boundary(self,lp,b):
-        outliers = find_maxes(map(abs,b.y))
+        outlier_indices = find_maxes(map(abs,b.y))
         status = 0
-        for index in outliers:
-            status |= locate_muller_root(lp,b.c[index-2],b.c[index+2],
-                                        b.c[index]/2,self.boundary_all,
-                                        self.boundary_failed_mulls)
-        status |= check_against_bnd_start_roots(lp,self.boundary_all,
-                                               self.boundary_failed_mulls,
-                                               self.boundary_reaccepted)
+        self.boundary_outliers = []
+        for i in outlier_indices:
+            self.boundary_outliers.append(b.c[i]/2)
+            status |= locate_muller_root(lp,b.c[i-2],b.c[i+2],
+                                        b.c[i]/2,self.boundary_passed_fz,
+                                        self.boundary_failed_fz)
+        status |= check_against_bnd_start_roots(lp,self.boundary_failed_fz,
+                                               self.boundary_passed_z)
+        self.boundary_all = self.boundary_passed_fz + self.boundary_passed_z
 
         self.boundary_purged = purge(self.boundary_all,gp.dist_eps)
         self.boundary_new = get_unique(self.boundary_purged,self.known,
@@ -324,19 +338,19 @@ class root_container:
         for rough_root in self.interior_rough:
             status |= locate_muller_root(lp,rough_root-gp.mul_off,
                                         rough_root+gp.mul_off,rough_root,
-                                        self.interior_mull_all,
-                                        self.interior_failed_mulls)
-        status |= check_against_rough_roots(lp,I0,self.interior_mull_all,
-                                           self.interior_failed_mulls,
-                                           self.interior_reaccepted)
-                
-        self.interior_mull_purged = purge(self.interior_mull_all,gp.dist_eps)
+                                        self.interior_passed_fz,
+                                        self.interior_failed_fz)
+        status |= check_against_rough_roots(lp,I0,self.interior_failed_fz,
+                                            self.interior_passed_z)
+        self.interior_all = self.interior_passed_fz + self.interior_passed_z
 
-        self.interior_mull_within = inside_boundary(self.interior_mull_purged,
+        self.interior_purged = purge(self.interior_all,gp.dist_eps)
+
+        self.interior_within = inside_boundary(self.interior_purged,
                                                     b.rx,b.ry,b.rw,b.rh)
 
-        self.interior_mull_new = get_unique(self.interior_mull_within,
-                                               self.boundary_and_known,gp.dist_eps)
+        self.interior_new = get_unique(self.interior_within,
+                                       self.boundary_and_known,gp.dist_eps)
 
         return status
 
@@ -344,7 +358,7 @@ class root_container:
         # This should be the only place where conjugate addition is required
         # Only the newly found roots here. Already known will be added later.
         self.region = \
-            purge(self.boundary_new+self.interior_mull_new,gp.dist_eps)
+            purge(self.boundary_new+self.interior_new,gp.dist_eps)
         self.region_corrected,self.num_added_conjs = correct_roots(lp,b,self.region)
         self.log_region(lp,b,I0,sub_required)
 
@@ -383,7 +397,7 @@ class boundary:
         return status
 
 def all_interior_found(roots,num_pred_roots):
-    return len(roots.interior_mull_new)>=num_pred_roots
+    return len(roots.interior_new)>=num_pred_roots
 
 def do_subcalculation(lp,roots,I0,num_pred_roots):
     # Don't count the added conjs at this stage, just pass them to the 
