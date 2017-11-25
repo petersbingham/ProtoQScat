@@ -77,7 +77,7 @@ note_muller_exception = 0x80
 note_root_sub_div_by_zero = 0x100
 
 #Used for switching out notes from warnings:
-mode_warn_switch = 0xF
+mode_warn_switch = 0x7
 
 def root_purge(lst,eps=1e-7,conj_min_i=1e-8):
     if len(lst) == 0:
@@ -135,11 +135,11 @@ def check_against_bnd_start_roots(lp,failed_roots,reaccepted_roots):
     return 0
 
 def correct_roots(lp,b,roots):
-    roots_inside = inside_boundary(roots,b.rx,b.ry,b.rw,b.rh)
+    roots_inside = inside_boundary(roots,*b.reg_i())
     conjs_added = 0
     if lp.mode & mode_add_conjs:
         roots_miss_conj = add_miss_conjs(roots_inside,gp.dist_eps,gp.conj_min_i)
-        roots_final = inside_boundary(roots_missing_conjs,b.rx,b.ry,b.rw,b.rh)
+        roots_final = inside_boundary(roots_missing_conjs,*b.reg_i())
         conjs_added = len(roots_final)-len(roots_inside)
     else:
         roots_final = roots_inside
@@ -190,7 +190,7 @@ class root_container:
 
     def _log_region(self,lp,b,I0,isSubregions):
         s = "."*lp.lvl_cnt
-        gp.print_region_string(lp,b)
+        b.print_region_string(lp)
         num_known_roots = len(self.known)
         num_interior_roots_fnd = len(self.interior_new)
         if num_known_roots != 0:
@@ -303,8 +303,8 @@ class root_container:
         self.boundary_outliers = []
         for i in outlier_indices:
             self.boundary_outliers.append(b.c[i]/2)
-            status |= locate_muller_root(lp,b.c[i-2],b.c[i+2],
-                                        b.c[i]/2,self.boundary_passed_fz,
+            status |= locate_muller_root(lp,b.c[i-1],b.c[i+1],
+                                        b.c[i],self.boundary_passed_fz,
                                         self.boundary_failed_fz)
         status |= check_against_bnd_start_roots(lp,self.boundary_failed_fz,
                                                self.boundary_passed_z)
@@ -317,13 +317,10 @@ class root_container:
         self.boundary_and_known = purge(self.boundary_new+self.known,
                                         gp.dist_eps)
 
-        self.boundary_within = inside_boundary(self.boundary_purged,
-                                               b.rx,b.ry,b.rw,b.rh)
+        self.boundary_within = inside_boundary(self.boundary_purged,*b.reg_i())
 
         # We don't need the roots far outside the boundary
-        self.subtracted = inside_boundary(self.boundary_and_known,
-                                          b.rx,b.ry,b.rw+gp.bnd_thres,
-                                          b.rh+gp.bnd_thres)
+        self.subtracted = inside_boundary(self.boundary_and_known,*b.reg_m())
         self.residues_subtracted = \
             residues(b.f_frac,self.subtracted,gp.lmt_N,gp.lmt_eps)
         return status
@@ -346,8 +343,7 @@ class root_container:
 
         self.interior_purged = purge(self.interior_all,gp.dist_eps)
 
-        self.interior_within = inside_boundary(self.interior_purged,
-                                                    b.rx,b.ry,b.rw,b.rh)
+        self.interior_within = inside_boundary(self.interior_purged,*b.reg_i())
 
         self.interior_new = get_unique(self.interior_within,
                                        self.boundary_and_known,gp.dist_eps)
@@ -376,12 +372,29 @@ class boundary:
     def __init__(self,rx,ry,rw,rh):
         self.rx = rx
         self.ry = ry
-        self.rw = rw
-        self.rh = rh
+        
+        self.rw_i = rw
+        self.rh_i = rh
+        
+        self.rw_m = rw+gp.bnd_thres
+        self.rh_m = rh+gp.bnd_thres
+        
+        self.rw_o = rw+2.*gp.bnd_thres
+        self.rh_o = rh+2.*gp.bnd_thres
+
         self.c = get_boundary(rx,ry,rw,rh,gp.N)
         self.f_frac = lambda z: gp.fp(z)/(2j*np.pi*gp.f(z))
         self.y = [self.f_frac(z) for z in self.c]
         self.max_ok = abs(gp.outlier_coeff*get_max(self.y))
+
+    def reg_i(self):
+        return self.rx, self.ry, self.rw_i, self.rh_i
+
+    def reg_m(self):
+        return self.rx, self.ry, self.rw_m, self.rh_m
+
+    def reg_o(self):
+        return self.rx, self.ry, self.rw_o, self.rh_o
 
     def smoothed(self,roots):
         self.y_smooth = []
@@ -395,6 +408,21 @@ class boundary:
             if not ret:
                 status |= note_root_sub_div_by_zero
         return status
+
+    def get_subregions(self):
+        x_list = [self.rx - self.rw_i / 2., self.rx - self.rw_i / 2., 
+                  self.rx + self.rw_i / 2., self.rx + self.rw_i / 2.]
+        y_list = [self.ry - self.rh_i / 2., self.ry + self.rh_i / 2.,
+                  self.ry - self.rh_i / 2., self.ry + self.rh_i / 2.]
+        return x_list, y_list
+
+    def print_region_string(self,lp):
+        if lp.mode & mode_log_summary:
+            s = "-"*lp.lvl_cnt
+            print ("\n"+s+"Region(rx,ry,rw,rh): "+\
+                   str(self.rx)+" "+str(self.ry)+\
+                   " "+str(self.rw_i)+" "+str(self.rh_i))
+
 
 def all_interior_found(roots,num_pred_roots):
     return len(roots.interior_new)>=num_pred_roots
@@ -414,22 +442,19 @@ def do_subcalculation(lp,roots,I0,num_pred_roots):
     return ret and lp.max_steps!=0
 
 def calculate_for_subregions(lp,b,roots):
-    x_list = [b.rx - b.rw / 2.,b.rx - b.rw / 2., 
-              b.rx + b.rw / 2.,b.rx + b.rw / 2.]
-    y_list = [b.ry - b.rh / 2.,b.ry + b.rh / 2.,
-              b.ry - b.rh / 2.,b.ry + b.rh / 2.]
-    num_regions = len(x_list)
     if lp.mode & mode_log_recursive:
         new_mode = lp.mode
     else:
         new_mode = lp.mode & mode_log_switch
     status = 0
     known_roots = roots.region + roots.known
-    for x,y in zip(x_list,y_list):
-        new_state,sub_roots = droots(gp.f,gp.fp,x,y,b.rw/2.,b.rh/2.,gp.N,
+    num_regions = 0
+    for x,y in zip(*b.get_subregions()):
+        new_state,sub_roots = droots(gp.f,gp.fp,x,y,b.rw_i/2.,b.rh_i/2.,gp.N,
                                lp.max_steps-1,new_mode,known_roots,lp.lvl_cnt+1)
         status |= new_state
         roots.interior_all_subs.extend(sub_roots)
+        num_regions += 1
     return status,num_regions
 
 class global_parameters:
@@ -480,12 +505,6 @@ class global_parameters:
         self.f = f
         self.fp = fp
         self.N = N
-
-    def print_region_string(self,lp,b):
-        if lp.mode & mode_log_summary:
-            s = "-"*lp.lvl_cnt
-            print ("\n"+s+"Region(rx,ry,rw,rh): "+str(b.rx)+" "+str(b.ry)+\
-                   " "+str(b.rw)+" "+str(b.rh))
 
     def handle_state(self,lp,status):
         if lp.mode & mode_log_verbose:

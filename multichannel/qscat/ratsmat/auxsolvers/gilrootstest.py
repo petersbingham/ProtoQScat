@@ -125,6 +125,7 @@ def test_Poly_Roots_N(N, printRoots=False, printPolys=False, printParams=False, 
 
     #calcmode = mode_off
     calcmode = mode_accept_int_muller_close_to_good_roche
+    #calcmode = mode_recurse_on_inaccurate_roche | mode_recurse_on_not_all_interior_found
 
     mode = logmode | calcmode
 

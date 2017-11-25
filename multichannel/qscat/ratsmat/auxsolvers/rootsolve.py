@@ -3,13 +3,6 @@ import gilroots as pydelves
 from globalSettings import *
 from general.file import *
 
-DELVES_MODE_STANDARD = 0
-DELVES_MODE_REFLECT_AXIS = 1
-DELVES_MODE_REFLECT_POLE = 2
-DELVES_MODE_REFLECT_CHECK = 4
-DELVES_MODE_MAINTAIN = 8
-DELVES_MODE_RETRY = 16
-
 #v2: In _findRoots function matrix elements with poly(...): matLst[len(matLst)-1].append(poly(val))
 class SymDetRoots(AuxHelper):
     def __init__(self, suppressCmdOut, solve_method, sympy_nroots_n, sympy_nroots_maxsteps):
@@ -102,21 +95,6 @@ class DelvesRoots(AuxHelper):
                 found = True
                 break
         return found
-    
-    def _doesRootExist(self, root, f):
-        offset = self.delves_args['muller_offset']
-        checkRoot = Muller(root-offset, root+offset, root, f)
-        if self.cmp.complexCompare(root, checkRoot):
-            return checkRoot
-        return None
-    
-    def _handleNewRoot(self, newRoots, newRoot, f):
-        if self.mode & DELVES_MODE_REFLECT_CHECK:
-            checkRoot = self._doesRootExist(newRoot, f)
-            if checkRoot is not None:
-                newRoots.append(checkRoot)
-        else:
-            newRoots.append(newRoot)
                                                 
     def getRoots(self, f, fp, lastRoots):
         pydelves.set_delves_routine_parameters(**self.delves_routine_args)
