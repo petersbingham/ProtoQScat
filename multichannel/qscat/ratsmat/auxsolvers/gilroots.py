@@ -287,7 +287,8 @@ class root_container:
             print s+"Failed fz mull:\n"+str(np.array(zip(*self.boundary_failed_fz)[1]))
         else:
             print s+"Failed fz:\n[]"
-        print s+"Passed z:\n"+str(np.array(self.boundary_passed_z))
+        k = "YES" if len(self.boundary_passed_z) > 0 else "NO"
+        print s+"Passed z (" + k +")"+":\n" + str(np.array(self.boundary_passed_z))
         print s+"All Passed:\n"+str(np.array(self.boundary_all))
         print s+"New:\n"+str(np.array(self.boundary_new))
         print s+"Within:\n"+str(np.array(self.boundary_within))
@@ -301,7 +302,8 @@ class root_container:
             print s+"Failed fz mull:\n"+str(np.array(zip(*self.interior_failed_fz)[1]))
         else:
             print s+"Failed fz:\n[]"
-        print s+"Passed z:\n"+str(np.array(self.interior_passed_z))
+        k = "YES" if len(self.interior_passed_z) > 0 else "NO"
+        print s+"Passed z (" + k +")"+":\n" + str(np.array(self.interior_passed_z))
         print s+"All Passed:\n"+str(np.array(self.interior_all))
         print s+"Purged:\n"+str(np.array(self.interior_purged))
         print s+"Within:\n"+str(np.array(self.interior_within))

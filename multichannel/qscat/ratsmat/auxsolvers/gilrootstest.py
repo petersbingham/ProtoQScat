@@ -109,7 +109,7 @@ def test_Poly_Roots_N(N, printRoots=False, printPolys=False, printParams=False, 
     mul_fzhtol = 1e-12
     mul_off = 1e-5
 
-    mul_ztol = 1e-1
+    mul_ztol = 1e-3
     conj_min_i = 1e-8
 
     dist_eps = 1e-7
