@@ -109,23 +109,23 @@ def test_Poly_Roots_N(N, printRoots=False, printPolys=False, printParams=False, 
     mul_fzhtol = 1e-12
     mul_off = 1e-5
 
-    mul_ztol = 1e-4
+    mul_ztol = 1e-1
     conj_min_i = 1e-8
 
     dist_eps = 1e-7
     lmt_N = 10
     lmt_eps = 1e-3
-    bnd_thres = 2.
+    bnd_thres = .1
 
-    #logmode = mode_off    
-    logmode = mode_log_summary
-    #logmode = mode_log_summary|mode_log_recursive
-    #logmode = mode_log_summary|mode_log_debug|mode_log_recursive
-    #logmode = mode_log_summary|mode_log_debug|mode_log_verbose|mode_log_recursive
+    logmode = mode_off    
+    logmode |= mode_log_summary
+    #logmode |= mode_log_recursive
+    #logmode |= mode_log_debug
+    #logmode |= mode_log_verbose
 
-    #calcmode = mode_off
-    calcmode = mode_accept_int_muller_close_to_good_roche
-    #calcmode = mode_recurse_on_inaccurate_roche | mode_recurse_on_not_all_interior_found
+    calcmode = mode_off
+    calcmode |= mode_recurse_on_inaccurate_roche | mode_recurse_on_not_all_interior_found
+    #calcmode |= mode_accept_int_muller_close_to_good_roche | mode_use_stripped_subtraction
 
     mode = logmode | calcmode
 

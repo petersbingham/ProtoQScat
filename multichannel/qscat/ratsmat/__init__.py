@@ -33,10 +33,16 @@ DELVES_RW = 0.14
 DELVES_RH = 0.3
 DELVES_N = 1000
 DELVES_MAX_STEPS = 5
-log_mode = pydelves.mode_log_summary | pydelves.mode_log_debug | pydelves.mode_log_recursive
-#log_mode = pydelves.mode_log_summary | pydelves.mode_log_debug | pydelves.mode_log_recursive
-calc_mode = pydelves.mode_accept_int_muller_close_to_good_roche | pydelves.mode_accept_bnd_muller_close_to_start | pydelves.mode_recurse_on_not_all_interior_found
-#calc_mode = pydelves.mode_accept_all_mullers
+
+log_mode = pydelves.mode_log_summary
+#log_mode |= pydelves.mode_log_debug
+#log_mode |= pydelves.mode_log_recursive
+
+calc_mode = pydelves.mode_accept_all_mullers
+#calc_mode = pydelves.mode_accept_int_muller_close_to_good_roche
+#calc_mode |= pydelves.mode_recurse_on_inaccurate_roche | pydelves.mode_recurse_on_not_all_interior_found
+#calc_mode |= pydelves.mode_use_stripped_subtraction
+
 DELVES_MODE = log_mode | calc_mode
 
 DELVES_OUTLIER_COEFF = 100.
@@ -54,6 +60,7 @@ DELVES_CONJ_MIN_IMAG = 1e-6
 DELVES_DIST_EPS = 1e-6
 DELVES_LMT_N = 10
 DELVES_LMT_EPS = 1e-3
+#DELVES_BND_THRES = .1
 DELVES_BND_THRES = 2.
 
 ##########################################################
@@ -129,22 +136,37 @@ class RatSMat(sm.mat):
     def setEnergy(self, ene):
         #print "ene: " + str(ene)
         self.ene = ene
-        self._calculate()
+        calculate = False
+        if self.type == TYPE_FIN:
+            if self.ene not in self.selDiffMatDict:
+                calculate = True
+        elif self.ene not in self.selMatDict:
+            calculate = True
+        if calculate:
+            self._calculate()
+        self.selMat = self.selMatDict[self.ene]
+        if self.type == TYPE_FIN:
+            self.selDiffMat = self.selDiffMatDict[self.ene]
+
     # Get the determinant of Fin for the energy set above.
     def getFinDet(self):
         if self.type != TYPE_FIN:
             raise sm.MatException("Wrong type set")
         else:
-            return tw.det(self.selMat)
+            if self.ene not in self.selDetDict:
+                self.selDetDict[self.ene] = tw.det(self.selMat)
+            return self.selDetDict[self.ene]
     def getDiffFinDet(self):
         if self.type != TYPE_FIN:
             raise sm.MatException("Wrong type set")
         else:
             #return tw.trace( tw.dot(tw.adjugate(self.selMat), self.selDiffMat))
-            det = 0.
-            for m in range(tw.shape(self.selMat)[0]):
-                det += tw.det(tw.copyRow(self.selDiffMat, self.selMat, m))
-            return det
+            if self.ene not in self.selDiffDetDict:
+                det = 0.
+                for m in range(tw.shape(self.selMat)[0]):
+                    det += tw.det(tw.copyRow(self.selDiffMat, self.selMat, m))
+                self.selDiffDetDict[self.ene] = det
+            return self.selDiffDetDict[self.ene]
         
     # This returns values of the determinants across a specified range.
     def getFinRange(self, startEne, endEne, complexOffset, steps, m, n):
@@ -251,7 +273,11 @@ class RatSMat(sm.mat):
             self.betas[sz] = self._initialiseCoefficients()
         self.selMat = tw.matrix(self._getZeroListMats())
         self.selDiffMat = tw.matrix(self._getZeroListMats())
-
+        self.selMatDict = {}
+        self.selDiffMatDict = {}
+        self.selDetDict = {}
+        self.selDiffDetDict = {}
+        
     def _initialiseCoefficients(self):
         coeffs = []
         for i in range(0, self.numCoeffs):
@@ -453,10 +479,10 @@ class RatSMat(sm.mat):
         
             #print str(self.ene) + " , " + str(Fin[0,0]) + " , " + str(Fin[0,1]) + " , " + str(Fin[1,0]) + " , " + str(Fin[1,1])
             if self.type == TYPE_FIN:
-                self.selMat = Fin
-                self.selDiffMat = FinDiff
+                self.selMatDict[self.ene] = Fin
+                self.selDiffMatDict[self.ene] = FinDiff
             else:
-                self.selMat = Fout * tw.invert(Fin)  #S-matrix
+                self.selMatDict[self.ene] = Fout * tw.invert(Fin)  #S-matrix
         else:
             raise sm.MatException("Calculation Error")
         #if self.resultFileHandler:
