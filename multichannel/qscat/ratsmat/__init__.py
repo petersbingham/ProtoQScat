@@ -41,7 +41,7 @@ log_mode = pydelves.mode_log_summary
 #calc_mode = pydelves.mode_off
 calc_mode = pydelves.mode_accept_all_mullers
 #calc_mode = pydelves.mode_accept_int_muller_close_to_good_roche
-#calc_mode |= pydelves.mode_recurse_on_inaccurate_roche | pydelves.mode_recurse_on_not_all_interior_found
+calc_mode |= pydelves.mode_dont_recurse_on_inaccurate_roche | pydelves.mode_dont_recurse_on_not_all_interior_found
 #calc_mode |= pydelves.mode_use_stripped_subtraction
 
 DELVES_MODE = log_mode | calc_mode

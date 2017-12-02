@@ -184,9 +184,9 @@ class PoleFinder:
             self.populateSmatCB(sMats, self.sMats)
         file = open(self.resultFileHandler.getRootFilePath(), 'w')
         try:
+            ratSmat.doCalc()
             if self.ratkCal is not None:
                 ratSmat.kCal = self.ratkCal
-            ratSmat.doCalc()
             roots = ratSmat.findRoots(self.lastRoots)
             self.lastRoots = roots
             self._printInfoStr("Calculated", N, roots)

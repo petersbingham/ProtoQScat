@@ -133,7 +133,9 @@ class PoleMetaCalculator:
             if not pole.isLost:
                 combinedPoleSet[N] = pole
         return combinedPoleSet
-          
+    
+    # Produces two table. The fist is named ...PREVALENCE.tab and contains tables of amalgamated poles, with up dataed calculations.
+    # The second is only a partial table, named PREVALENCECOMB.tab, to indicate the poles that have been combined.
     def _combineUniquePoleSets(self, uniquePoleSets):
         zeroValue = 10**(-self.zeroValExp)
         ratCmp = num.RationalCompare(zeroValue, self.amalgThreshold)
@@ -160,6 +162,7 @@ class PoleMetaCalculator:
                             else:
                                 poleSet = uniquePoleSets[j][0]
                             q5_inter = list(sets.Set(uniquePoleSets[i][3]).union(sets.Set(uniquePoleSets[j][3])))
+                            # Update the calculations, using the pole set at the higher N.
                             uniquePoleSets[i] = [poleSet, uniquePoleSets[i][1]+uniquePoleSets[j][1], uniquePoleSets[i][2]+uniquePoleSets[j][2], q5_inter]
                 newUniquePoleSets.append(uniquePoleSets[i])
         return newUniquePoleSets, combinedPoleSets

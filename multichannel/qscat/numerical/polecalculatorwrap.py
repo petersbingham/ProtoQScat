@@ -50,8 +50,8 @@ def _doPoleFind(ratkCal, mode):
     cfSteps = map(int, args.cfSteps_.split(','))
     p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfSteps, args.startingDistThreshold_, args.amalgThreshold_, args.zeroValExp_, args.Nmin_, args.Nmax_, resultFileHandler)
     cmpPole = RMATRIX_POLES[args.cmpIndex_] if args.cmpIndex_<len(RMATRIX_POLES) else None
-    
-    p.doPoleCalculations(smats, kCAL, mode, ratkCal=ratkCal, cmpPole=cmpPole)
+    kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=kCAL, massMult=MASSMULT)
+    p.doPoleCalculations(smats, kCal, mode, ratkCal=ratkCal, cmpPole=cmpPole)
 
 def _polesForAllSigns(mode):
     kperms = num.getPermutations([1.0,-1.0], len(THRESHOLDS))
