@@ -9,5 +9,5 @@ def getFileHandler(kCal, startIndex, endIndex):
     return ResultFileHandler(sysName)
 
 def readkMats(fileName):
-    r = RfortMatReader(fileName, NUMCHANNELS)
+    r = RfortMatReader(fileName)
     return r.readkMats()

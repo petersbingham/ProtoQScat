@@ -12,7 +12,7 @@ CALCULATIONS = ["Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]
 
 
 class PoleMetaCalculator:
-    def __init__(self, startIndex, endIndex, offset, mode, cfSteps, startingDistThreshold, amalgThreshold, zeroValExp, Nmin, Nmax, resultFileHandler):
+    def __init__(self, startIndex, endIndex, offset, mode, cfSteps, startingDistThreshold, amalgThreshold, zeroValExp, Nmin, Nmax, resultFileHandler, endDistThreshold=None):
         self.startIndex = startIndex
         self.endIndex = endIndex
         self.offset = offset
@@ -23,7 +23,9 @@ class PoleMetaCalculator:
         self.zeroValExp = zeroValExp
         self.Nmin = Nmin
         self.Nmax = Nmax
+        self.endDistThreshold = endDistThreshold
         self.resultFileHandler = resultFileHandler
+        self.resultFileHandler.setDistThresholdEnd(endDistThreshold)
         self.distThresholds = {k:[] for k in self.cfSteps}
         self.allDistThresholds = []
 
@@ -50,7 +52,7 @@ class PoleMetaCalculator:
                     pc = PoleConverger(self.resultFileHandler, self.Nmin, self.Nmax)
                     pc.createPoleTable()
                     poleSetsDict[cfSteps].append(pc.poleSets)
-                    if pf.NmaxTotPoles != 0:
+                    if pf.NmaxTotPoles != 0 and (self.endDistThreshold is None or distThreshold > (self.endDistThreshold + self.endDistThreshold/10.0)):
                         distThreshold /= 10.0
                     else:
                         break

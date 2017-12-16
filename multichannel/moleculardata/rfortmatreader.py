@@ -15,15 +15,10 @@ if __name__ != '__main__': #Can test without these imports
 NUMFIELDCHARS=20
 
 class RfortMatReader:
-    def __init__(self, fileName, numChannels):
+    def __init__(self, fileName):
         self.fileName = fileName
-        self.numChannels = numChannels
 
     def readkMats(self):
-        self.numUniqueElements = self._aSum(self.numChannels)
-        numCompleteLinesPerMat = self.numUniqueElements / 4
-        numRemElements = self.numUniqueElements % 4
-            
         self.kmats = {}
         with open(self.fileName, 'rb') as file:
             linNum = 0
@@ -31,14 +26,20 @@ class RfortMatReader:
                 linNum += 1
                 file.readline()
             ene = None
+            numCompleteLinesPerMat = 0
+            numRemElements = 0
             for line in file:
                 linNum += 1
-                nums = line.split()
-                if len(nums) == 4 and nums[0]==str(self.numChannels):
+                nums = filter(lambda x: x!="", line.split())
+                if nums[0].find(".") == -1:
+                    numChannels = int(nums[0])
+                    numUniqueElements = self._aSum(numChannels)
+                    numCompleteLinesPerMat = numUniqueElements / 4
+                    numRemElements = numUniqueElements % 4
                     lineI = 0
                     self.cElement = 1
                     ene = self._num(nums[3])
-                    self.kmats[ene] = tw.sqZeros(self.numChannels)
+                    self.kmats[ene] = tw.sqZeros(numChannels)
                 else:
                     if lineI < numCompleteLinesPerMat:
                         self._checkLineLength(line, linNum, 4)
@@ -78,15 +79,17 @@ class RfortMatReader:
         return float(string.replace("D", "E").replace(" ", ""))
     
     def _flipCopyDiag(self):
-        numElements = self._aSum(self.numChannels)
         for ene in self.kmats:
+            kmat = self.kmats[ene]
+            numChannels = tw.shape(kmat)[0]
+            numUniqueElements = self._aSum(numChannels) 
             self.cElement = 1
-            for i in range(self.numUniqueElements):
+            for i in range(numUniqueElements):
                 indices = self._getIndices()
                 if indices[0] != indices[1]:
-                    self.kmats[ene][indices[1],indices[0]] = self.kmats[ene][indices[0],indices[1]]
+                    kmat[indices[1],indices[0]] = kmat[indices[0],indices[1]]
     
 if __name__ == '__main__':
-    r = RfortMatReader(None, None)
+    r = RfortMatReader(None)
     for i in range(3):
         print r._getIndices()

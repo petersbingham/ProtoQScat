@@ -13,7 +13,7 @@ N_MAX=32
 
 for ANALYTIC_TYPE in $(seq 2 2 18)
 do
-  python ../../run_polecalculatorwrap.py 1.0 2.0 2.0 0.0 0.0 1.0 1.0 8.0 0.0 1000 $SET_START $SET_END $SET_OFFSET 3 $CF_STEPS $START_DIST_THRES $AMALG_THRES $ZERO_VALUE_EXPONENT $N_MIN $N_MAX $ANALYTIC_TYPE
+  python ../../run_polecalculatorwrap.py 1.0 2.0 2.0 0.0 2.0 1.0 1.0 8.0 0.0 1000 $SET_START $SET_END $SET_OFFSET 3 $CF_STEPS $START_DIST_THRES $AMALG_THRES $ZERO_VALUE_EXPONENT $N_MIN $N_MAX $ANALYTIC_TYPE
 done
 
 read -n1 -r -p "Press any key to continue..." key

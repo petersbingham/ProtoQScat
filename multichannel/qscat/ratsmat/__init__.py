@@ -300,7 +300,7 @@ class RatSMat(sm.mat):
             print "  numFits: " + str(self.numFits)
             print "Fit:"
             print "  fitSize: " + str(self.fitSize)
-            print "  numFitPoints: " + str(self.numPolyTerms)
+            print "  numPolyTerms: " + str(self.numPolyTerms)
             print "  numCoeffs: " + str(self.numCoeffs)
 
 

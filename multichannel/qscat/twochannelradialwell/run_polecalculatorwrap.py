@@ -1,9 +1,8 @@
 import sys
 import os
 base =  os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0,base+'/../..')
-sys.path.insert(0,base+'/../../..')
-sys.path.insert(0,base+'/../../../ratsmat')
+sys.path.insert(0,base+'/..')
+sys.path.insert(0,base+'/../ratsmat')
 sys.path.insert(0,os.getcwd()) #We assume that the specific kreader and description (below) will be here.
 
 from resultfilehandler import *
@@ -50,7 +49,7 @@ def _polesForRot(mode):
     _doPoleFind(kCal, mode)
 
 def _polesForPos(mode):
-    kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0]*2, massMult=MASSMULT)
+    kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,-1.0], massMult=MASSMULT)
     _doPoleFind(kCal, mode)
 
 def _polesForComp(mode):

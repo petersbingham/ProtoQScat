@@ -76,7 +76,7 @@ def calculateQIs(args, anakCal, fitkCal, mode, resultsType=RESULTS_TYPE_DEFAULT,
         args.endIndex_ = len(smats)-1
     resultFileHandler = _getFileHandler(args, anakCal, fitkCal, resultsType)
     cfSteps = map(int, args.cfSteps_.split(','))
-    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfSteps, args.startingDistThreshold_, args.amalgThreshold_, args.zeroValExp_, args.Nmin_, args.Nmax_, resultFileHandler)
+    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfSteps, args.startingDistThreshold_, args.amalgThreshold_, args.zeroValExp_, args.Nmin_, args.Nmax_, resultFileHandler, 1e-12)
     p.doPoleCalculations(smats, fitkCal, mode, lambda sm1,sm2: popSmat(anaSmat, sm1, sm2), cmpValue)
     
 def popSmat(anaSmat, smats1, smats2=None):

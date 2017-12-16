@@ -18,7 +18,7 @@ ANALYTIC_TYPE=0 #For the analytical calculation. 0 indicates to use the globally
 function run {
   START="$(echo print $2-3.5 | python)"
   END="$(echo print $2+3.5 | python)"
-  python ../../run_polecalculatorwrap.py 1.0 $1 $1 0.0 0.0 1.0 $START $END 0.0 1000 $SET_START $SET_END $SET_OFFSET 3 $CF_STEPS $START_DIST_THRES $AMALG_THRES $ZERO_VALUE_EXPONENT $N_MIN $N_MAX $ANALYTIC_TYPE
+  python ../../run_polecalculatorwrap.py 1.0 $1 $1 0.0 2.0 1.0 $START $END 0.0 1000 $SET_START $SET_END $SET_OFFSET 3 $CF_STEPS $START_DIST_THRES $AMALG_THRES $ZERO_VALUE_EXPONENT $N_MIN $N_MAX $ANALYTIC_TYPE
 }
 
 run 0 5.839
