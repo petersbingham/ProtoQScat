@@ -5,7 +5,7 @@ try:
     kmat = RatSMatWrap(FILENAME)
     anaes = kmat.getDiscreteEigenSum()
     
-    kmat = RatSMatWrap(FILENAME, args.subN_, args.subStart_, args.subEnd_, kfitSigns=[1.0]*NUMCHANNELS)
+    kmat = RatSMatWrap(FILENAME, args.subN_, args.subStart_, args.subEnd_, kfitSigns=[1.0]*kmat.numChannels)
     fites = kmat.getDiscreteEigenSum()
     fites.useMarker()
     ratTotes = kmat.getRatEigenSum(eneStart=args.plotStart_, eneEnd=args.plotEnd_, eneComplexOffset=args.plotComplex_, eneSteps=args.steps_)

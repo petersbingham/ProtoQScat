@@ -13,5 +13,5 @@ N_MAX=32
 
 ANALYTIC_TYPE=0 #For the analytical calculation. 0 indicates to use the globally selected type (in qstype.py), -1 to simulate a 32-bit float, -2 for 64-bit. Positive number indicates the number of points to truncate the mantissa to.
 
-python -u ../../run_polecalculatorwrap.py 1.0 2.0 2.0 0.0 2.0 1.0 0.01 1.99 0.0 1000 $SET_START $SET_END $SET_OFFSET 5 $CF_STEPS $START_DIST_THRES $AMALG_THRES $ZERO_VALUE_EXPONENT $N_MIN $N_MAX $ANALYTIC_TYPE > thres.dat
+python ../../run_polecalculatorwrap.py 1.0 2.0 2.0 0.0 2.0 1.0 -0.5 1.99 0.0 1000 $SET_START $SET_END $SET_OFFSET 5 $CF_STEPS $START_DIST_THRES $AMALG_THRES $ZERO_VALUE_EXPONENT $N_MIN $N_MAX $ANALYTIC_TYPE
 read -n1 -r -p "Press any key to continue..." key

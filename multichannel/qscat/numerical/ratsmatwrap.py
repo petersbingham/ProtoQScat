@@ -38,7 +38,6 @@ class RatSMatWrap:
             startIndex = None 
         if endIndex == -1:
             endIndex = None
-        self.numChannels = NUMCHANNELS
         self.ene = None
         if kfitSigns is None:
             self.kFitCal = sm.kCalculator(THRESHOLDS, LS, massMult=MASSMULT)
@@ -53,12 +52,16 @@ class RatSMatWrap:
         self.N = N
         self.suppressCmdOut = suppressCmdOut
         self.fileHandler = getFileHandler(self.kFitCal, startIndex if startIndex is not None else 0, endIndex if endIndex is not None else len(self.kmats)-1)
+        enes = sorted(self.sMats.keys())
         if startIndex is not None and endIndex is not None and N is not None:
             self.mode = M_NORM
             self._decimate(startIndex, endIndex, N)
         else:
             if len(self.kmats)%2 != 0:
-                self.kmats.pop(ene)
+                self.kmats.pop(enes[-1])
+        if tw.shape(self.sMats[enes[0]] != self.sMats[enes[-1]]):
+            raise Exception("S-matrices have difference shapes")
+        self.numChannels = tw.shape(self.sMats[enes[0]])[0]
   
     def _decimate(self, startIndex, endIndex, N):
         decimator = Decimator(startIndex, endIndex, 0, self.fileHandler)
@@ -71,7 +74,7 @@ class RatSMatWrap:
     
     def getMatrix(self):
         if self.ene is None:
-            return tw.identity(NUMCHANNELS)
+            return tw.identity(self.numChannels)
         else:
             return self._getSfromKmatrix(self.ene)
     
@@ -120,10 +123,10 @@ class RatSMatWrap:
         return (ratEPhaseMats, ePhaseFitPointsLst)
     
     def _getSfromKmatrices(self):
-        return sm.getSfromKmatrices(self.kmats, NUMCHANNELS)
+        return sm.getSfromKmatrices(self.kmats)
     
     def _getSfromKmatrix(self, ene):
-        return sm.getSfromKmatrix(self.kmats, NUMCHANNELS, ene)
+        return sm.getSfromKmatrix(self.kmats, ene)
     
     def _getRatSmat(self):
         smats = self._getSfromKmatrices()

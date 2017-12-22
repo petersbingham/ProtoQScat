@@ -234,6 +234,12 @@ class RatSMat(sm.mat):
             self.fitSize = fitSize
         self._checkInput()
         self.enes = [key.real for key in sorted(self.sMatData.keys(), key=lambda val: val.real)]
+
+        if self.sMatData is not None and len(self.sMatData) > 1:
+            if self.sMatData[self.enes[0]] is not None and self.sMatData[self.enes[-1]] is not None:
+                if tw.shape(self.sMatData[self.enes[0]]) != tw.shape(self.sMatData[self.enes[-1]]):
+                    raise Exception("S-matrices have difference shapes")
+
         self.numFits = self.numData/self.fitSize
         self.numPolyTerms = self.fitSize / 2
         self.numCoeffs = self.numPolyTerms + 1

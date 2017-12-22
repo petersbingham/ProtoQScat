@@ -31,14 +31,15 @@ def decimate(mats, startIndex, endIndex, N):
         index += 1
     return newMats, step, index, startEne, ene
 
-def getSfromKmatrices(kmats, numChannels):
+def getSfromKmatrices(kmats):
     smats = {}
     for ene in sorted(kmats.keys()):
-        mat = getSfromKmatrix(kmats, numChannels, ene)
+        mat = getSfromKmatrix(kmats, ene)
         smats[ene] = mat
     return smats
 
-def getSfromKmatrix(kmats, numChannels, ene):
+def getSfromKmatrix(kmats, ene):
+    numChannels = tw.shape(kmats[ene])[0]
     num = tw.identity(numChannels) + 1.0j*kmats[ene]
     denum = tw.identity(numChannels) - 1.0j*kmats[ene]
     S = tw.dot(num, tw.invert(denum))
