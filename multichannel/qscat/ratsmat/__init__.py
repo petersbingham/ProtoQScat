@@ -71,11 +71,11 @@ def _isElasticRootMethod():
     return EXPANDEDDET_ROOTS_FINDTYPE=="numpy_roots" or EXPANDEDDET_ROOTS_FINDTYPE=="sympy_nroots"
 
 class RatSMat(sm.mat):
-    def __init__(self, sMatData, kCal, fitSize=None, resultFileHandler=None, suppressCmdOut=False, doCalc=True):
+    def __init__(self, sMatData, fitkCal, ratkCal=None, fitSize=None, resultFileHandler=None, suppressCmdOut=False, doCalc=True):
         self.sMatData = sMatData
         self.suppressCmdOut = suppressCmdOut
         self._initData1(fitSize)
-        self.kCal = kCal
+        self.fitkCal = fitkCal
         self.type = TYPE_S
         self.hasCoeffs = False
         self.ene = None
@@ -83,7 +83,7 @@ class RatSMat(sm.mat):
         self.coeffSolve = CoeffSolve(self.suppressCmdOut, tw.mode, PYTYPE_COEFF_SOLVE_METHOD)
         
         if _isElasticRootMethod():
-            if not self.kCal.isElastic():
+            if not self.fitkCal.isElastic():
                 raise sm.MatException("Selected root finding method not applicable to inelastic scattering data.")
             self.rootSolver = SymDetRoots(self.suppressCmdOut, EXPANDEDDET_ROOTS_FINDTYPE, SYMPY_NROOTS_N, SYMPY_NROOTS_MAXSTEPS)
         else:
@@ -106,9 +106,18 @@ class RatSMat(sm.mat):
         self.rootSolver.setResultFileHandler(self.resultFileHandler)
         self.rootCleaner.setResultFileHandler(self.resultFileHandler)
         self.fitName = None
+        self.setRatkCal(ratkCal)
 
         if doCalc:
             self.doCalc()
+
+    def setRatkCal(self, ratkCal):
+        if ratkCal is not None:
+            self.ratkCal = ratkCal
+            if self.resultFileHandler is not None:
+                self.resultFileHandler.setRatsMatCalcStr(str(ratkCal))
+        else:
+            self.ratkCal = self.fitkCal
 
     # Calculate the coefficients.
     def doCalc(self):
@@ -217,7 +226,7 @@ class RatSMat(sm.mat):
     # This cleans the roots.
     def cleanRoots(self, roots):
         #Originally thought that bad roots around start of data set but moved data set away from zero and bad roots did not follow.
-        #badRoot = self.kCal.fk(sorted(self.sMatData, key=lambda val: val.real)[0])
+        #badRoot = self.ratkCal.fk(sorted(self.sMatData, key=lambda val: val.real)[0])
         badRoot = 0.0
         return self.rootCleaner.cleanRoots(roots, badRoot)
 
@@ -413,16 +422,16 @@ class RatSMat(sm.mat):
         return self.numPolyTerms*self.numChannels + m*self.numPolyTerms + ti
 
     def _primaryAlpha(self, m, n, ene, exp):
-        return self.kCal.kl(n,ene,1.0) / self.kCal.kl(m,ene,1.0) * (self.sMatData[ene][m,m]-1.0) * tw.pow(ene,exp)
+        return self.fitkCal.kl(n,ene,1.0) / self.fitkCal.kl(m,ene,1.0) * (self.sMatData[ene][m,m]-1.0) * tw.pow(ene,exp)
 
     def _primaryBeta(self, m, n, ene, exp):
-        return -1.0j * self.kCal.kl(m,ene,0.0) * self.kCal.kl(n,ene,1.0) * (self.sMatData[ene][m,m]+1.0) * tw.pow(ene,exp)
+        return -1.0j * self.fitkCal.kl(m,ene,0.0) * self.fitkCal.kl(n,ene,1.0) * (self.sMatData[ene][m,m]+1.0) * tw.pow(ene,exp)
 
     def _secondaryAlpha(self, m, n, j, ene, exp):
-        return self.kCal.kl(n,ene,1.0) / self.kCal.kl(j,ene,1.0) * self.sMatData[ene][m,j] * tw.pow(ene,exp)
+        return self.fitkCal.kl(n,ene,1.0) / self.fitkCal.kl(j,ene,1.0) * self.sMatData[ene][m,j] * tw.pow(ene,exp)
 
     def _secondaryBeta(self, m, n, j, ene, exp):
-        return -1.0j * self.kCal.kl(j,ene,0.0) * self.kCal.kl(n,ene,1.0) * self.sMatData[ene][m,j] * tw.pow(ene,exp)
+        return -1.0j * self.fitkCal.kl(j,ene,0.0) * self.fitkCal.kl(n,ene,1.0) * self.sMatData[ene][m,j] * tw.pow(ene,exp)
 
     def _result(self, m, n, ene):
         num = 0.0
@@ -464,8 +473,8 @@ class RatSMat(sm.mat):
                     t2 = 0.0
                     dt1 = 0.0
                     dt2 = 0.0
-                    k1_mult = self.kCal.kl(n,self.ene,1.0)/self.kCal.kl(m,self.ene,1.0)
-                    k2_mult = 1.0j*self.kCal.kl(m,self.ene,0.0)*self.kCal.kl(n,self.ene,1.0)
+                    k1_mult = self.ratkCal.kl(n,self.ene,1.0)/self.ratkCal.kl(m,self.ene,1.0)
+                    k2_mult = 1.0j*self.ratkCal.kl(m,self.ene,0.0)*self.ratkCal.kl(n,self.ene,1.0)
                     for ci in range(self.numCoeffs):
                         exp = ci
                         pow = tw.pow(self.ene, exp)
@@ -496,12 +505,12 @@ class RatSMat(sm.mat):
         #    self.resultFileHandler.endLogAction("_calculate")
       
     def _getDiffMults(self, m, n, exp):
-        C = self.kCal.getMult()
-        lm = self.kCal.l(m)
-        lnp1 = self.kCal.l(n)+1.0
-        lmp1 = self.kCal.l(m)+1.0
-        knsq = 2.0*tw.pow(self.kCal.k(n,self.ene),2.0)
-        kmsq = 2.0*tw.pow(self.kCal.k(m,self.ene),2.0)
+        C = self.ratkCal.getMult()
+        lm = self.ratkCal.l(m)
+        lnp1 = self.ratkCal.l(n)+1.0
+        lmp1 = self.ratkCal.l(m)+1.0
+        knsq = 2.0*tw.pow(self.ratkCal.k(n,self.ene),2.0)
+        kmsq = 2.0*tw.pow(self.ratkCal.k(m,self.ene),2.0)
         muOverE = exp / self.ene
         
         t1_fact = C*lnp1/knsq - C*lmp1/kmsq + muOverE
@@ -509,8 +518,8 @@ class RatSMat(sm.mat):
         return t1_fact, t2_fact
       
     def _gett2Diff(self, n, m, exp):
-        a = self.kCal.l(m) / (2*tw.pow(self.kCal.k(m,self.ene),2.0))
-        b = (self.kCal.l(n)+1.0) / (2*tw.pow(self.kCal.k(n,self.ene),2.0))
+        a = self.ratkCal.l(m) / (2*tw.pow(self.ratkCal.k(m,self.ene),2.0))
+        b = (self.ratkCal.l(n)+1.0) / (2*tw.pow(self.ratkCal.k(n,self.ene),2.0))
         c = exp / self.ene
       
     def _getAlphaSet(self):
@@ -608,7 +617,7 @@ class RatSMat(sm.mat):
             for eKey in self.alphas:
                 roots = self.rootSolver.getRoots(lambda x: complex(self._getDet(x)), lambda x: complex(self._getDiffDet(x)), lastRoots)
                 eRoots = map(lambda val: complex(val), roots)
-                kRoots = map(lambda val: self.kCal.fk(val,True), roots)
+                kRoots = map(lambda val: self.ratkCal.fk(val,True), roots)
                 allRoots.extend(zip(kRoots,eRoots))
         else:
             raise sm.MatException("Calculation Error")
@@ -635,19 +644,19 @@ class RatSMat(sm.mat):
                 for m in range(self.numChannels):
                     matLst.append([])
                     for n in range(self.numChannels):
-                        lm = self.kCal.l(m)
-                        ln = self.kCal.l(n)
+                        lm = self.ratkCal.l(m)
+                        ln = self.ratkCal.l(n)
                         val = 0.0
                         for ci in range(self.numCoeffs):
                             A = alphas[ci][m,n]
                             B = betas[ci][m,n]
-                            val += (1.0/2.0)*(1.0/self.kCal.massMult)**(ci) * (tw.toSympy(A)*k**(ln-lm+2*ci) - sy.I*tw.toSympy(B)*k**(ln+lm+1+2*ci) )
+                            val += (1.0/2.0)*(1.0/self.ratkCal.massMult)**(ci) * (tw.toSympy(A)*k**(ln-lm+2*ci) - sy.I*tw.toSympy(B)*k**(ln+lm+1+2*ci) )
                         matLst[len(matLst)-1].append(poly(val))
                         #matLst[len(matLst)-1].append(val) #v1
                 mat = sy_matrix(matLst)
                 roots = fun(mat, k, **args)
                 kRoots = map(lambda val: complex(val), roots)
-                eRoots = map(lambda val: self.kCal.e(val,True), roots)
+                eRoots = map(lambda val: self.ratkCal.e(val,True), roots)
                 allRoots.extend(zip(kRoots,eRoots))
         else:
             raise sm.MatException("Calculation Error")

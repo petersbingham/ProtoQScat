@@ -14,9 +14,9 @@ INC_N = 'incN'
 COMPLETE_STR = "Complete"
    
 class PoleFinder:
-    def __init__(self, sMats, kCal, resultFileHandler, startIndex, endIndex, offset, distThreshold, cfSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX, ratkCal=None):
+    def __init__(self, sMats, fitkCal, resultFileHandler, startIndex, endIndex, offset, distThreshold, cfSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX, ratkCal=None):
         self.sMats = sMats
-        self.kCal = kCal
+        self.fitkCal = fitkCal
         self.resultFileHandler = resultFileHandler
         self.decimator = Decimator(startIndex, endIndex, offset, resultFileHandler)
         self.cfSteps = cfSteps
@@ -84,7 +84,7 @@ class PoleFinder:
 
     def _getNroots(self, N):
         sMats, descStr = self.decimator.decimate(self.sMats, N)
-        ratSmat = RatSMat(sMats, self.kCal, resultFileHandler=self.resultFileHandler, doCalc=False)
+        ratSmat = RatSMat(sMats, self.fitkCal, self.ratkCal, resultFileHandler=self.resultFileHandler, doCalc=False)
         self.resultFileHandler.setPoleFindParameters(self.mode, self.cfSteps, self.distThreshold, self.zeroValue)
         
         roots = None
@@ -185,8 +185,6 @@ class PoleFinder:
         file = open(self.resultFileHandler.getRootFilePath(), 'w')
         try:
             ratSmat.doCalc()
-            if self.ratkCal is not None:
-                ratSmat.kCal = self.ratkCal
             roots = ratSmat.findRoots(self.lastRoots)
             self.lastRoots = roots
             self._printInfoStr("Calculated", N, roots)
