@@ -98,8 +98,6 @@ class RatSMat(sm.mat):
         if self.resultFileHandler is not None:
             self.resultFileHandler.setFitInfo(self.numFits, self.fitSize)
             self.resultFileHandler.setCoeffRoutine(self.coeffSolve.typeStr)
-            self.resultFileHandler.setRootFindRoutine(self.rootSolver.typeStr)
-            self.resultFileHandler.setCleanRootParameter(self.rootCleaner.typeStr)
         if ALWAYS_CALCULATE or not canCacheCoefficients(): #We need to set the info for later use before setting reference to None.
             self.resultFileHandler = None
         self.coeffSolve.setResultFileHandler(self.resultFileHandler)
@@ -112,12 +110,12 @@ class RatSMat(sm.mat):
             self.doCalc()
 
     def setRatkCal(self, ratkCal):
-        if ratkCal is not None:
-            self.ratkCal = ratkCal
-            if self.resultFileHandler is not None:
-                self.resultFileHandler.setRatsMatCalcStr(str(ratkCal))
-        else:
+        self.ratkCal = ratkCal
+        if self.ratkCal is None:
             self.ratkCal = self.fitkCal
+        if self.resultFileHandler is not None:
+            self.resultFileHandler.setRootFindRoutine(self.rootSolver.typeStr, str(self.ratkCal))
+            self.resultFileHandler.setCleanRootParameter(self.rootCleaner.typeStr)
 
     # Calculate the coefficients.
     def doCalc(self):
@@ -178,16 +176,27 @@ class RatSMat(sm.mat):
                 self.selDiffDetDict[self.ene] = det
             return self.selDiffDetDict[self.ene]
         
-    # This returns values of the determinants across a specified range.
-    def getFinRange(self, startEne, endEne, complexOffset, steps, m, n):
-        return self._getRangeVals(startEne, endEne, complexOffset, steps, lambda : self.selMat[m,n])
-    def getDiffFinRange(self, startEne, endEne, complexOffset, steps, m, n):
-        return self._getRangeVals(startEne, endEne, complexOffset, steps, lambda : self.selDiffMat[m,n])
-    # This returns values of the determinants across a specified range.
-    def getFinDetRange(self, startEne, endEne, complexOffset, steps):
-        return self._getRangeVals(startEne, endEne, complexOffset, steps, self.getFinDet)
-    def getDiffFinDetRange(self, startEne, endEne, complexOffset, steps):
-        return self._getRangeVals(startEne, endEne, complexOffset, steps, self.getDiffFinDet)
+    # This returns values of the determinants across a specified real energy range.
+    def getFinRealRange(self, start, end, complexOffset, steps, m, n):
+        return self._getRealRangeVals(start, end, complexOffset, steps, lambda : self.selMat[m,n])
+    def getDiffFinRealRange(self, start, end, complexOffset, steps, m, n):
+        return self._getRealRangeVals(start, end, complexOffset, steps, lambda : self.selDiffMat[m,n])
+    # This returns values of the determinants across a specified real energy range.
+    def getFinDetRealRange(self, start, end, complexOffset, steps):
+        return self._getRealRangeVals(start, end, complexOffset, steps, self.getFinDet)
+    def getDiffFinDetRealRange(self, start, end, complexOffset, steps):
+        return self._getRealRangeVals(start, end, complexOffset, steps, self.getDiffFinDet)
+        
+    # This returns values of the determinants across a specified imag energy range.
+    def getFinImagRange(self, start, end, realOffset, steps, m, n):
+        return self._getImagRangeVals(start, end, realOffset, steps, lambda : self.selMat[m,n])
+    def getDiffFinImagRange(self, start, end, realOffset, steps, m, n):
+        return self._getImagRangeVals(start, end, realOffset, steps, lambda : self.selDiffMat[m,n])
+    # This returns values of the determinants across a specified imag energy range.
+    def getFinDetImagRange(self, start, end, realOffset, steps):
+        return self._getImagRangeVals(start, end, realOffset, steps, self.getFinDet)
+    def getDiffFinDetImagRange(self, start, end, realOffset, steps):
+        return self._getImagRangeVals(start, end, realOffset, steps, self.getDiffFinDet)
     
 
     # This attempts to find a root using a specified a starting value.
@@ -461,46 +470,49 @@ class RatSMat(sm.mat):
     def _calculate(self):
         #if self.resultFileHandler:
         #    self.resultFileHandler.startLogAction("_calculate")
-        if self.hasCoeffs:
-            Fin = tw.matrix(self._getZeroListMats())
-            FinDiff = tw.matrix(self._getZeroListMats())
-            Fout = tw.matrix(self._getZeroListMats())
-            alphas = self._getAlphaSet()
-            betas = self._getBetaSet()
-            for m in range(self.numChannels):
-                for n in range(self.numChannels):
-                    t1 = 0.0
-                    t2 = 0.0
-                    dt1 = 0.0
-                    dt2 = 0.0
-                    k1_mult = self.ratkCal.kl(n,self.ene,1.0)/self.ratkCal.kl(m,self.ene,1.0)
-                    k2_mult = 1.0j*self.ratkCal.kl(m,self.ene,0.0)*self.ratkCal.kl(n,self.ene,1.0)
-                    for ci in range(self.numCoeffs):
-                        exp = ci
-                        pow = tw.pow(self.ene, exp)
-                        a = k1_mult * alphas[ci][m,n] * pow
-                        b = k2_mult * betas[ci][m,n] * pow
-
-                        t1 += a
-                        t2 += b
+        if self.ratkCal is not None:
+            if self.hasCoeffs:
+                Fin = tw.matrix(self._getZeroListMats())
+                FinDiff = tw.matrix(self._getZeroListMats())
+                Fout = tw.matrix(self._getZeroListMats())
+                alphas = self._getAlphaSet()
+                betas = self._getBetaSet()
+                for m in range(self.numChannels):
+                    for n in range(self.numChannels):
+                        t1 = 0.0
+                        t2 = 0.0
+                        dt1 = 0.0
+                        dt2 = 0.0
+                        k1_mult = self.ratkCal.kl(n,self.ene,1.0)/self.ratkCal.kl(m,self.ene,1.0)
+                        k2_mult = 1.0j*self.ratkCal.kl(m,self.ene,0.0)*self.ratkCal.kl(n,self.ene,1.0)
+                        for ci in range(self.numCoeffs):
+                            exp = ci
+                            pow = tw.pow(self.ene, exp)
+                            a = k1_mult * alphas[ci][m,n] * pow
+                            b = k2_mult * betas[ci][m,n] * pow
+    
+                            t1 += a
+                            t2 += b
+                            
+                            t1_mult, t2_mult = self._getDiffMults(m, n, exp)
+                            dt1 += t1_mult * a
+                            dt2 += t2_mult * b
+                            
+                        Fin[m,n] = (t1-t2) / 2.0
+                        FinDiff[m,n] = (dt1-dt2) / 2.0
                         
-                        t1_mult, t2_mult = self._getDiffMults(m, n, exp)
-                        dt1 += t1_mult * a
-                        dt2 += t2_mult * b
-                        
-                    Fin[m,n] = (t1-t2) / 2.0
-                    FinDiff[m,n] = (dt1-dt2) / 2.0
-                    
-                    Fout[m,n] = (t1+t2) / 2.0
-        
-            #print str(self.ene) + " , " + str(Fin[0,0]) + " , " + str(Fin[0,1]) + " , " + str(Fin[1,0]) + " , " + str(Fin[1,1])
-            if self.type == TYPE_FIN:
-                self.selMatDict[self.ene] = Fin
-                self.selDiffMatDict[self.ene] = FinDiff
+                        Fout[m,n] = (t1+t2) / 2.0
+            
+                #print str(self.ene) + " , " + str(Fin[0,0]) + " , " + str(Fin[0,1]) + " , " + str(Fin[1,0]) + " , " + str(Fin[1,1])
+                if self.type == TYPE_FIN:
+                    self.selMatDict[self.ene] = Fin
+                    self.selDiffMatDict[self.ene] = FinDiff
+                else:
+                    self.selMatDict[self.ene] = Fout * tw.invert(Fin)  #S-matrix
             else:
-                self.selMatDict[self.ene] = Fout * tw.invert(Fin)  #S-matrix
+                raise sm.MatException("Calculation Error")
         else:
-            raise sm.MatException("Calculation Error")
+            raise sm.MatException("No fit signs provided")
         #if self.resultFileHandler:
         #    self.resultFileHandler.endLogAction("_calculate")
       
@@ -516,11 +528,6 @@ class RatSMat(sm.mat):
         t1_fact = C*lnp1/knsq - C*lmp1/kmsq + muOverE
         t2_fact = C*lm/kmsq + C*lnp1/knsq + muOverE
         return t1_fact, t2_fact
-      
-    def _gett2Diff(self, n, m, exp):
-        a = self.ratkCal.l(m) / (2*tw.pow(self.ratkCal.k(m,self.ene),2.0))
-        b = (self.ratkCal.l(n)+1.0) / (2*tw.pow(self.ratkCal.k(n,self.ene),2.0))
-        c = exp / self.ene
       
     def _getAlphaSet(self):
         return self._getCoeffSet(self.alphas)
@@ -562,22 +569,31 @@ class RatSMat(sm.mat):
             return tw.getRow(self.selMat, m)
         else:
             raise sm.MatException("Calculation Error")
-
-    def _getRangeVals(self, startEne, endEne, complexOffset, steps, fun):
+        
+    def _getRangeVals(self, start, end, offset, steps, realRange, fun):
         xs = np.ndarray((steps,), dtype=float)
         ys = np.ndarray((steps,), dtype=float)
         zs = np.ndarray((steps,), dtype=float)
         self._setType(TYPE_FIN)
-        ene = startEne
-        dene = (endEne - startEne) / float(steps)
+        val = start
+        dval = (end - start) / float(steps)
         for i in range(0,steps):
-            xs[i] = ene
-            self.setEnergy(ene + complexOffset*1.0j)
+            xs[i] = val
+            if realRange:
+                self.setEnergy(val + offset*1.0j)
+            else:
+                self.setEnergy(offset + val*1.0j)
             res = fun()
             ys[i] = res.real
             zs[i] = res.imag
-            ene += dene
+            val += dval
         return (xs, ys, zs)
+
+    def _getRealRangeVals(self, startEne, endEne, complexOffset, steps, fun):
+        return self._getRangeVals(startEne, endEne, complexOffset, steps, True, fun)
+        
+    def _getImagRangeVals(self, startEne, endEne, realOffset, steps, fun):
+        return self._getRangeVals(startEne, endEne, realOffset, steps, False, fun)
 
 #### Root Finders ####
 
@@ -610,20 +626,24 @@ class RatSMat(sm.mat):
         return val    
 
     def _findDelvesRoots(self, lastRoots):
-        if self.resultFileHandler:
-            self.resultFileHandler.startLogAction("_findDelvesRoots")
-        if self.hasCoeffs:
-            allRoots = []
-            for eKey in self.alphas:
-                roots = self.rootSolver.getRoots(lambda x: complex(self._getDet(x)), lambda x: complex(self._getDiffDet(x)), lastRoots)
-                eRoots = map(lambda val: complex(val), roots)
-                kRoots = map(lambda val: self.ratkCal.fk(val,True), roots)
-                allRoots.extend(zip(kRoots,eRoots))
+        if self.ratkCal is not None:
+            if self.resultFileHandler:
+                self.resultFileHandler.startLogAction("_findDelvesRoots")
+            if self.hasCoeffs:
+                allRoots = []
+                for eKey in self.alphas:
+                    roots = self.rootSolver.getRoots(lambda x: complex(self._getDet(x)), lambda x: complex(self._getDiffDet(x)), lastRoots)
+                    eRoots = map(lambda val: complex(val), roots)
+                    kRoots = map(lambda val: self.ratkCal.fk(val,True), roots)
+                    allRoots.extend(zip(kRoots,eRoots))
+            else:
+                raise sm.MatException("Calculation Error")
+            if self.resultFileHandler:
+                self.resultFileHandler.endLogAction("_findDelvesRoots")
+            return allRoots
         else:
-            raise sm.MatException("Calculation Error")
-        if self.resultFileHandler:
-            self.resultFileHandler.endLogAction("_findDelvesRoots")
-        return allRoots
+            raise sm.MatException("No fit signs provided")
+            
 
 ########################################################################
 ############################## Symbolic ################################
@@ -632,34 +652,37 @@ class RatSMat(sm.mat):
 #### Elastic Wavenumber Calculation ####
 
     def _findElasticRoots(self, fun, **args):
-        if self.resultFileHandler:
-            self.resultFileHandler.startLogAction("_findElasticRoots")
-        if self.hasCoeffs:
-            allRoots = []
-            for eKey in self.alphas:
-                alphas = self.alphas[eKey]
-                betas = self.betas[eKey]
-                k = sy.symbols('k')
-                matLst = []
-                for m in range(self.numChannels):
-                    matLst.append([])
-                    for n in range(self.numChannels):
-                        lm = self.ratkCal.l(m)
-                        ln = self.ratkCal.l(n)
-                        val = 0.0
-                        for ci in range(self.numCoeffs):
-                            A = alphas[ci][m,n]
-                            B = betas[ci][m,n]
-                            val += (1.0/2.0)*(1.0/self.ratkCal.massMult)**(ci) * (tw.toSympy(A)*k**(ln-lm+2*ci) - sy.I*tw.toSympy(B)*k**(ln+lm+1+2*ci) )
-                        matLst[len(matLst)-1].append(poly(val))
-                        #matLst[len(matLst)-1].append(val) #v1
-                mat = sy_matrix(matLst)
-                roots = fun(mat, k, **args)
-                kRoots = map(lambda val: complex(val), roots)
-                eRoots = map(lambda val: self.ratkCal.e(val,True), roots)
-                allRoots.extend(zip(kRoots,eRoots))
+        if self.ratkCal is not None:
+            if self.resultFileHandler:
+                self.resultFileHandler.startLogAction("_findElasticRoots")
+            if self.hasCoeffs:
+                allRoots = []
+                for eKey in self.alphas:
+                    alphas = self.alphas[eKey]
+                    betas = self.betas[eKey]
+                    k = sy.symbols('k')
+                    matLst = []
+                    for m in range(self.numChannels):
+                        matLst.append([])
+                        for n in range(self.numChannels):
+                            lm = self.ratkCal.l(m)
+                            ln = self.ratkCal.l(n)
+                            val = 0.0
+                            for ci in range(self.numCoeffs):
+                                A = alphas[ci][m,n]
+                                B = betas[ci][m,n]
+                                val += (1.0/2.0)*(1.0/self.ratkCal.massMult)**(ci) * (tw.toSympy(A)*k**(ln-lm+2*ci) - sy.I*tw.toSympy(B)*k**(ln+lm+1+2*ci) )
+                            matLst[len(matLst)-1].append(poly(val))
+                            #matLst[len(matLst)-1].append(val) #v1
+                    mat = sy_matrix(matLst)
+                    roots = fun(mat, k, **args)
+                    kRoots = map(lambda val: complex(val), roots)
+                    eRoots = map(lambda val: self.ratkCal.e(val,True), roots)
+                    allRoots.extend(zip(kRoots,eRoots))
+            else:
+                raise sm.MatException("Calculation Error")
+            if self.resultFileHandler:
+                self.resultFileHandler.endLogAction("_findElasticRoots")
+            return allRoots
         else:
-            raise sm.MatException("Calculation Error")
-        if self.resultFileHandler:
-            self.resultFileHandler.endLogAction("_findElasticRoots")
-        return allRoots
+            raise sm.MatException("No fit signs provided")

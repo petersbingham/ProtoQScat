@@ -42,9 +42,10 @@ class ResultFileHandler:
         #First is for each cfSteps. Second is highest across all cfSteps.
         self.distThresholdsEnd = {}
         self.distThresholdEnd = None
-    
+
+        self.rootFindRoutine = None
         self.cleanRootRoutine = None
-        
+
         #Optional if using different calculator post fit
         self.ratsMatCalcStr = None
 
@@ -67,16 +68,21 @@ class ResultFileHandler:
         self.coeffPath = base+COEFFDIR+self.getPostStr()+sep()
         self._makeDir(self.coeffPath)
     
-    def setRatsMatCalcStr(self, calsStr):
-        self.ratsMatCalcStr = calsStr
-    
-    def setRootFindRoutine(self, rootFindRoutine):
+    def setRootFindRoutine(self, rootFindRoutine, ratsMatCalcStr):
         self.rootFindRoutine = rootFindRoutine
-        base = self._getBaseRootsPath()
-        self.rootDir = base + ROOTSDIR
-        self.rootPath = self.rootDir
-        self._makeDir(self.rootPath)
-        self.rootPath += self.getPostStr()
+        self.setRatsMatCalcStr(ratsMatCalcStr)
+    
+    def setRatsMatCalcStr(self, ratsMatCalcStr):
+        self.ratsMatCalcStr = ratsMatCalcStr
+        self.refreshRootFindRoutine()
+    
+    def refreshRootFindRoutine(self):
+        if self.rootFindRoutine is not None:
+            base = self._getBaseRootsPath()
+            self.rootDir = base + ROOTSDIR
+            self.rootPath = self.rootDir
+            self._makeDir(self.rootPath)
+            self.rootPath += self.getPostStr()
     
     def setCleanRootParameter(self, cleanRootRoutine):
         self.cleanRootRoutine = cleanRootRoutine

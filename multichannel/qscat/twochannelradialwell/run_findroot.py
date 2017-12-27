@@ -15,7 +15,7 @@ fitkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,1.0],
 ratkCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,-1.0], massMult=MASSMULT)
 
 anaSmat, ratSmat = getSmats(args, anakCal, fitkCal)
-ratSmat.kCal = ratkCal
+ratSmat.setRatkCal(ratkCal)
 rootVal = ratSmat.findERoot(args.startE_)
 print str(rootVal) + "   at +ve"
 

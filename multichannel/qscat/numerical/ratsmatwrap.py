@@ -52,16 +52,16 @@ class RatSMatWrap:
         self.N = N
         self.suppressCmdOut = suppressCmdOut
         self.fileHandler = getFileHandler(self.kFitCal, startIndex if startIndex is not None else 0, endIndex if endIndex is not None else len(self.kmats)-1)
-        enes = sorted(self.sMats.keys())
         if startIndex is not None and endIndex is not None and N is not None:
             self.mode = M_NORM
             self._decimate(startIndex, endIndex, N)
         else:
             if len(self.kmats)%2 != 0:
                 self.kmats.pop(enes[-1])
-        if tw.shape(self.sMats[enes[0]] != self.sMats[enes[-1]]):
-            raise Exception("S-matrices have difference shapes")
-        self.numChannels = tw.shape(self.sMats[enes[0]])[0]
+        enes = sorted(self.kmats.keys())
+        if tw.shape(self.kmats[enes[0]]) != tw.shape(self.kmats[enes[-1]]):
+            raise Exception("K-matrices have difference shapes")
+        self.numChannels = tw.shape(self.kmats[enes[0]])[0]
   
     def _decimate(self, startIndex, endIndex, N):
         decimator = Decimator(startIndex, endIndex, 0, self.fileHandler)
@@ -187,13 +187,13 @@ class RatSMatWrap:
         ratSmat = self._getRatSmat()
         return ratSmat.findRoots()
       
-    def getFinDetRange(self, startEne, endEne, complexOffset, steps):
+    def getFinDetRealRange(self, startEne, endEne, complexOffset, steps):
         ratSmat = self._getRatSmat()
-        return ratSmat.getFinDetRange(startEne, endEne, complexOffset, steps)
+        return ratSmat.getFinDetRealRange(startEne, endEne, complexOffset, steps)
       
-    def getDiffFinDetRange(self, startEne, endEne, complexOffset, steps):
+    def getDiffFinDetRealRange(self, startEne, endEne, complexOffset, steps):
         ratSmat = self._getRatSmat()
-        return ratSmat.getDiffFinDetRange(startEne, endEne, complexOffset, steps)
+        return ratSmat.getDiffFinDetRealRange(startEne, endEne, complexOffset, steps)
     
     def _getRatSmatFitSize(self):
         if self.mode==M_NORM:

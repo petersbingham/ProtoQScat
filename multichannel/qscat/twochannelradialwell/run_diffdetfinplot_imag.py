@@ -16,8 +16,8 @@ try:
     matSeq = sm.matSequence() 
     anaSmat, ratSmat = getSmats(args, kCal, kCal)
     
-    vals = ratSmat.getFinDetRealRange(args.startE_, args.endE_, args.plotOffset_, args.steps_)
-    dvals = ratSmat.getDiffFinDetRealRange(args.startE_, args.endE_, args.plotOffset_, args.steps_)
+    vals = ratSmat.getFinDetImagRange(args.startE_, args.endE_, args.plotOffset_, args.steps_)
+    dvals = ratSmat.getDiffFinDetImagRange(args.startE_, args.endE_, args.plotOffset_, args.steps_)
     
     sp.plotSingle("Two Channel Radial Well Fit : real Fin", vals[0], [vals[1],dvals[1]], 'Total Energy (hartrees)', 'det(Fin)', ['function','differential'])
     sp.plotSingle("Two Channel Radial Well Fit : imag Fin", vals[0], [vals[2],dvals[2]], 'Total Energy (hartrees)', 'det(Fin)', ['function','differential'])

@@ -33,8 +33,8 @@ def _findERoot(N, starting):
             print str(N) + "  None"
 
     except (DCException, sm.MatException) as inst:
-      print str(inst)
-      sys.exit()
+        print str(inst)
+        sys.exit()
 
 def _findERootFromActual():
     for i in range(2,33):

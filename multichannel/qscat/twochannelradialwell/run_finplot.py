@@ -18,7 +18,7 @@ try:
     matSeq = sm.matSequence() 
     anaSmat, ratSmat = getSmats(args, kCal, kCal)
     
-    vals = ratSmat.getFinRange(args.startE_, args.endE_, args.plotComplex_, args.steps_, args.m_, args.n_)
+    vals = ratSmat.getFinRealRange(args.startE_, args.endE_, args.plotComplex_, args.steps_, args.m_, args.n_)
     
     sp.plotSingle("Two Channel Radial Well Fit : Fin", vals[0], [vals[1],vals[2]], 'Total Energy (hartrees)', 'Fin', ['real','imag'])
 

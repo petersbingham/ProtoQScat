@@ -49,7 +49,7 @@ def _polesForRot(mode):
     _doPoleFind(kCal, mode)
 
 def _polesForPos(mode):
-    kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,-1.0], massMult=MASSMULT)
+    kCal = sm.kCalculator([args.t1_,args.t2_], ktype=sm.K_SIGN, ksigns=[1.0,1.0], massMult=MASSMULT)
     _doPoleFind(kCal, mode)
 
 def _polesForComp(mode):
