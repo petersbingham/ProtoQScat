@@ -31,7 +31,7 @@ def getTotalXS(T_to_XS):
     return tw.matrix([[XS]])
 
 class RatSMatWrap:
-    def __init__(self, fileName, N=None, startIndex=None, endIndex=None, kfitSigns=None, ksigns=None, suppressCmdOut=False):
+    def __init__(self, fileName, N=None, startIndex=None, endIndex=None, fromEnd=False, kfitSigns=None, ksigns=None, suppressCmdOut=False):
         if N == -1:
             N = None
         if startIndex == -1:
@@ -51,10 +51,10 @@ class RatSMatWrap:
         self.mode = M_PIECEWISE
         self.N = N
         self.suppressCmdOut = suppressCmdOut
-        self.fileHandler = getFileHandler(self.kFitCal, startIndex if startIndex is not None else 0, endIndex if endIndex is not None else len(self.kmats)-1)
+        self.fileHandler = getFileHandler(self.kFitCal, startIndex if startIndex is not None else 0, endIndex if endIndex is not None else len(self.kmats)-1, fromEnd)
         if startIndex is not None and endIndex is not None and N is not None:
             self.mode = M_NORM
-            self._decimate(startIndex, endIndex, N)
+            self._decimate(startIndex, endIndex, N, fromEnd)
         else:
             if len(self.kmats)%2 != 0:
                 self.kmats.pop(enes[-1])
@@ -63,9 +63,9 @@ class RatSMatWrap:
             raise Exception("K-matrices have difference shapes")
         self.numChannels = tw.shape(self.kmats[enes[0]])[0]
   
-    def _decimate(self, startIndex, endIndex, N):
+    def _decimate(self, startIndex, endIndex, N, fromEnd):
         decimator = Decimator(startIndex, endIndex, 0, self.fileHandler)
-        self.kmats, decStr = decimator.decimate(self.kmats, N)
+        self.kmats, decStr = decimator.decimate(self.kmats, N, fromEnd)
         if not self.suppressCmdOut:
             print "Decimation:  " + decStr
     

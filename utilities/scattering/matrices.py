@@ -9,16 +9,19 @@ import random
 import conversions as conv
 import general.type_wrap as tw
 
-def decimate(mats, startIndex, endIndex, N):
+def decimate(mats, startIndex, endIndex, N, fromEnd=False):
     step = int((endIndex-startIndex) / (N-1))
     newMats = {}
-    index = 0
+    incIndex = 0
+    actualStartIndex = startIndex
+    if fromEnd:
+        actualStartIndex = startIndex + (endIndex-startIndex) - (N-1)*step # The 1s cancel.
     stepCnt = 0
     startEne = None
     for ene in sorted(mats, key=lambda val: val.real):
-        if index>endIndex:
+        if incIndex>endIndex:
             return None, None, None, None, None
-        if index>=startIndex:
+        if incIndex>=actualStartIndex:
             if stepCnt == 0:
                 if startEne is None:
                     startEne = ene
@@ -28,8 +31,8 @@ def decimate(mats, startIndex, endIndex, N):
                 stepCnt = 0
         if len(newMats) == N:
             break
-        index += 1
-    return newMats, step, index, startEne, ene
+        incIndex += 1
+    return newMats, step, actualStartIndex, incIndex, startEne, ene
 
 def getSfromKmatrices(kmats):
     smats = {}

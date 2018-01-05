@@ -9,9 +9,10 @@ class Decimator():
         self.offset = offset
         self.resultFileHandler = resultFileHandler
                  
-    def decimate(self, sMats, N):
-        actualStartIndex = self.startIndex+self.offset
-        sMats, step, actualEndIndex, startEne, endEne = sm.decimate(sMats, actualStartIndex, self.endIndex+self.offset, N)
+    def decimate(self, sMats, N, fromEnd=False):
+        offStartIndex = self.startIndex+self.offset
+        offEndIndex = self.endIndex+self.offset
+        sMats, step, actualStartIndex, actualEndIndex, startEne, endEne = sm.decimate(sMats, offStartIndex, offEndIndex, N, fromEnd)
         self.resultFileHandler.setDeciminationInfo(actualStartIndex, actualEndIndex)
         try:
             decStr = "N=%d, Emin=%d(%f), Emax=%d(%f), step=%d" % (N,actualStartIndex,startEne,actualEndIndex,endEne,step)

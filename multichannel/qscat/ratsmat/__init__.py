@@ -43,6 +43,7 @@ calc_mode = pydelves.mode_accept_all_mullers
 #calc_mode = pydelves.mode_accept_int_muller_close_to_good_roche
 calc_mode |= pydelves.mode_dont_recurse_on_inaccurate_roche | pydelves.mode_dont_recurse_on_not_all_interior_found
 #calc_mode |= pydelves.mode_use_stripped_subtraction
+#calc_mode |= pydelves.mode_strict_boundary_search
 
 DELVES_MODE = log_mode | calc_mode
 
@@ -50,9 +51,9 @@ DELVES_OUTLIER_COEFF = 100.
 DELVES_MAX_POLY_ORDER = 10
 DELVES_I0_TOL = 5e-3
 
-DELVES_MUL_N = 400
-DELVES_MUL_FZLTOL = 1e-6
-DELVES_MUL_FZHTOL = 1e-6
+DELVES_MUL_N = 1000
+DELVES_MUL_FZLTOL = None
+DELVES_MUL_FZHTOL = None
 DELVES_MUL_OFF = 1e-6
 
 DELVES_MUL_ZTOL = 1e-1
@@ -63,6 +64,7 @@ DELVES_LMT_N = 10
 DELVES_LMT_EPS = 1e-3
 #DELVES_BND_THRES = .1
 DELVES_BND_THRES = 2.
+DELVES_FUN_MULT = 1.
 
 ##########################################################
 ##########################################################
@@ -90,7 +92,7 @@ class RatSMat(sm.mat):
             self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_RX, DELVES_RY, DELVES_RW, DELVES_RH,DELVES_N, DELVES_OUTLIER_COEFF, 
                                           DELVES_MAX_STEPS, DELVES_MAX_POLY_ORDER, DELVES_MUL_N,DELVES_MUL_FZLTOL, DELVES_MUL_FZHTOL, 
                                           DELVES_MUL_OFF, DELVES_MUL_ZTOL, DELVES_CONJ_MIN_IMAG, DELVES_DIST_EPS, DELVES_LMT_N, 
-                                          DELVES_LMT_EPS, DELVES_BND_THRES, DELVES_I0_TOL, DELVES_MODE)
+                                          DELVES_LMT_EPS, DELVES_BND_THRES, DELVES_FUN_MULT, DELVES_I0_TOL, DELVES_MODE)
             
         self.rootCleaner = RootClean(self.suppressCmdOut, EXPANDEDDET_ROOTS_CLEANWIDTH)
 

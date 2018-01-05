@@ -12,10 +12,11 @@ CALCULATIONS = ["Q2", "Q3", "Q4", "Q5", "Q6", "Q7"]
 
 
 class PoleMetaCalculator:
-    def __init__(self, startIndex, endIndex, offset, mode, cfSteps, startingDistThreshold, amalgThreshold, zeroValExp, Nmin, Nmax, resultFileHandler, endDistThreshold=None):
+    def __init__(self, startIndex, endIndex, offset, endLock, mode, cfSteps, startingDistThreshold, amalgThreshold, zeroValExp, Nmin, Nmax, resultFileHandler, endDistThreshold=None):
         self.startIndex = startIndex
         self.endIndex = endIndex
         self.offset = offset
+        self.endLock = endLock
         self.mode = mode
         self.cfSteps = cfSteps
         self.startingDistThreshold = startingDistThreshold
@@ -45,7 +46,7 @@ class PoleMetaCalculator:
                 self.distThresholds[cfSteps].append(distThreshold)
                 if distThreshold not in self.allDistThresholds:
                     self.allDistThresholds.append(distThreshold)
-                pf = PoleFinder(copy.deepcopy(smats), kCal, self.resultFileHandler, self.startIndex, self.endIndex, self.offset, distThreshold, cfSteps, cmpPole, mode, populateSmatCB, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax, ratkCal=ratkCal)
+                pf = PoleFinder(copy.deepcopy(smats), kCal, self.resultFileHandler, self.startIndex, self.endIndex, self.offset, self.endLock, distThreshold, cfSteps, cmpPole, mode, populateSmatCB, zeroValExp=self.zeroValExp, Nmin=self.Nmin, Nmax=self.Nmax, ratkCal=ratkCal)
                 self.errState = self.errState | pf.errState
                 if not self.errState:
                     tabCounts[cfSteps].append((pf.NmaxTotPoles, pf.NmaxLostPoles))

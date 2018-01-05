@@ -72,13 +72,13 @@ class SymDetRoots(AuxHelper):
 class DelvesRoots(AuxHelper):
     def __init__(self, suppressCmdOut, rx, ry, rw, rh, N, outlier_coeff, max_steps, max_order, 
                  mul_N, mul_fzltol, mul_fzhtol, mul_off, mul_ztol, conj_min_i, dist_eps, lmt_N,
-                 lmt_eps, bnd_thres, I0_tol, mode):
+                 lmt_eps, bnd_thres, fun_multiplier, I0_tol, mode):
         AuxHelper.__init__(self, suppressCmdOut)
         self.delves_args = {'rx':rx, 'ry':ry, 'rw':rw, 'rh':rh, 'N':N, 'max_steps':max_steps, 'mode':mode}
         self.delves_routine_args = {'outlier_coeff':outlier_coeff, 'max_order':max_order, 'I0_tol':I0_tol}
         self.delves_muller_args = {'mul_N':mul_N, 'mul_fzltol':mul_fzltol, 'mul_fzhtol':mul_fzhtol, 'mul_off':mul_off}
         self.delves_mode_args = {'mul_ztol':mul_ztol,'conj_min_i':conj_min_i}
-        self.delves_adv_args = {'dist_eps':dist_eps, 'lmt_N':lmt_N, 'lmt_eps':lmt_eps, 'bnd_thres':bnd_thres}
+        self.delves_adv_args = {'dist_eps':dist_eps, 'lmt_N':lmt_N, 'lmt_eps':lmt_eps, 'bnd_thres':bnd_thres, 'fun_multiplier':fun_multiplier}
         
         self.typeStr = "droots"+getArgDesc(pydelves.droots, self.delves_args, ["known_roots", "lvl_cnt"]) + sep() + \
                        "routine"+getArgDesc(pydelves.set_delves_routine_parameters, self.delves_routine_args) + sep() + \

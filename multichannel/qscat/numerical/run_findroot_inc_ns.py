@@ -10,7 +10,7 @@ args = parentArgs.parse_args()
 NUM_FND = 0
           
 def _findKnownRoot(N):
-    kmat = RatSMatWrap(FILENAME,N,args.subStart_,args.subEnd_, kfitSigns=[1.0]*len(THRESHOLDS))
+    kmat = RatSMatWrap(FILENAME,N,args.subStart_,args.subEnd_,kfitSigns=[1.0]*len(THRESHOLDS))
     starting = args.sene_
     print str(starting) + "   " + str(kmat.findERoot(starting)) + "\n\n"
         

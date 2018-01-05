@@ -39,16 +39,17 @@ args = parentArgs.parse_args()
 from scriptparameters import *
 
 kCAL=[1.0]*len(THRESHOLDS)
+FROM_END = False
 
 def _doPoleFind(ratkCal, mode):
     kmats = readkMats(FILENAME)
     smats = sm.getSfromKmatrices(kmats)
     if args.endIndex_ == -1:
         args.endIndex_ = len(smats)-1
-    resultFileHandler = getFileHandler(kCAL, args.startIndex_, args.endIndex_)
+    resultFileHandler = getFileHandler(kCAL, args.startIndex_, args.endIndex_, FROM_END)
     resultFileHandler.setRatsMatCalcStr(str(ratkCal))
     cfSteps = map(int, args.cfSteps_.split(','))
-    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, mode, cfSteps, args.startingDistThreshold_, args.amalgThreshold_, args.zeroValExp_, args.Nmin_, args.Nmax_, resultFileHandler, 1e-12)
+    p = PoleMetaCalculator(args.startIndex_, args.endIndex_, args.offset_, FROM_END, mode, cfSteps, args.startingDistThreshold_, args.amalgThreshold_, args.zeroValExp_, args.Nmin_, args.Nmax_, resultFileHandler, 1e-12)
     cmpPole = RMATRIX_POLES[args.cmpIndex_] if args.cmpIndex_<len(RMATRIX_POLES) else None
     kCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_SIGN, ksigns=kCAL, massMult=MASSMULT)
     p.doPoleCalculations(smats, kCal, mode, ratkCal=ratkCal, cmpPole=cmpPole)

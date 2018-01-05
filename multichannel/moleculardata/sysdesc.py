@@ -18,6 +18,8 @@ DESC_STR = "Pyrazine Elastic 3ch"
 
 "H2O inel B1 10ch"
 
+"para-benzoquinone inel 4ch"
+
 if DESC_STR == "Pyrazine Elastic 3ch":
     ARCHIVE_BASE_STR = "Pyrazine"
     FILENAME = "rmatrixdata/pyrazine_3ch.19"
@@ -101,3 +103,10 @@ elif DESC_STR == "H2O inel B1 10ch":
     
     THRESHOLDS = [0.0]*4 + [0.517059]*6
     LS = [1,2,3,3,0,1,2,2,3,3]
+    
+elif DESC_STR == "para-benzoquinone inel 4ch":
+    ARCHIVE_BASE_STR = "para-benzoquinone_inel_4ch"
+    FILENAME = "rmatrixdata/para-benzoquinone_inel_4ch.19"
+    
+    THRESHOLDS = [0.0] + [0.217429]*3
+    LS = [3,2,4,4]

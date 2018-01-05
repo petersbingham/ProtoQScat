@@ -14,11 +14,12 @@ INC_N = 'incN'
 COMPLETE_STR = "Complete"
    
 class PoleFinder:
-    def __init__(self, sMats, fitkCal, resultFileHandler, startIndex, endIndex, offset, distThreshold, cfSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX, ratkCal=None):
+    def __init__(self, sMats, fitkCal, resultFileHandler, startIndex, endIndex, offset, endLock, distThreshold, cfSteps=1, cmpValue=None, mode=DOUBLE_N, populateSmatCB=None, zeroValExp=ZEROVALEXP, Nmin=DEFAULT_N_MIN, Nmax=DEFAULT_N_MAX, ratkCal=None):
         self.sMats = sMats
         self.fitkCal = fitkCal
         self.resultFileHandler = resultFileHandler
         self.decimator = Decimator(startIndex, endIndex, offset, resultFileHandler)
+        self.endLock = endLock
         self.cfSteps = cfSteps
         self.distThreshold = distThreshold
         self.zeroValue = 10**(-zeroValExp)
@@ -83,7 +84,7 @@ class PoleFinder:
         return ret
 
     def _getNroots(self, N):
-        sMats, descStr = self.decimator.decimate(self.sMats, N)
+        sMats, descStr = self.decimator.decimate(self.sMats, N, self.endLock)
         ratSmat = RatSMat(sMats, self.fitkCal, self.ratkCal, resultFileHandler=self.resultFileHandler, doCalc=False)
         self.resultFileHandler.setPoleFindParameters(self.mode, self.cfSteps, self.distThreshold, self.zeroValue)
         
