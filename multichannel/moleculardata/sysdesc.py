@@ -20,6 +20,8 @@ DESC_STR = "Pyrazine Elastic 3ch"
 
 "para-benzoquinone inel 4ch"
 
+"thiophene inel inel A2 14ch"
+
 if DESC_STR == "Pyrazine Elastic 3ch":
     ARCHIVE_BASE_STR = "Pyrazine"
     FILENAME = "rmatrixdata/pyrazine_3ch.19"
@@ -110,3 +112,10 @@ elif DESC_STR == "para-benzoquinone inel 4ch":
     
     THRESHOLDS = [0.0] + [0.217429]*3
     LS = [3,2,4,4]
+    
+elif DESC_STR == "thiophene inel inel A2 14ch":
+    ARCHIVE_BASE_STR = "thiophene_inel_A2_14ch"
+    FILENAME = "rmatrixdata/thiop_inel_A2_14ch.19"
+    
+    THRESHOLDS = [0.0]*4 + [0.273534]*6 + [0.363323]*4
+    LS = [2,3,4,4,1,2,3,3,4,4,2,3,4,4]
