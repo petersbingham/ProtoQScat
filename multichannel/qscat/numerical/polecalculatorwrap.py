@@ -16,12 +16,14 @@ MODE_POS_DOUBLE = 4
 MODE_POS_INC = 5
 MODE_COMP_DOUBLE = 6
 MODE_COMP_INC = 7
-MODE_RAT_DOUBLE = 8
-MODE_RAT_INC = 9
-MODE_NEG_DOUBLE = 10
-MODE_NEG_INC = 11
-MODE_CUST_DOUBLE = 12
-MODE_CUST_INC = 13
+MODE_ANA_AXIS_DOUBLE = 8
+MODE_ANA_AXIS_INC = 9
+MODE_ANA_THRES_DOUBLE = 10
+MODE_ANA_THRES_INC = 11
+MODE_NEG_DOUBLE = 12
+MODE_NEG_INC = 13
+MODE_CUST_DOUBLE = 14
+MODE_CUST_INC = 15
 
 import argparse
 parentArgs = argparse.ArgumentParser(description="Numercal Data Fit - Pole find")
@@ -82,8 +84,12 @@ def _polesForComp(mode):
     ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_COMP, massMult=MASSMULT)
     _doPoleFind(ratkCal, mode)
 
-def _polesForRat(mode):
-    ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_RAT, massMult=MASSMULT)
+def _polesForAnaAxis(mode):
+    ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_ANA_AXIS, massMult=MASSMULT)
+    _doPoleFind(ratkCal, mode)
+
+def _polesForAnaThres(mode):
+    ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_ANA_THRES, massMult=MASSMULT)
     _doPoleFind(ratkCal, mode)
 
 if args.mode_ == MODE_ALLSIGNS_DOUBLE:
@@ -102,10 +108,14 @@ elif args.mode_ == MODE_COMP_DOUBLE:
     _polesForComp(DOUBLE_N)
 elif args.mode_ == MODE_COMP_INC:
     _polesForComp(INC_N)
-elif args.mode_ == MODE_RAT_DOUBLE:
-    _polesForRat(DOUBLE_N)
-elif args.mode_ == MODE_RAT_INC:
-    _polesForRat(INC_N)
+elif args.mode_ == MODE_ANA_AXIS_DOUBLE:
+    _polesForAnaAxis(DOUBLE_N)
+elif args.mode_ == MODE_ANA_AXIS_INC:
+    _polesForAnaAxis(INC_N)
+elif args.mode_ == MODE_ANA_THRES_DOUBLE:
+    _polesForAnaThres(DOUBLE_N)
+elif args.mode_ == MODE_ANA_THRES_INC:
+    _polesForAnaThres(INC_N)
 elif args.mode_ == MODE_NEG_DOUBLE:
     _polesForNeg(DOUBLE_N)
 elif args.mode_ == MODE_NEG_INC:

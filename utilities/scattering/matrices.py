@@ -53,7 +53,8 @@ K_POS = "kPos"
 K_SIGN = "kSign"
 K_ROT = "kRot"
 K_COMP = "kComp"
-K_RAT = "kRat"
+K_ANA_AXIS = "kAnaAxis"
+K_SNS_THRES = "kAnaThres"
 
 MASSMULT_RYDBERGS = 1.0
 MASSMULT_HARTREES = 2.0
@@ -98,8 +99,10 @@ class kCalculator:
             return self.krot(ch, ene)
         elif self.ktype == K_COMP:
             return self.kcomp(ch, ene)
-        elif self.ktype == K_RAT:
-            return self.krat(ch, ene)
+        elif self.ktype == K_ANA_AXIS:
+            return self.kanaAxis(ch, ene)
+        elif self.ktype == K_ANA_THRES:
+            return self.kanaThres(ch, ene)
     def l(self, ch):
         return self.ls[ch]
     def kpos(self, ch, ene):
@@ -129,7 +132,7 @@ class kCalculator:
             else:
                 sign = 1.0
         return sign*k
-    def krat(self, ch, ene):
+    def kanaAxis(self, ch, ene):
         #This keeps function analytical AS LONG as you don't cross thresholds.
         k = self.kpos(ch, ene)
         if ene.real <= self.thresholds[ch]: #We want smooth transition over the real axis
@@ -138,6 +141,14 @@ class kCalculator:
             else:
                 sign = -1.0
         elif ene.real > self.thresholds[ch]: #We want smooth transition over the real axis
+            sign = 1.0
+        return sign*k
+    def kanaThres(self, ch, ene):
+        #This keeps function analytical AS LONG as you don't cross axis.
+        k = self.kpos(ch, ene)
+        if ene.imag >= 0.0:
+            sign = -1.0
+        else:
             sign = 1.0
         return sign*k
     def _getValue(self, ch, ene):

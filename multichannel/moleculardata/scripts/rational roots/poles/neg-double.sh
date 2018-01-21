@@ -16,5 +16,5 @@ N_MAX=30
 FLAG_RMATRIX_POLES_INDEX=0
 
 cd ../../..
-python ../qscat/numerical/polecalculatorwrap.py $SET_START $SET_END $SET_OFFSET 10 $CF_STEPS $START_DIST_THRES $AMALG_THRES $ZERO_VALUE_EXPONENT $N_MIN $N_MAX $FLAG_RMATRIX_POLES_INDEX
+python ../qscat/numerical/polecalculatorwrap.py $SET_START $SET_END $SET_OFFSET 12 $CF_STEPS $START_DIST_THRES $AMALG_THRES $ZERO_VALUE_EXPONENT $N_MIN $N_MAX $FLAG_RMATRIX_POLES_INDEX
 read -n1 -r -p "Press any key to continue..." key
