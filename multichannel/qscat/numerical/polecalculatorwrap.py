@@ -16,10 +16,12 @@ MODE_POS_DOUBLE = 4
 MODE_POS_INC = 5
 MODE_COMP_DOUBLE = 6
 MODE_COMP_INC = 7
-MODE_NEG_DOUBLE = 8
-MODE_NEG_INC = 9
-MODE_CUST_DOUBLE = 10
-MODE_CUST_INC = 11
+MODE_RAT_DOUBLE = 8
+MODE_RAT_INC = 9
+MODE_NEG_DOUBLE = 10
+MODE_NEG_INC = 11
+MODE_CUST_DOUBLE = 12
+MODE_CUST_INC = 13
 
 import argparse
 parentArgs = argparse.ArgumentParser(description="Numercal Data Fit - Pole find")
@@ -80,6 +82,10 @@ def _polesForComp(mode):
     ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_COMP, massMult=MASSMULT)
     _doPoleFind(ratkCal, mode)
 
+def _polesForRat(mode):
+    ratkCal = sm.kCalculator(THRESHOLDS, LS, ktype=sm.K_RAT, massMult=MASSMULT)
+    _doPoleFind(ratkCal, mode)
+
 if args.mode_ == MODE_ALLSIGNS_DOUBLE:
     _polesForAllSigns(DOUBLE_N)
 elif args.mode_ == MODE_ALLSIGNS_INC:
@@ -96,6 +102,10 @@ elif args.mode_ == MODE_COMP_DOUBLE:
     _polesForComp(DOUBLE_N)
 elif args.mode_ == MODE_COMP_INC:
     _polesForComp(INC_N)
+elif args.mode_ == MODE_RAT_DOUBLE:
+    _polesForRat(DOUBLE_N)
+elif args.mode_ == MODE_RAT_INC:
+    _polesForRat(INC_N)
 elif args.mode_ == MODE_NEG_DOUBLE:
     _polesForNeg(DOUBLE_N)
 elif args.mode_ == MODE_NEG_INC:

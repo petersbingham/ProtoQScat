@@ -8,7 +8,7 @@ try:
     kmat = RatSMatWrap(FILENAME, args.subN_, args.subStart_, args.subEnd_, kfitSigns=[1.0]*kmat.numChannels)
     fites = kmat.getDiscreteEigenSum()
     fites.useMarker()
-    ratTotes = kmat.getRatEigenSum(eneStart=args.plotStart_, eneEnd=args.plotEnd_, eneComplexOffset=args.plotComplex_, eneSteps=args.steps_)
+    ratTotes = kmat.getRatEigenSum(eneStart=args.plotStart_, eneEnd=args.plotEnd_, eneComplexOffset=args.offset_, eneSteps=args.steps_)
     
     anaes.setDetails("R-matrix", ['green'])
     fites.setDetails("Fit Points", ['red'])

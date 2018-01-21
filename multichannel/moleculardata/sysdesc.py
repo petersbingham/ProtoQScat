@@ -112,6 +112,7 @@ elif DESC_STR == "para-benzoquinone inel 4ch":
     
     THRESHOLDS = [0.0] + [0.217429]*3
     LS = [3,2,4,4]
+    # 0->147, 148->399
     
 elif DESC_STR == "thiophene inel inel A2 14ch":
     ARCHIVE_BASE_STR = "thiophene_inel_A2_14ch"
@@ -119,3 +120,4 @@ elif DESC_STR == "thiophene inel inel A2 14ch":
     
     THRESHOLDS = [0.0]*4 + [0.273534]*6 + [0.363323]*4
     LS = [2,3,4,4,1,2,3,3,4,4,2,3,4,4]
+    # 186, 61, 49

@@ -1,4 +1,4 @@
-# Locates poles by comparing roots for N=N+2. Positive signs are used throughout.
+# Locates poles by comparing roots for N=N*2. Signs switch when passing threshold.
 
 SET_START=0
 SET_END=-1 # To end of data
@@ -16,5 +16,5 @@ N_MAX=40
 FLAG_RMATRIX_POLES_INDEX=0
 
 cd ../../..
-python -u ../qscat/numerical/polecalculatorwrap.py $SET_START $SET_END $SET_OFFSET 7 $CF_STEPS $START_DIST_THRES $AMALG_THRES $ZERO_VALUE_EXPONENT $N_MIN $N_MAX $FLAG_RMATRIX_POLES_INDEX > out_comp.dat
+python ../qscat/numerical/polecalculatorwrap.py $SET_START $SET_END $SET_OFFSET 8 $CF_STEPS $START_DIST_THRES $AMALG_THRES $ZERO_VALUE_EXPONENT $N_MIN $N_MAX $FLAG_RMATRIX_POLES_INDEX
 read -n1 -r -p "Press any key to continue..." key

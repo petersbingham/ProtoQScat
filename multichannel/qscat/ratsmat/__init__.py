@@ -24,15 +24,23 @@ DISPLAY_PRECISION = 8
 
 ######################## Minor ###########################
 
+# Elastic
 SYMPY_NROOTS_N = tw.dps
 SYMPY_NROOTS_MAXSTEPS = 5000
 
-DELVES_RX = 0.15
-DELVES_RY = 0.0
-DELVES_RW = 0.14
-DELVES_RH = 0.3
-DELVES_N = 1000
-DELVES_MAX_STEPS = 5
+# Inelastic
+INEL_REG_RX_MID = 0.40278
+INEL_REG_RX_WIDTH = 0.18
+INEL_REG_RY_MID = 0
+INEL_REG_RY_HEIGHT = 0.01
+USE_MIDS = True
+INEL_REG_RX_START = 0.218295
+INEL_REG_RX_END = 0.587265
+INEL_REG_RY_START = -1e-8
+INEL_REG_RY_END = -0.01
+
+DELVES_N = 3000
+DELVES_MAX_STEPS = 2
 
 log_mode = pydelves.mode_log_summary
 #log_mode |= pydelves.mode_log_debug
@@ -44,6 +52,7 @@ calc_mode = pydelves.mode_accept_all_mullers
 calc_mode |= pydelves.mode_dont_recurse_on_inaccurate_roche | pydelves.mode_dont_recurse_on_not_all_interior_found
 #calc_mode |= pydelves.mode_use_stripped_subtraction
 #calc_mode |= pydelves.mode_strict_boundary_search
+calc_mode |= pydelves.mode_boundary_search_off
 
 DELVES_MODE = log_mode | calc_mode
 
@@ -89,11 +98,21 @@ class RatSMat(sm.mat):
                 raise sm.MatException("Selected root finding method not applicable to inelastic scattering data.")
             self.rootSolver = SymDetRoots(self.suppressCmdOut, EXPANDEDDET_ROOTS_FINDTYPE, SYMPY_NROOTS_N, SYMPY_NROOTS_MAXSTEPS)
         else:
-            self.rootSolver = DelvesRoots(self.suppressCmdOut, DELVES_RX, DELVES_RY, DELVES_RW, DELVES_RH,DELVES_N, DELVES_OUTLIER_COEFF, 
-                                          DELVES_MAX_STEPS, DELVES_MAX_POLY_ORDER, DELVES_MUL_N,DELVES_MUL_FZLTOL, DELVES_MUL_FZHTOL, 
-                                          DELVES_MUL_OFF, DELVES_MUL_ZTOL, DELVES_CONJ_MIN_IMAG, DELVES_DIST_EPS, DELVES_LMT_N, 
+            if USE_MIDS:
+                inel_reg_rx = INEL_REG_RX_MID
+                inel_reg_rw = abs(INEL_REG_RX_WIDTH)
+                inel_reg_ry = INEL_REG_RY_MID
+                inel_reg_rh = abs(INEL_REG_RY_HEIGHT)
+            else:
+                inel_reg_rx = (INEL_REG_RX_END + INEL_REG_RX_START) / 2.
+                inel_reg_rw = abs((INEL_REG_RX_END - INEL_REG_RX_START) / 2.)
+                inel_reg_ry = (INEL_REG_RY_END + INEL_REG_RY_START) / 2.
+                inel_reg_rh = abs((INEL_REG_RY_END - INEL_REG_RY_START) / 2.)
+            self.rootSolver = DelvesRoots(self.suppressCmdOut, inel_reg_rx, inel_reg_ry, inel_reg_rw, inel_reg_rh, 
+                                          DELVES_N, DELVES_OUTLIER_COEFF,  DELVES_MAX_STEPS, DELVES_MAX_POLY_ORDER, DELVES_MUL_N,DELVES_MUL_FZLTOL, 
+                                          DELVES_MUL_FZHTOL, DELVES_MUL_OFF, DELVES_MUL_ZTOL, DELVES_CONJ_MIN_IMAG, DELVES_DIST_EPS, DELVES_LMT_N, 
                                           DELVES_LMT_EPS, DELVES_BND_THRES, DELVES_FUN_MULT, DELVES_I0_TOL, DELVES_MODE)
-            
+
         self.rootCleaner = RootClean(self.suppressCmdOut, EXPANDEDDET_ROOTS_CLEANWIDTH)
 
         self.resultFileHandler = resultFileHandler
@@ -178,27 +197,36 @@ class RatSMat(sm.mat):
                 self.selDiffDetDict[self.ene] = det
             return self.selDiffDetDict[self.ene]
         
-    # This returns values of the determinants across a specified real energy range.
-    def getFinRealRange(self, start, end, complexOffset, steps, m, n):
-        return self._getRealRangeVals(start, end, complexOffset, steps, lambda : self.selMat[m,n])
-    def getDiffFinRealRange(self, start, end, complexOffset, steps, m, n):
-        return self._getRealRangeVals(start, end, complexOffset, steps, lambda : self.selDiffMat[m,n])
-    # This returns values of the determinants across a specified real energy range.
-    def getFinDetRealRange(self, start, end, complexOffset, steps):
-        return self._getRealRangeVals(start, end, complexOffset, steps, self.getFinDet)
-    def getDiffFinDetRealRange(self, start, end, complexOffset, steps):
-        return self._getRealRangeVals(start, end, complexOffset, steps, self.getDiffFinDet)
+    def getRoche_0(self):
+        return self.getDiffFinDet()/(2j*np.pi*self.getFinDet())
         
-    # This returns values of the determinants across a specified imag energy range.
+    # Following functions return range of values of quantities of interest across specified real and imag energy ranges.
+    def getFinRealRange(self, start, end, imagOffset, steps, m, n):
+        return self._getRealRangeVals(start, end, imagOffset, steps, lambda : self.selMat[m,n])
     def getFinImagRange(self, start, end, realOffset, steps, m, n):
         return self._getImagRangeVals(start, end, realOffset, steps, lambda : self.selMat[m,n])
+    
+    def getDiffFinRealRange(self, start, end, imagOffset, steps, m, n):
+        return self._getRealRangeVals(start, end, imagOffset, steps, lambda : self.selDiffMat[m,n])
     def getDiffFinImagRange(self, start, end, realOffset, steps, m, n):
         return self._getImagRangeVals(start, end, realOffset, steps, lambda : self.selDiffMat[m,n])
-    # This returns values of the determinants across a specified imag energy range.
+    
+    
+    def getFinDetRealRange(self, start, end, imagOffset, steps):
+        return self._getRealRangeVals(start, end, imagOffset, steps, self.getFinDet)
     def getFinDetImagRange(self, start, end, realOffset, steps):
         return self._getImagRangeVals(start, end, realOffset, steps, self.getFinDet)
+    
+    def getDiffFinDetRealRange(self, start, end, imagOffset, steps):
+        return self._getRealRangeVals(start, end, imagOffset, steps, self.getDiffFinDet)
     def getDiffFinDetImagRange(self, start, end, realOffset, steps):
         return self._getImagRangeVals(start, end, realOffset, steps, self.getDiffFinDet)
+
+
+    def getRocheRealRange(self, start, end, imagOffset, steps):
+        return self._getRealRangeVals(start, end, imagOffset, steps, self.getRoche_0)
+    def getRocheImagRange(self, start, end, realOffset, steps):
+        return self._getImagRangeVals(start, end, realOffset, steps, self.getRoche_0)
     
 
     # This attempts to find a root using a specified a starting value.

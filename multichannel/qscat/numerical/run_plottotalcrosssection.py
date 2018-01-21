@@ -8,7 +8,7 @@ try:
     kmat = RatSMatWrap(FILENAME, args.subN_, args.subStart_, args.subEnd_)
     fitxs = kmat.getTotalDiscreteXS()
     fitxs.useMarker()
-    ratTotxs = kmat.getTotalRatXS(eneStart=args.plotStart_, eneEnd=args.plotEnd_, eneComplexOffset=args.plotComplex_, eneSteps=args.steps_)
+    ratTotxs = kmat.getTotalRatXS(eneStart=args.plotStart_, eneEnd=args.plotEnd_, eneComplexOffset=args.offset_, eneSteps=args.steps_)
     
     anaxs.setDetails("R matrix", ['green'])
     fitxs.setDetails("Fit Points", ['red'])

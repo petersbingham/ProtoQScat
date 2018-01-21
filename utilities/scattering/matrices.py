@@ -53,6 +53,7 @@ K_POS = "kPos"
 K_SIGN = "kSign"
 K_ROT = "kRot"
 K_COMP = "kComp"
+K_RAT = "kRat"
 
 MASSMULT_RYDBERGS = 1.0
 MASSMULT_HARTREES = 2.0
@@ -97,12 +98,15 @@ class kCalculator:
             return self.krot(ch, ene)
         elif self.ktype == K_COMP:
             return self.kcomp(ch, ene)
+        elif self.ktype == K_RAT:
+            return self.krat(ch, ene)
     def l(self, ch):
         return self.ls[ch]
     def kpos(self, ch, ene):
         return tw.sqrt(self._getValue(ch, ene))
     def ksign(self, ch, ene):
         if self.invertChannel:
+            print "WARNING channel inverted."
             ch = len(self.thresholds)-1 - ch
         mult = 1.0
         if self.ksigns is not None:
@@ -125,7 +129,21 @@ class kCalculator:
             else:
                 sign = 1.0
         return sign*k
+    def krat(self, ch, ene):
+        #This keeps function analytical AS LONG as you don't cross thresholds.
+        k = self.kpos(ch, ene)
+        if ene.real <= self.thresholds[ch]: #We want smooth transition over the real axis
+            if ene.imag >= 0.0:
+                sign = 1.0
+            else:
+                sign = -1.0
+        elif ene.real > self.thresholds[ch]: #We want smooth transition over the real axis
+            sign = 1.0
+        return sign*k
     def _getValue(self, ch, ene):
+        #if ene.real < self.thresholds[ch]:
+        #    print "WARNING!"
+        #    print str(ene) + "   " + str(self.thresholds[ch])
         return self.getMult()*(ene - self.thresholds[ch])
     def getPhase(self, ch, ene):
         if ene.real <= self.thresholds[ch]:
@@ -564,4 +582,24 @@ class mat:
             return tw.formattedComplexString(tw.complex(value), self.precision)
         else:
             return tw.formattedFloatString(tw.complex(value).real, self.precision)
+    
+if __name__ == "__main__":
+    import mpmath
+    import tabulate
+    k = kCalculator([0.0])
+    results = []
+    def appendVals(val):
+        r = '+' if val.real>0 else '-'
+        i = '+' if val.imag>0 else '-'
+        results.append([r+i, mpmath.nstr(k.kpos(0, val),3), mpmath.nstr(k.krot(0, val),3), mpmath.nstr(k.kcomp(0, val),3)])
+    for real in [0.2,0.1,0.,-0.1,-0.2]:
+        appendVals(real + 0.2j)
+    for imag in [0.2,0.1,0.,-0.1,-0.2]:
+        appendVals(-0.2 + imag*1j)
+    for real in [-0.2,-0.1,0.,0.1,0.2]:
+        appendVals(real - 0.2j)
+    for imag in [-0.2,-0.1,0.,0.1,0.2]:
+        appendVals(0.2 + imag*1j)
+    print tabulate.tabulate(results)
+        
     

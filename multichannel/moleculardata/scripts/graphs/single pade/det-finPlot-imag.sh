@@ -9,5 +9,5 @@ COMPLEXOFFSET=0.0
 NUM_PLOT_POINTS=500
 
 cd ../../..
-python ../qscat/numerical/run_detfinplot.py $N $SET_START $SET_END $PLOT_START $PLOT_END $COMPLEXOFFSET $NUM_PLOT_POINTS
+python ../qscat/numerical/run_detfinplot_imag.py $N $SET_START $SET_END $PLOT_START $PLOT_END $OFFSET $NUM_PLOT_POINTS
 read -n1 -r -p "Press any key to continue..." key

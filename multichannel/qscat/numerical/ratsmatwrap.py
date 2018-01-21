@@ -187,14 +187,27 @@ class RatSMatWrap:
         ratSmat = self._getRatSmat()
         return ratSmat.findRoots()
       
-    def getFinDetRealRange(self, startEne, endEne, complexOffset, steps):
+    def getFinDetRealRange(self, startEne, endEne, imagOffset, steps):
         ratSmat = self._getRatSmat()
-        return ratSmat.getFinDetRealRange(startEne, endEne, complexOffset, steps)
+        return ratSmat.getFinDetRealRange(startEne, endEne, imagOffset, steps)
+    def getFinDetImagRange(self, startEne, endEne, realOffset, steps):
+        ratSmat = self._getRatSmat()
+        return ratSmat.getFinDetImagRange(startEne, endEne, realOffset, steps)
       
-    def getDiffFinDetRealRange(self, startEne, endEne, complexOffset, steps):
+    def getDiffFinDetRealRange(self, startEne, endEne, imagOffset, steps):
         ratSmat = self._getRatSmat()
-        return ratSmat.getDiffFinDetRealRange(startEne, endEne, complexOffset, steps)
+        return ratSmat.getDiffFinDetRealRange(startEne, endEne, imagOffset, steps)
+    def getDiffFinDetImagRange(self, startEne, endEne, realOffset, steps):
+        ratSmat = self._getRatSmat()
+        return ratSmat.getDiffFinDetImagRange(startEne, endEne, realOffset, steps)
     
+    def getRocheRealRange(self, startEne, endEne, imagOffset, steps):
+        ratSmat = self._getRatSmat()
+        return ratSmat.getRocheRealRange(startEne, endEne, imagOffset, steps)
+    def getRocheImagRange(self, startEne, endEne, realOffset, steps):
+        ratSmat = self._getRatSmat()
+        return ratSmat.getRocheImagRange(startEne, endEne, realOffset, steps)
+
     def _getRatSmatFitSize(self):
         if self.mode==M_NORM:
             return len(self.kmats) 
