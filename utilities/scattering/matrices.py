@@ -54,7 +54,7 @@ K_SIGN = "kSign"
 K_ROT = "kRot"
 K_COMP = "kComp"
 K_ANA_AXIS = "kAnaAxis"
-K_SNS_THRES = "kAnaThres"
+K_ANA_THRES = "kAnaThres"
 
 MASSMULT_RYDBERGS = 1.0
 MASSMULT_HARTREES = 2.0
