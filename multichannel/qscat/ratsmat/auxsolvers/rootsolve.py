@@ -70,19 +70,26 @@ class SymDetRoots(AuxHelper):
 
 
 class DelvesRoots(AuxHelper):
-    def __init__(self, suppressCmdOut, rx, ry, rw, rh, N, outlier_coeff, max_steps, max_order, 
+    def __init__(self, suppressCmdOut, rx, ry, rw, rh, 
+                 bnd_change_left, bnd_change_right, bnd_change_bottom, bnd_change_top,
+                 bnd_limit_left, bnd_limit_right, bnd_limit_bottom, bnd_limit_top,
+                 bnd_max_tries, N, outlier_coeff, max_steps, max_order, 
                  mul_N, mul_fzltol, mul_fzhtol, mul_off, mul_ztol, conj_min_i, dist_eps, lmt_N,
-                 lmt_eps, bnd_thres, fun_multiplier, I0_tol, mode):
+                 lmt_eps, bnd_thres, fun_multiplier, I0_tol, mode, log):
         AuxHelper.__init__(self, suppressCmdOut)
-        self.delves_args = {'rx':rx, 'ry':ry, 'rw':rw, 'rh':rh, 'N':N, 'max_steps':max_steps, 'mode':mode}
+        self.delves_args = {'rx':rx, 'ry':ry, 'rw':rw, 'rh':rh, 'N':N, 'max_steps':max_steps, 'mode':mode, 'log':log}
         self.delves_routine_args = {'outlier_coeff':outlier_coeff, 'max_order':max_order, 'I0_tol':I0_tol}
         self.delves_muller_args = {'mul_N':mul_N, 'mul_fzltol':mul_fzltol, 'mul_fzhtol':mul_fzhtol, 'mul_off':mul_off}
+        self.delves_reg_args = {'change_left':bnd_change_left, 'change_right':bnd_change_right, 'change_bottom':bnd_change_bottom, 'change_top':bnd_change_top,\
+                                'limit_left':bnd_limit_left, 'limit_right':bnd_limit_right, 'limit_bottom':bnd_limit_bottom, 'limit_top':bnd_limit_top,\
+                                'max_tries':bnd_max_tries}
         self.delves_mode_args = {'mul_ztol':mul_ztol,'conj_min_i':conj_min_i}
         self.delves_adv_args = {'dist_eps':dist_eps, 'lmt_N':lmt_N, 'lmt_eps':lmt_eps, 'bnd_thres':bnd_thres, 'fun_multiplier':fun_multiplier}
         
-        self.typeStr = "droots"+getArgDesc(pydelves.droots, self.delves_args, ["known_roots", "lvl_cnt"]) + sep() + \
+        self.typeStr = "droots"+getArgDesc(pydelves.droots, self.delves_args, ["known_roots", "lvl_cnt", "log"]) + sep() + \
                        "routine"+getArgDesc(pydelves.set_delves_routine_parameters, self.delves_routine_args) + sep() + \
                        "muller"+getArgDesc(pydelves.set_muller_parameters, self.delves_muller_args) + sep() + \
+                       "region"+getArgDesc(pydelves.set_changing_region_parameters, self.delves_reg_args) + sep() + \
                        "mode"+getArgDesc(pydelves.set_mode_parameters, self.delves_mode_args) + sep() + \
                        "adv"+getArgDesc(pydelves.set_advanced_parameters, self.delves_adv_args)
         
@@ -100,6 +107,7 @@ class DelvesRoots(AuxHelper):
         pydelves.set_delves_routine_parameters(**self.delves_routine_args)
         pydelves.set_muller_parameters(**self.delves_muller_args)
         pydelves.set_mode_parameters(**self.delves_mode_args)
+        pydelves.set_changing_region_parameters(**self.delves_reg_args)
         pydelves.set_advanced_parameters(**self.delves_adv_args)
         state, roots = pydelves.droots(f, fp, **self.delves_args)
         return roots

@@ -2,6 +2,7 @@
 
 from auxsolvers import *
 from globalSettings import *
+import psutil
 
 TYPE_S = 0
 TYPE_FIN = 1
@@ -29,32 +30,53 @@ SYMPY_NROOTS_N = tw.dps
 SYMPY_NROOTS_MAXSTEPS = 5000
 
 # Inelastic
-INEL_REG_RX_MID = 0.40278
-INEL_REG_RX_WIDTH = 0.18
-INEL_REG_RY_MID = 0
-INEL_REG_RY_HEIGHT = 0.01
+DELVES_RX_MID = 0.15
+DELVES_RY_MID = 0.5
+DELVES_RX_WIDTH = 0.14
+DELVES_RY_HEIGHT = 0.49
 USE_MIDS = True
-INEL_REG_RX_START = 0.218295
-INEL_REG_RX_END = 0.587265
-INEL_REG_RY_START = -1e-8
-INEL_REG_RY_END = -0.01
+DELVES_RX_START = 0.218295
+DELVES_RX_END = 0.587265
+DELVES_RY_START = -1e-8
+DELVES_RY_END = -0.01
 
-DELVES_N = 3000
+DELVES_BND_CHG_LEFT = 0.001
+DELVES_BND_CHG_RIGHT = 0.001
+DELVES_BND_CHG_BOT = 0.001
+DELVES_BND_CHG_TOP = 0.001
+
+DELVES_BND_LMT_LEFT = 0.001
+DELVES_BND_LMT_RIGHT = None
+DELVES_BND_LMT_BOT = 0.001
+DELVES_BND_LMT_TOP = None
+
+DELVES_BND_MAX_TRIES = 5
+
+DELVES_N = 100
 DELVES_MAX_STEPS = 2
 
-log_mode = pydelves.mode_log_summary
-#log_mode |= pydelves.mode_log_debug
-#log_mode |= pydelves.mode_log_recursive
+DELVES_LOG_MODE = pydelves.log_summary
+#DELVES_LOG_MODE |= pydelves.log_debug
+#DELVES_LOG_MODE |= pydelves.log_recursive
 
-#calc_mode = pydelves.mode_off
-calc_mode = pydelves.mode_accept_all_mullers
-#calc_mode = pydelves.mode_accept_int_muller_close_to_good_roche
-calc_mode |= pydelves.mode_dont_recurse_on_inaccurate_roche | pydelves.mode_dont_recurse_on_not_all_interior_found
-#calc_mode |= pydelves.mode_use_stripped_subtraction
-#calc_mode |= pydelves.mode_strict_boundary_search
-calc_mode |= pydelves.mode_boundary_search_off
+DELVES_CALC_MODE = pydelves.mode_off
+#DELVES_CALC_MODE |= pydelves.mode_dont_recurse_on_bad_roche
+#DELVES_CALC_MODE |= pydelves.mode_dont_recurse_on_inaccurate_roche
+#DELVES_CALC_MODE |= pydelves.mode_dont_recurse_on_not_all_interior_found
 
-DELVES_MODE = log_mode | calc_mode
+#DELVES_CALC_MODE |= pydelves.mode_accept_int_muller_close_to_good_roche
+#DELVES_CALC_MODE |= pydelves.mode_accept_int_muller_close_to_any_roche
+DELVES_CALC_MODE |= pydelves.mode_accept_all_mullers
+#DELVES_CALC_MODE |= pydelves.mode_attempt_polysolve_on_bad_roche
+
+#DELVES_CALC_MODE |= pydelves.mode_boundary_change_off
+#DELVES_CALC_MODE |= pydelves.mode_boundary_search_on
+#DELVES_CALC_MODE |= pydelves.mode_boundary_smoothing_off
+#DELVES_CALC_MODE |= pydelves.mode_use_stripped_subtraction
+#DELVES_CALC_MODE |= pydelves.mode_accept_bnd_muller_close_to_start
+#DELVES_CALC_MODE |= pydelves.mode_strict_boundary_search
+
+#DELVES_CALC_MODE |= pydelves.mode_add_conjs
 
 DELVES_OUTLIER_COEFF = 100.
 DELVES_MAX_POLY_ORDER = 10
@@ -82,14 +104,19 @@ def _isElasticRootMethod():
     return EXPANDEDDET_ROOTS_FINDTYPE=="numpy_roots" or EXPANDEDDET_ROOTS_FINDTYPE=="sympy_nroots"
 
 class RatSMat(sm.mat):
-    def __init__(self, sMatData, fitkCal, ratkCal=None, fitSize=None, resultFileHandler=None, suppressCmdOut=False, doCalc=True):
+    def __init__(self, sMatData, fitkCal, ratkCal=None, fitSize=None, resultFileHandler=None, suppressCmdOut=False, doCalc=True, cacheMatrices=False, cacheDeters=True, cacheSizeLimitGB=50):
         self.sMatData = sMatData
         self.suppressCmdOut = suppressCmdOut
+        self.cacheMatrices = cacheMatrices
+        self.cacheDeters = cacheDeters
+        self.cacheSizeLimitGB = cacheSizeLimitGB
         self._initData1(fitSize)
         self.fitkCal = fitkCal
         self.type = TYPE_S
         self.hasCoeffs = False
         self.ene = None
+        if self.cacheSizeLimitGB is not None:
+            self.process = psutil.Process(os.getpid())
         
         self.coeffSolve = CoeffSolve(self.suppressCmdOut, tw.mode, PYTYPE_COEFF_SOLVE_METHOD)
         
@@ -99,19 +126,21 @@ class RatSMat(sm.mat):
             self.rootSolver = SymDetRoots(self.suppressCmdOut, EXPANDEDDET_ROOTS_FINDTYPE, SYMPY_NROOTS_N, SYMPY_NROOTS_MAXSTEPS)
         else:
             if USE_MIDS:
-                inel_reg_rx = INEL_REG_RX_MID
-                inel_reg_rw = abs(INEL_REG_RX_WIDTH)
-                inel_reg_ry = INEL_REG_RY_MID
-                inel_reg_rh = abs(INEL_REG_RY_HEIGHT)
+                inel_reg_rx = DELVES_RX_MID
+                inel_reg_rw = abs(DELVES_RX_WIDTH)
+                inel_reg_ry = DELVES_RY_MID
+                inel_reg_rh = abs(DELVES_RY_HEIGHT)
             else:
-                inel_reg_rx = (INEL_REG_RX_END + INEL_REG_RX_START) / 2.
-                inel_reg_rw = abs((INEL_REG_RX_END - INEL_REG_RX_START) / 2.)
-                inel_reg_ry = (INEL_REG_RY_END + INEL_REG_RY_START) / 2.
-                inel_reg_rh = abs((INEL_REG_RY_END - INEL_REG_RY_START) / 2.)
-            self.rootSolver = DelvesRoots(self.suppressCmdOut, inel_reg_rx, inel_reg_ry, inel_reg_rw, inel_reg_rh, 
-                                          DELVES_N, DELVES_OUTLIER_COEFF,  DELVES_MAX_STEPS, DELVES_MAX_POLY_ORDER, DELVES_MUL_N,DELVES_MUL_FZLTOL, 
-                                          DELVES_MUL_FZHTOL, DELVES_MUL_OFF, DELVES_MUL_ZTOL, DELVES_CONJ_MIN_IMAG, DELVES_DIST_EPS, DELVES_LMT_N, 
-                                          DELVES_LMT_EPS, DELVES_BND_THRES, DELVES_FUN_MULT, DELVES_I0_TOL, DELVES_MODE)
+                inel_reg_rx = (DELVES_RX_END + DELVES_RX_START) / 2.
+                inel_reg_rw = abs((DELVES_RX_END - DELVES_RX_START) / 2.)
+                inel_reg_ry = (DELVES_RY_END + DELVES_RY_START) / 2.
+                inel_reg_rh = abs((DELVES_RY_END - DELVES_RY_START) / 2.)
+            self.rootSolver = DelvesRoots(self.suppressCmdOut, inel_reg_rx, inel_reg_ry, inel_reg_rw, inel_reg_rh,
+                                          DELVES_BND_CHG_LEFT, DELVES_BND_CHG_RIGHT, DELVES_BND_CHG_BOT, DELVES_BND_CHG_TOP,
+                                          DELVES_BND_LMT_LEFT, DELVES_BND_LMT_RIGHT, DELVES_BND_LMT_BOT, DELVES_BND_LMT_TOP, DELVES_BND_MAX_TRIES,
+                                          DELVES_N, DELVES_OUTLIER_COEFF,  DELVES_MAX_STEPS, DELVES_MAX_POLY_ORDER, DELVES_MUL_N,DELVES_MUL_FZLTOL,
+                                          DELVES_MUL_FZHTOL, DELVES_MUL_OFF, DELVES_MUL_ZTOL, DELVES_CONJ_MIN_IMAG, DELVES_DIST_EPS, DELVES_LMT_N,
+                                          DELVES_LMT_EPS, DELVES_BND_THRES, DELVES_FUN_MULT, DELVES_I0_TOL, DELVES_LOG_MODE, DELVES_CALC_MODE)
 
         self.rootCleaner = RootClean(self.suppressCmdOut, EXPANDEDDET_ROOTS_CLEANWIDTH)
 
@@ -160,11 +189,19 @@ class RatSMat(sm.mat):
         self.lastPrintedEne = None
         sm.mat.__init__(self, self.numChannels, DISPLAY_PRECISION)
 
+    def _maintainCache(self):
+        clearCache = False
+        if self.cacheSizeLimitGB is not None:
+            if self.process.memory_info().rss > self.cacheSizeLimitGB * 1073741824:
+                clearCache = True
+        if clearCache or not self.cacheMatrices:
+            self.selMatDict = {}
+            self.selDiffMatDict = {}
+        if clearCache or not self.cacheDeters:
+            self.selDetDict = {}
+            self.selDiffDetDict = {}
 
-    # Set the energy value for the calculation. Results can be accesed using the sm.mat interface.
-    def setEnergy(self, ene):
-        #print "ene: " + str(ene)
-        self.ene = ene
+    def _setMatrices(self):
         calculate = False
         if self.type == TYPE_FIN:
             if self.ene not in self.selDiffMatDict:
@@ -177,12 +214,19 @@ class RatSMat(sm.mat):
         if self.type == TYPE_FIN:
             self.selDiffMat = self.selDiffMatDict[self.ene]
 
+    # Set the energy value for the calculation. Results can be accesed using the sm.mat interface.
+    def setEnergy(self, ene):
+        #print "ene: " + str(ene)
+        self._maintainCache()
+        self.ene = ene
+
     # Get the determinant of Fin for the energy set above.
     def getFinDet(self):
         if self.type != TYPE_FIN:
             raise sm.MatException("Wrong type set")
         else:
             if self.ene not in self.selDetDict:
+                self._setMatrices()
                 self.selDetDict[self.ene] = tw.det(self.selMat)
             return self.selDetDict[self.ene]
     def getDiffFinDet(self):
@@ -191,6 +235,7 @@ class RatSMat(sm.mat):
         else:
             #return tw.trace( tw.dot(tw.adjugate(self.selMat), self.selDiffMat))
             if self.ene not in self.selDiffDetDict:
+                self._setMatrices()
                 det = 0.
                 for m in range(tw.shape(self.selMat)[0]):
                     det += tw.det(tw.copyRow(self.selDiffMat, self.selMat, m))
@@ -202,13 +247,17 @@ class RatSMat(sm.mat):
         
     # Following functions return range of values of quantities of interest across specified real and imag energy ranges.
     def getFinRealRange(self, start, end, imagOffset, steps, m, n):
+        self._setMatrices()
         return self._getRealRangeVals(start, end, imagOffset, steps, lambda : self.selMat[m,n])
     def getFinImagRange(self, start, end, realOffset, steps, m, n):
+        self._setMatrices()
         return self._getImagRangeVals(start, end, realOffset, steps, lambda : self.selMat[m,n])
     
     def getDiffFinRealRange(self, start, end, imagOffset, steps, m, n):
+        self._setMatrices()
         return self._getRealRangeVals(start, end, imagOffset, steps, lambda : self.selDiffMat[m,n])
     def getDiffFinImagRange(self, start, end, realOffset, steps, m, n):
+        self._setMatrices()
         return self._getImagRangeVals(start, end, realOffset, steps, lambda : self.selDiffMat[m,n])
     
     
@@ -596,6 +645,7 @@ class RatSMat(sm.mat):
     
     def _getRow(self, m):    
         if self.hasCoeffs:
+            self._setMatrices()
             return tw.getRow(self.selMat, m)
         else:
             raise sm.MatException("Calculation Error")
