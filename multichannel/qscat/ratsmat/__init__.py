@@ -68,6 +68,7 @@ DELVES_CALC_MODE = pydelves.mode_off
 #DELVES_CALC_MODE |= pydelves.mode_accept_int_muller_close_to_any_roche
 DELVES_CALC_MODE |= pydelves.mode_accept_all_mullers
 #DELVES_CALC_MODE |= pydelves.mode_attempt_polysolve_on_bad_roche
+#DELVES_CALC_MODE |= pydelves.mode_always_attempt_polysolve_on_final_step
 
 #DELVES_CALC_MODE |= pydelves.mode_boundary_change_off
 #DELVES_CALC_MODE |= pydelves.mode_boundary_search_on
