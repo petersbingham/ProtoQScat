@@ -1,6 +1,8 @@
 ProtoQScat
 ==========
 
+THIS HAS BEEN SUPERSEDED BY RESKIT (https://github.com/petersbingham/reskit) AND IS OBSOLETE AND UNSUPPORTED.
+
 Prototype for quantum scattering library. Main two folders are utilities and multichannel. singlechannel folder contains some data analysis code used with results from another project. The analysis folder contains an examination of the Riemann energy surfaces and various other investigations.
 
 <br />
